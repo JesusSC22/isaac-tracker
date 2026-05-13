@@ -78,6 +78,16 @@ def test_parser_detects_known_challenges(sample_save_path, known_completions):
         )
 
 
+def test_parser_extracts_items_seen(sample_save_path):
+    parsed = parse_save(sample_save_path)
+    assert isinstance(parsed.items_seen, set)
+    assert len(parsed.items_seen) > 50, (
+        f"expected >50 items seen in fixture, got {len(parsed.items_seen)}"
+    )
+    # All ids are non-negative ints within the chunk range (~733)
+    assert all(isinstance(i, int) and 0 <= i < 1000 for i in parsed.items_seen)
+
+
 def test_parser_detects_known_character_unlocks(sample_save_path, known_completions):
     parsed = parse_save(sample_save_path)
     for char_id in known_completions["characters_unlocked"]:

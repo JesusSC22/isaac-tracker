@@ -55,12 +55,24 @@ class ParsedSave:
     character_marks: per-character set of completion-mark IDs (0..12) completed.
         Mark IDs are in HTML-display order, NOT save-file order. The mapping
         from save-order to HTML-order is applied by the parser.
+    achievements_unlocked: set of achievement byte indices that are set to 1
+        in the save's achievements chunk. The Isaac game numbers achievements
+        from 1 upward; we keep the raw byte index (so index 50 ↔ achievement
+        50 in the game's own numbering). Used by the "Logros" view to render
+        global completion.
+    items_seen: set of collectible IDs (byte indices in the COLLECTIBLES
+        chunk, chunk 4) the player has touched at least once. The Isaac engine
+        sets byte[id]=1 when an item is picked up for the first time; that
+        flag persists across runs and is the source of truth for the
+        Collection Page. Used by the "Ítems" view.
     parsed_at: when this parse ran. Useful for logging / UI footer.
     """
     slot: int
     challenges_complete: set[int] = field(default_factory=set)
     characters_unlocked: set[int] = field(default_factory=set)
     character_marks: dict[int, set[int]] = field(default_factory=dict)
+    achievements_unlocked: set[int] = field(default_factory=set)
+    items_seen: set[int] = field(default_factory=set)
     parsed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -81,6 +93,7 @@ _ENTRY_SIZES = (1, 4, 4, 1, 1, 1, 1, 4, 4, 1)
 
 # Chunk type IDs we actually care about (1-indexed).
 _CHUNK_ACHIEVEMENTS = 1
+_CHUNK_COLLECTIBLES = 4
 _CHUNK_CHALLENGE_COUNTERS = 7
 
 # Challenges chunk: 46 bytes; index 0 is unused, indices 1..45 are challenges.
@@ -114,26 +127,41 @@ def parse_save(path: Path) -> ParsedSave:
         )
 
     slot = _infer_slot_from_name(path)
-    achievements, challenges = _extract_chunks(data, path)
+    achievements, challenges, collectibles = _extract_chunks(data, path)
 
     challenges_complete = _extract_challenges(challenges)
     characters_unlocked, character_marks = _extract_character_state(achievements)
+    achievements_unlocked = _extract_achievements_set(achievements)
+    items_seen = _extract_items_seen(collectibles)
 
     return ParsedSave(
         slot=slot,
         challenges_complete=challenges_complete,
         characters_unlocked=characters_unlocked,
         character_marks=character_marks,
+        achievements_unlocked=achievements_unlocked,
+        items_seen=items_seen,
     )
 
 
-def _extract_chunks(data: bytes, path: Path) -> tuple[bytes, bytes]:
-    """Walk the 10 fixed-size chunks and return (achievements_body, challenges_body).
+def _extract_items_seen(collectibles_body: bytes) -> set[int]:
+    """Return the set of collectible IDs whose byte is 1 (touched at least once)."""
+    return {i for i, b in enumerate(collectibles_body) if b == 1}
+
+
+def _extract_achievements_set(achievements_body: bytes) -> set[int]:
+    """Return the set of achievement byte indices that are set to 1."""
+    return {i for i, b in enumerate(achievements_body) if b == 1}
+
+
+def _extract_chunks(data: bytes, path: Path) -> tuple[bytes, bytes, bytes]:
+    """Walk the 10 fixed-size chunks and return (achievements, challenges, collectibles).
 
     We only walk through chunk 10; chunk 11 (bestiary) is not needed.
     """
     achievements: bytes | None = None
     challenges: bytes | None = None
+    collectibles: bytes | None = None
 
     off = _HEADER_SIZE
     for i in range(10):
@@ -156,6 +184,8 @@ def _extract_chunks(data: bytes, path: Path) -> tuple[bytes, bytes]:
         body = data[body_start:body_end]
         if chunk_type == _CHUNK_ACHIEVEMENTS:
             achievements = body
+        elif chunk_type == _CHUNK_COLLECTIBLES:
+            collectibles = body
         elif chunk_type == _CHUNK_CHALLENGE_COUNTERS:
             challenges = body
         off = body_end
@@ -164,7 +194,9 @@ def _extract_chunks(data: bytes, path: Path) -> tuple[bytes, bytes]:
         raise SaveParseError("No achievements chunk found in save", path=str(path))
     if challenges is None:
         raise SaveParseError("No challenges chunk found in save", path=str(path))
-    return achievements, challenges
+    if collectibles is None:
+        raise SaveParseError("No collectibles chunk found in save", path=str(path))
+    return achievements, challenges, collectibles
 
 
 def _extract_challenges(challenges_body: bytes) -> set[int]:
