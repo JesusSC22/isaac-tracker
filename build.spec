@@ -37,13 +37,49 @@ a = Analysis(
         ('tracker/assets/challenges.html', 'assets'),
         ('tracker/assets/bossrush.png', 'assets'),
         ('tracker/assets/marks', 'assets/marks'),
+        ('tracker/assets/ach_icons', 'assets/ach_icons'),
+        ('tracker/assets/icons', 'assets/icons'),
+        ('tracker/assets/item_icons', 'assets/item_icons'),
+        ('tracker/assets/items_inline.js', 'assets'),
     ],
     hiddenimports=[
         'watchdog.observers.read_directory_changes',
     ],
     hookspath=[],
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        # Dev/build tooling pulled in transitively by PyInstaller hooks.
+        'setuptools',
+        'pkg_resources',
+        '_distutils_hack',
+        'pip',
+        'wheel',
+        # Test frameworks (only used during development).
+        'pytest',
+        '_pytest',
+        'unittest',
+        'doctest',
+        # Stdlib pieces a windowed app never touches.
+        '_pyrepl',
+        'pdb',
+        'pydoc',
+        'pydoc_data',
+        'lib2to3',
+        'turtle',
+        'turtledemo',
+        'tkinter',
+        # XML-RPC / SMTP / FTP — not used.
+        'xmlrpc',
+        'smtplib',
+        'ftplib',
+        'telnetlib',
+        'nntplib',
+        'poplib',
+        'imaplib',
+        # Image lib not used (pywebview renders HTML directly).
+        'PIL',
+        'pillow',
+    ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     noarchive=False,
@@ -62,5 +98,5 @@ exe = EXE(
     upx=False,
     runtime_tmpdir=None,
     console=False,                # --windowed: no console window pops up
-    icon=None,
+    icon=str(ROOT / "tracker" / "assets" / "icons" / "godhead.ico"),
 )
