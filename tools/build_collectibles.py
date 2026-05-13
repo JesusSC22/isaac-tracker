@@ -66,16 +66,19 @@ def find_resources_dir(isaac_root: Path) -> Path:
 _NAME_KEY_RE = re.compile(r"^#?(.+?)_NAME$")
 _FILENAME_RE = re.compile(r"^Collectibles_(\d+)_(.+)\.png$", re.IGNORECASE)
 
+# stringtable.sta is an XML file. Each <key> has up to 8 <string> children, one
+# per game language, in this fixed order (confirmed against THE_SAD_ONION_NAME):
+_LANG_ORDER = ["en", "jp", "kr", "zh", "ru", "de", "es", "fr"]
+_LANG_INDEX = {lang: i for i, lang in enumerate(_LANG_ORDER)}
+
 
 def humanize_filename(filename: str) -> str:
-    """`Collectibles_001_TheSadOnion.png` -> `The Sad Onion`."""
+    """`Collectibles_001_TheSadOnion.png` -> `The Sad Onion`. Fallback only."""
     m = _FILENAME_RE.match(filename)
     if not m:
         return filename
     camel = m.group(2)
-    # Insert spaces before capital letters that follow a lowercase letter or digit.
     spaced = re.sub(r"(?<=[a-z0-9])([A-Z])", r" \1", camel)
-    # Also split runs of caps before a lowercase: "XMLParser" -> "XML Parser"
     spaced = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", spaced)
     return spaced.strip()
 
@@ -91,16 +94,40 @@ def humanize_name_key(name_attr: str) -> str:
     return " ".join(p.capitalize() for p in parts)
 
 
+def parse_stringtable(stringtable_xml: Path) -> dict[str, dict[str, str]]:
+    """Return {key_name: {lang_code: translated_string}}.
+
+    Skips entries without enough <string> children for the language we want.
+    """
+    root = ET.parse(stringtable_xml).getroot()
+    out: dict[str, dict[str, str]] = {}
+    for key_elem in root.iter("key"):
+        name = key_elem.get("name")
+        if not name:
+            continue
+        strings = [s.text or "" for s in key_elem.findall("string")]
+        translations = {}
+        for lang, i in _LANG_INDEX.items():
+            if i < len(strings) and strings[i]:
+                translations[lang] = strings[i]
+        out[name] = translations
+    return out
+
+
 _COLLECTIBLE_TAGS = {"passive", "active", "familiar"}
 
 
-def parse_items_xml(items_xml: Path) -> list[dict]:
-    """Return [{id, name, gfx_filename, removed}] for every collectible entry.
+def _strip_key(attr_value: str) -> str:
+    """`#THE_SAD_ONION_NAME` -> `THE_SAD_ONION_NAME`."""
+    return (attr_value or "").lstrip("#")
 
-    Only `<passive>`, `<active>`, `<familiar>` are collectibles (the save's
-    COLLECTIBLES chunk). `<trinket>` and `<null>` use a separate id-space and
-    are ignored here. Commented-out items (removed placeholders) are not
-    visible to ET — those ids are filled in later by `fill_id_gaps_as_removed`.
+
+def parse_items_xml(items_xml: Path, strings: dict[str, dict[str, str]]) -> list[dict]:
+    """Return [{id, name, sprite_file, removed, desc_es}] for every collectible.
+
+    Names come from stringtable.sta's English entry (canonical, with apostrophes).
+    desc_es comes from the Spanish entry of the description key.
+    Falls back to filename heuristics if a string lookup misses.
     """
     root = ET.parse(items_xml).getroot()
     out: list[dict] = []
@@ -115,21 +142,23 @@ def parse_items_xml(items_xml: Path) -> list[dict]:
         except ValueError:
             continue
         gfx = elem.get("gfx") or ""
-        name_attr = elem.get("name") or ""
+        name_key = _strip_key(elem.get("name") or "")
+        desc_key = _strip_key(elem.get("description") or "")
         hidden = elem.get("hidden") == "true"
-        if gfx:
-            human = humanize_filename(gfx)
-        else:
-            human = humanize_name_key(name_attr)
-        # `hidden="true"` items are internal/duplicate variants of an existing
-        # collectible (e.g. id=59 is a hidden duplicate of id=34 Book of Belial,
-        # id=656 mirrors id=577 Damocles). The save reuses the original id's
-        # bit, not the hidden one — so the hidden slot would always look
-        # "missing" and produce a confusing duplicate in the grid. Drop them.
-        removed = not gfx or human.upper().startswith("REMOVED") or hidden
-        out.append(
-            {"id": item_id, "name": human, "gfx_filename": gfx, "removed": removed}
-        )
+
+        # Canonical name: English from stringtable; fallback to filename humanize.
+        name_en = strings.get(name_key, {}).get("en") or humanize_filename(gfx) or humanize_name_key(name_key)
+        # Spanish in-game description (the pickup blurb).
+        desc_es = strings.get(desc_key, {}).get("es") or ""
+
+        removed = not gfx or name_en.upper().startswith("REMOVED") or hidden
+        out.append({
+            "id": item_id,
+            "name": name_en,
+            "gfx_filename": gfx,
+            "removed": removed,
+            "desc_es": desc_es,
+        })
     return out
 
 
@@ -146,7 +175,10 @@ def fill_id_gaps_as_removed(items: list[dict]) -> list[dict]:
         if i in by_id:
             out.append(by_id[i])
         else:
-            out.append({"id": i, "name": "", "gfx_filename": "", "removed": True})
+            out.append({
+                "id": i, "name": "", "gfx_filename": "",
+                "removed": True, "desc_es": "",
+            })
     return out
 
 
@@ -181,17 +213,20 @@ def write_collectibles_py(items: list[dict], path: Path) -> None:
         '"""Auto-generated by tools/build_collectibles.py — do not edit by hand."""',
         "from __future__ import annotations",
         "",
-        "# id -> {name, sprite, removed}",
+        "# id -> {name, sprite, removed, desc_es}",
         "# `sprite` is the filename under tracker/assets/item_icons/ (empty if removed).",
+        "# `desc_es` is the in-game Spanish pickup description (empty for removed).",
         "COLLECTIBLES: dict[int, dict] = {",
     ]
     for it in items:
         sprite = f"collectible_{it['id']:03d}.png" if not it["removed"] else ""
+        desc = it.get("desc_es", "")
         lines.append(
             f"    {it['id']}: {{"
             f"'name': {it['name']!r}, "
             f"'sprite': {sprite!r}, "
-            f"'removed': {it['removed']}"
+            f"'removed': {it['removed']}, "
+            f"'desc_es': {desc!r}"
             f"}},"
         )
     lines.append("}")
@@ -204,11 +239,19 @@ def main() -> int:
     resources_dir = find_resources_dir(isaac_root)
     print(f"[build_collectibles] resources: {resources_dir}")
 
-    items_raw = parse_items_xml(resources_dir / "items.xml")
+    stringtable_path = resources_dir / "stringtable.sta"
+    if not stringtable_path.exists():
+        sys.exit(f"stringtable.sta missing at {stringtable_path}")
+    strings = parse_stringtable(stringtable_path)
+    print(f"[build_collectibles] {len(strings)} stringtable keys")
+
+    items_raw = parse_items_xml(resources_dir / "items.xml", strings)
     items = fill_id_gaps_as_removed(items_raw)
     real = sum(1 for it in items if not it["removed"])
     holes = len(items) - real
+    with_desc = sum(1 for it in items if not it["removed"] and it.get("desc_es"))
     print(f"[build_collectibles] {len(items)} entries ({real} real, {holes} removed/placeholder)")
+    print(f"[build_collectibles] {with_desc} items have a Spanish in-game description")
 
     project_root = Path(__file__).resolve().parents[1]
     icons_dir = project_root / "tracker" / "assets" / "item_icons"

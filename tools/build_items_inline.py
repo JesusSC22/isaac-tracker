@@ -18,7 +18,12 @@ from tracker.data.collectibles import COLLECTIBLES  # noqa: E402
 
 def main() -> int:
     items = [
-        {"id": item_id, "name": meta["name"], "sprite": meta["sprite"]}
+        {
+            "id": item_id,
+            "name": meta["name"],
+            "sprite": meta["sprite"],
+            "desc": meta.get("desc_es", ""),
+        }
         for item_id, meta in sorted(COLLECTIBLES.items())
         if not meta["removed"]
     ]
