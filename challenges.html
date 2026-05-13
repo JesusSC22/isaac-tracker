@@ -297,14 +297,10 @@
 
     .tt-block {
       position: relative;
-      padding: 9px 11px 9px 13px;
-      margin-bottom: 8px;
-      background: rgba(255,255,255,0.028);
-      border-radius: 8px;
+      padding: 2px 0 2px 11px;
+      margin-bottom: 10px;
       border-left: 3px solid var(--tt-accent, #e94560);
-      transition: background 0.15s;
     }
-    .tt-block:hover { background: rgba(255,255,255,0.045); }
     .tt-block:last-child { margin-bottom: 0; }
 
     .tt-block-label {
@@ -592,20 +588,33 @@
       box-shadow: inset 0 0 0 3px #f5b73a, 0 0 4px rgba(245,183,58,0.35);
       background: #4a5a7e;
     }
+    /* Strong inverted hierarchy: undone non-priority cells go FULL black-and-white
+       and lose their bright background; done cells get a subtle green tint
+       background so the colored icon + green cell pops against the gray sea. */
+    .char-grid-cell:not(.done):not(.empty):not(.priority) {
+      background: #2a3552;
+    }
+    .char-grid-cell:not(.done):not(.empty):not(.priority) img {
+      filter: grayscale(1) brightness(0.7) contrast(0.85);
+      opacity: 0.45;
+    }
+    .char-grid-cell.done:not(.priority) {
+      background: linear-gradient(135deg, #2d5a3e 0%, #1f4530 100%);
+      box-shadow: inset 0 0 0 1px rgba(95, 200, 130, 0.35);
+    }
     .char-grid-cell.done img {
-      /* Slight dim so the bright mark stamp pops, but keep the item readable. */
-      opacity: 0.55;
-      filter: grayscale(0.2) brightness(0.85);
+      opacity: 1;
+      filter: none;
     }
     /* Hard-mode completion mark stamp shown on completed cells.
-       Position: bottom-right corner, large enough to be unmistakable. */
+       Slightly smaller (48%) so it's a badge, not a dominant overlay. */
     .char-grid-cell.done::after {
       content: '';
       position: absolute;
       bottom: 1px;
       right: 1px;
-      width: 56%;
-      height: 56%;
+      width: 48%;
+      height: 48%;
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
@@ -758,6 +767,11 @@
     body.tracker-locked .char-grid-cell,
     body.tracker-locked .char-grid-col-header {
       cursor: default;
+    }
+    /* In tracker-locked mode, the reset buttons do nothing useful (the next
+       save-file push overwrites whatever they cleared), so hide them entirely. */
+    body.tracker-locked .reset-btn {
+      display: none;
     }
   </style>
 </head>
@@ -1957,9 +1971,9 @@
   const ITEM_INFO = {
     // ===== ISAAC =====
     "Lost Baby":      { type: "Co-op baby",   description: "Baby co-op cosmético; aparece con halo al morir su jugador." },
-    "Isaac's Tears":  { type: "Item activo",  description: "Dispara 8 lágrimas en círculo a tu alrededor. Recarga: 4 segundos." },
+    "Isaac's Tears":  { type: "Item activo",  description: "Dispara 8 lágrimas alrededor de Isaac. Se recarga +1 cada lágrima que disparas (único activo que se carga disparando). Recarga: 6 salas." },
     "Mom's Knife":    { type: "Pasivo",       description: "Reemplaza tus lágrimas por un cuchillo que se carga y se lanza atravesando obstáculos. Daño máximo 6× a ~1/3 de carga (en Repentance, no al máximo de carga).", priorityNote: "Una de las mejores builds del juego. Atraviesa muros y mata bosses muy rápido si dominas el timing de la carga." },
-    "D20":            { type: "Item activo",  description: "Rerolla todos los pickups, cofres y trinkets de la sala actual (no afecta items en pedestales).", priorityNote: "Convierte salas pobres en recursos infinitos. Imprescindible para farmear monedas/llaves/bombas." },
+    "D20":            { type: "Item activo",  description: "Rerolla todos los pickups, cofres y trinkets de la sala actual (incluye los de tienda).", priorityNote: "Convierte salas pobres en recursos infinitos. Imprescindible para farmear monedas/llaves/bombas." },
     "Missing Poster": { type: "Trinket",      description: "Si mueres en una Sacrifice Room con este trinket, revives como The Lost (y lo desbloqueas). En Repentance: además 1/3 de probabilidad de revelar Super Secret Room al entrar piso.", priorityNote: "Imprescindible para desbloquear The Lost. Único uso pero crítico." },
     "Isaac's Head":   { type: "Familiar",     description: "Cabeza voladora que dispara lágrimas en la misma dirección que Isaac." },
     "Fart Baby":      { type: "Co-op baby",   description: "Baby co-op cosmético; suelta nubes de gas." },
@@ -1968,22 +1982,22 @@
     "D1":             { type: "Item activo",  description: "Duplica un pickup aleatorio de la habitación actual." },
     "D Infinity":     { type: "Item activo",  description: "Ciclas entre 10 dados distintos (D1, D4, D6, Eternal D6, D7, D8, D10, D12, D20, D100) con la tecla de drop (Ctrl). Cada dado tiene sus propias cargas.", priorityNote: "Flexibilidad gigantesca: cualquier dado disponible en una sola pieza. Top tier en cualquier run." },
     "Meat Cleaver":   { type: "Item activo",  description: "Parte a los enemigos de la sala en mitades con ~40% de vida cada una. Los enemigos sin partición posible reciben 25 de daño fijo. Recarga: 4 salas.", priorityNote: "Control de tropas: convierte hordas peligrosas en enemigos débiles a costa de duplicar números. No da daño permanente." },
-    "Options?":       { type: "Pasivo",       description: "Al completar cualquier sala que genere recompensa (boss, treasure room, etc.) aparece un segundo drop distinto. Solo puedes coger uno; el otro desaparece.", priorityNote: "Duplica items elegibles cada piso (boss + treasure). Cambia la run radicalmente al asegurar la build deseada." },
+    "Options?":       { type: "Pasivo",       description: "Al limpiar una sala con recompensa, aparece un segundo pickup distinto junto al primero. Solo puedes coger uno; el otro desaparece. No afecta items de boss/treasure.", priorityNote: "Duplica items elegibles cada piso (boss + treasure). Cambia la run radicalmente al asegurar la build deseada." },
 
     // ===== CAIN =====
     "Glass Baby":     { type: "Co-op baby",   description: "Baby co-op cosmético; estallido de cristal al recibir daño." },
     "Sack of Pennies":{ type: "Familiar",     description: "Saco que suelta una moneda cada pocas habitaciones." },
     "Bomb Bag":       { type: "Familiar",     description: "Saco que suelta una bomba (a veces especial) cada pocas habitaciones." },
-    "Cain's Eye":     { type: "Trinket",      description: "5% de probabilidad de que las habitaciones empiecen reveladas en el mapa." },
+    "Cain's Eye":     { type: "Trinket",      description: "Al empezar un piso, 25% de probabilidad de aplicar Compass durante todo el piso (revela boss y salas especiales). Escala con Luck." },
     "Abel":           { type: "Familiar",     description: "Tu doble; dispara lágrimas en la dirección opuesta a ti y refleja tus disparos." },
     "Cain's Other Eye":{ type: "Familiar",    description: "Mosca-ojo que sigue a Isaac y dispara lágrimas en direcciones aleatorias." },
     "D12":            { type: "Item activo",  description: "Rerolea todas las rocas y obstáculos de la habitación actual." },
     "Green Baby":     { type: "Co-op baby",   description: "Baby co-op cosmético; aura de veneno." },
     "Evil Eye":       { type: "Pasivo",       description: "Probabilidad de generar un ojo flotante que dispara una lágrima poderosa." },
     "Sack of Sacks":  { type: "Familiar",     description: "Te suelta un saco con pickups aleatorios cada pocas habitaciones." },
-    "Silver Dollar":  { type: "Trinket",      description: "Más probabilidad de Money Rooms; bonus de dinero al entrar en tiendas." },
-    "Guppy's Eye":    { type: "Trinket",      description: "Puedes ver el contenido de los cofres antes de abrirlos." },
-    "Pound of Flesh": { type: "Pasivo",       description: "Las puertas Devil/Angel cuestan corazones rojos; las tiendas piden corazones en vez de monedas." },
+    "Silver Dollar":  { type: "Trinket",      description: "Hace que aparezca una tienda en Womb/Utero/Scarred Womb/Corpse. Debes tenerlo al entrar al piso." },
+    "Guppy's Eye":    { type: "Trinket",      description: "Revela el contenido de cofres, fireplaces, grab bags y shopkeepers antes de abrirlos. Cuenta para Guppy." },
+    "Pound of Flesh": { type: "Pasivo",       description: "Invierte la economía: items de Devil/Black Market se compran con monedas y los de tienda con corazones. Los consumibles de tienda son gratis pero rodeados de pinchos." },
 
     // ===== APOLLYON =====
     "Smelter":              { type: "Item activo",  description: "Consume un trinket dándole sus efectos permanentes a Isaac.", priorityNote: "Acumula trinkets infinitos como pasivos. Build farmeable hasta el infinito." },
@@ -1994,41 +2008,41 @@
     "Locust of Conquest":   { type: "Trinket",      description: "Al entrar a una sala con enemigos genera entre 1 y 4 langostas blancas que hacen el doble del daño de Isaac.", priorityNote: "Burst de DPS automático en cada sala. Top tier para clearing rápido, especialmente con Apollyon." },
     "Hushy":                { type: "Familiar",     description: "Babosa gigante azul que persigue enemigos y dispara lágrimas." },
     "Mort Baby":            { type: "Co-op baby",   description: "Baby co-op cosmético; familiar oscuro." },
-    "Brown Nugget":         { type: "Pasivo",       description: "Genera una mosca familiar que orbita por la habitación." },
+    "Brown Nugget":         { type: "Item activo",  description: "Al usarse genera una mosca-torreta estacionaria que dispara a enemigos cercanos. Recarga: 8 segundos." },
     "Black Rune":           { type: "Runa",         description: "Inflige 40 de daño a todos los enemigos de la sala, convierte pickups en moscas/arañas azules amigas y absorbe items en upgrades de stats aleatorios.", priorityNote: "Top tier rune: limpia habitaciones, convierte recursos en aliados y items en stats." },
     "Void":                 { type: "Item activo",  description: "Absorbe items activos para ejecutarlos todos en orden al activar Void. Absorbe items pasivos otorgándote +2 stat boosts aleatorios (no los efectos pasivos en sí).", priorityNote: "Top 3 del juego. Acumula efectos de activos + stats sin límite. Imprescindible para Apollyon." },
     "Lil Portal":           { type: "Familiar",     description: "Portal flotante que dispara lágrimas y, a veces, suelta pickups." },
-    "Worm Friend":          { type: "Familiar",     description: "Gusano que enreda a enemigos al suelo, dejándolos quietos." },
+    "Worm Friend":          { type: "Familiar",     description: "Familiar que emerge del suelo y agarra enemigos durante 4 segundos, haciéndoles daño continuo. Funciona en bosses." },
 
     // ===== MAGDALENE =====
     "Cute Baby":          { type: "Co-op baby",   description: "Baby co-op cosmético." },
-    "The Relic":          { type: "Pasivo",       description: "Genera un Soul Heart cada 2 habitaciones limpiadas." },
+    "The Relic":          { type: "Pasivo",       description: "Familiar cruz que dropea un Soul Heart cada 7-8 salas limpiadas (5-6 con BFFS!)." },
     "Guardian Angel":     { type: "Familiar",     description: "Ángel que orbita a Isaac y bloquea proyectiles enemigos.", priorityNote: "Defensa pasiva extrema, especialmente útil en runs largas y pisos altos." },
-    "Celtic Cross":       { type: "Pasivo",       description: "5% de probabilidad de empezar cada habitación con Holy Mantle." },
-    "Maggy's Faith":      { type: "Pasivo",       description: "+1 contenedor de corazón eterno." },
-    "Maggy's Bow":        { type: "Pasivo",       description: "+0.5 daño y +0.16 velocidad." },
+    "Celtic Cross":       { type: "Pasivo",       description: "Al recibir daño, 20% de probabilidad de activar Book of Shadows (escudo invulnerable 7s). Escala con Luck." },
+    "Maggy's Faith":      { type: "Trinket",      description: "Da un Eternal Heart al empezar cada piso." },
+    "Maggy's Bow":        { type: "Pasivo",       description: "+1 contenedor de corazón rojo y los Red Hearts curan el doble." },
     "Purity":             { type: "Pasivo",       description: "Aura de color que da un bonus de estadística según el color (cambia al recibir daño)." },
     "Red Baby":           { type: "Co-op baby",   description: "Baby co-op cosmético; explota al recibir daño." },
     "Censer":             { type: "Pasivo",       description: "Aura que ralentiza enemigos cercanos." },
     "Glyph of Balance":   { type: "Pasivo",       description: "+2 Soul Hearts y los drops de las salas se transforman en lo que más te falta (sigue prioridad: soul hearts, red hearts, llaves, bombas, monedas...). Cada sala garantiza un drop.", priorityNote: "Resuelve runs muertas: te da exactamente lo que necesitas. Run-saving." },
-    "Eucharist":          { type: "Pasivo",       description: "Garantiza la aparición de Angel Room en cada piso (sin necesidad de tomar Devil Deal)." },
-    "Yuck Heart":         { type: "Trinket",      description: "Las habitaciones pueden generar un Yuck Heart que cura al enemigo cercano." },
-    "Candy Heart":        { type: "Trinket",      description: "Cada vez que recoges un corazón, sube una estadística." },
+    "Eucharist":          { type: "Pasivo",       description: "Fija la chance de Angel Room al 100% y la de Devil Room al 0% el resto del piso. La puerta no se cierra." },
+    "Yuck Heart":         { type: "Item activo",  description: "Al usarse otorga un Rotten Heart (rellena contenedor vacío o reemplaza uno lleno). Recarga: 4 salas." },
+    "Candy Heart":        { type: "Pasivo",       description: "Cada medio Red Heart curado da un stat boost aleatorio pequeño (daño, tears, range, speed, shot speed o luck)." },
 
     // ===== LAZARUS =====
     "Wrapped Baby":       { type: "Co-op baby",   description: "Baby co-op cosmético." },
-    "Lazarus' Rags":      { type: "Pasivo",       description: "Al morir, revives una vez con +0.5 daño y boost de stats." },
-    "Broken Ankh":        { type: "Trinket",      description: "8% de probabilidad de revivir como ??? (Blue Baby) al morir." },
+    "Lazarus' Rags":      { type: "Pasivo",       description: "Al morir, revives como Lazarus Risen con Anemic y +0.5 daño permanente (un contenedor menos)." },
+    "Broken Ankh":        { type: "Trinket",      description: "22% de probabilidad de revivir como ??? en la sala anterior. Puede ocurrir varias veces por run." },
     "Store Credit":       { type: "Trinket",      description: "Te permite comprar cualquier item gratis una sola vez." },
     "Pandora's Box":      { type: "Item activo",  description: "Suelta pickups o items basados en el piso (cuanto más profundo, mejor calidad).", priorityNote: "Power spike enorme: en pisos altos suelta items de calidad boss/devil." },
     "Missing No":         { type: "Item activo",  description: "Reroll completo de tus items y reordena el orden de los pisos del juego." },
-    "Empty Vessel":       { type: "Pasivo",       description: "Cuando estás sin corazones rojos, ganas un Soul Heart eterno." },
+    "Empty Vessel":       { type: "Pasivo",       description: "Da 2 Black Hearts. Sin Red Hearts: vuelo y escudo invulnerable de 10s cada 40 segundos." },
     "Long Baby":          { type: "Co-op baby",   description: "Baby co-op cosmético; cuerpo alargado." },
     "Key Bum":            { type: "Familiar",     description: "Beggar que come llaves y devuelve pickups aleatorios." },
     "Plan C":             { type: "Item activo",  description: "Mata a todos los enemigos al instante… pero Isaac muere 3 segundos después." },
-    "Compound Fracture":  { type: "Pasivo",       description: "Tus lágrimas se rompen en lágrimas más pequeñas al impactar el suelo." },
-    "Tinytoma":           { type: "Familiar",     description: "Versión bebé de Mom's Heart que te sigue y aplasta enemigos." },
-    "Astral Projection":  { type: "Pasivo",       description: "Al morir, te conviertes en un espíritu con una vida extra." },
+    "Compound Fracture":  { type: "Pasivo",       description: "Tus lágrimas se vuelven huesos que se rompen en 1-3 fragmentos al impactar (50% daño cada uno). +1.5 range." },
+    "Tinytoma":           { type: "Familiar",     description: "Orbital grande tipo Teratoma que repele enemigos y hace daño de contacto. Tras bloquear shots se divide en orbitales más pequeños." },
+    "Astral Projection":  { type: "Pasivo",       description: "Al recibir daño, congela el tiempo 2s y te conviertes en fantasma con vuelo y lágrimas spectrales hasta limpiar la sala o recibir otro hit." },
 
     // ===== BETHANY =====
     "Wisp Baby":          { type: "Co-op baby",   description: "Baby co-op cosmético; genera wisps." },
@@ -2036,149 +2050,149 @@
     "Urn of Souls":       { type: "Item activo",  description: "Lanzallamas de fuego azul que se carga matando enemigos (1 carga por kill, 15 llamas por carga). Daño altísimo." },
     "Blessed Penny":      { type: "Trinket",      description: "Al recoger monedas, probabilidad de dropear medio Soul Heart (mayor probabilidad con monedas de más valor — Dime hasta 83%)." },
     "Alabaster Box":      { type: "Item activo",  description: "Empieza descargada y se carga con Soul/Black Hearts (1 carga por medio corazón). Al máximo, suelta 3 Soul Hearts + 2 items de Angel Room (solo 1 item si has hecho un Devil Deal).",          priorityNote: "Items de ángel gratis acumulando Soul Hearts. Build defensiva top." },
-    "Beth's Faith":       { type: "Trinket",      description: "Por cada 2 corazones eternos: +0.25 daño temporal." },
+    "Beth's Faith":       { type: "Trinket",      description: "Al inicio de cada piso, spawnea 4 wisps que orbitan a Isaac y disparan lágrimas (como Book of Virtues)." },
     "Divine Intervention":{ type: "Pasivo",       description: "Al hacer doble tap de la dirección de disparo, lanzas un escudo que empuja enemigos y refleja sus proyectiles (incluso rayos Brimstone). Recarga 3s.", priorityNote: "Defensa activa + reflejo de proyectiles. Útil en bosses con bullet patterns densos." },
     "Glowing Baby":       { type: "Co-op baby",   description: "Baby co-op cosmético; deja rastro luminoso." },
-    "Soul Locket":        { type: "Pasivo",       description: "Recoger Soul Hearts da un pequeño buff permanente de stats." },
-    "Vade Retro":         { type: "Item activo",  description: "Hace temblar a los enemigos; segundo uso los explota." },
-    "Star of Bethlehem":  { type: "Pasivo",       description: "Item de planetarium: lágrimas con homing fuerte." },
-    "Revelation":         { type: "Item activo",  description: "Carga ángel guardián y otorga +1 Soul Heart al usar." },
-    "Jar of Wisps":       { type: "Item activo",  description: "Cada uso suelta un wisp que orbita y dispara permanentemente." },
+    "Soul Locket":        { type: "Pasivo",       description: "Cada medio Soul Heart o Black Heart recogido da un stat boost aleatorio permanente." },
+    "Vade Retro":         { type: "Item activo",  description: "Pasivamente, enemigos muertos dejan fantasmas rojos. Al usar, los fantasmas explotan dañando enemigos cercanos y destruyendo proyectiles." },
+    "Star of Bethlehem":  { type: "Pasivo",       description: "Spawnea una estrella que vuela hacia la boss room; estar en su aura te da x2.5 fire rate, lágrimas homing, daño extra y 50% chance de ignorar daño." },
+    "Revelation":         { type: "Pasivo",       description: "Da vuelo. Tras disparar 2.35s y soltar, dispara un Holy Laser angélico durante ~1.28s." },
+    "Jar of Wisps":       { type: "Item activo",  description: "Cada uso suelta wisps que orbitan, disparan y bloquean shots. Recarga: 12 salas." },
 
     // ===== EDEN =====
     "Glitch Baby":        { type: "Co-op baby",   description: "Baby co-op cosmético; aspecto glitcheado." },
     "Blank Card":         { type: "Item activo",  description: "Reutiliza la última card o pill que recogiste." },
     "Book of Secrets":    { type: "Item activo",  description: "Otorga efecto Treasure Map o Compass para el piso actual." },
-    "Mysterious Paper":   { type: "Trinket",      description: "Alterna cada frame entre Polaroid, Negative, Missing Page y Missing Poster." },
+    "Mysterious Paper":   { type: "Trinket",      description: "Cada frame, probabilidad de aplicar el efecto de Polaroid, Negative, Missing Page o Missing Poster (sirve para acceder a Chest/Dark Room y desbloquear Lost)." },
     "Mystery Sack":       { type: "Pasivo",       description: "Cada 5-7 habitaciones suelta un saco con pickups aleatorios." },
-    "Undefined":          { type: "Item activo",  description: "Te teletransporta aleatoriamente a Treasure Room, Secret Room, Super Secret Room o I AM ERROR (1% Black Market).", priorityNote: "Movilidad imprescindible: acceso constante a Treasure Rooms y habitaciones especiales por piso." },
-    "Eden's Blessing":    { type: "Trinket",      description: "En tu próxima run con Eden empezarás con un item extra." },
+    "Undefined":          { type: "Item activo",  description: "Te teletransporta a una Treasure Room, Secret Room, Super Secret Room o I AM ERROR aleatoria. Recarga: 6 salas.", priorityNote: "Movilidad imprescindible: acceso constante a Treasure Rooms y habitaciones especiales por piso." },
+    "Eden's Blessing":    { type: "Pasivo",       description: "+0.7 tears, y tu próxima run (con cualquier personaje) empezará con un item aleatorio." },
     "Yellow Baby":        { type: "Co-op baby",   description: "Baby co-op cosmético; dispara lágrimas amarillas." },
     "GB Bug":             { type: "Familiar",     description: "Bug glitched que persigue y daña enemigos cercanos." },
-    "Metronome":          { type: "Item activo",  description: "Te da el efecto aleatorio de otro item durante la habitación." },
+    "Metronome":          { type: "Item activo",  description: "Te aplica el efecto aleatorio de otro item durante la sala. Recarga: 2 salas. Reemplaza el efecto previo si se usa varias veces." },
     "Eden's Soul":        { type: "Item activo",  description: "Al usarse genera 2 pedestales de items aleatorios del pool de la sala actual y se consume del inventario." },
     "'M":                 { type: "Trinket",      description: "Cada vez que uses un item activo, se rerolea a otro distinto." },
-    "Everything Jar":     { type: "Item activo",  description: "Acumula hasta 12 cargas (1 por sala). Drops escalan con cargas (1=poop, 2=penny, 3=bomb... 11=gold bomb). Full charged: efectos masivos aleatorios. Puede usarse parcialmente cargado.", priorityNote: "Generación constante de pickups por sala. Cargas full = lujo de drops aleatorios." },
+    "Everything Jar":     { type: "Item activo",  description: "Hasta 12 cargas. Cada nivel de carga dropea un pickup mejor al usarse (poop → penny → bomb → key → heart → pill → card → soul heart → gold heart → golden key → golden bomb). Full = efecto masivo aleatorio.", priorityNote: "Generación constante de pickups por sala. Cargas full = lujo de drops aleatorios." },
 
     // ===== JUDAS =====
     "Shadow Baby":     { type: "Co-op baby",   description: "Baby co-op cosmético; aura oscura." },
-    "Guillotine":      { type: "Pasivo",       description: "Tu cabeza se separa del cuerpo y dispara desde arriba, con +daño." },
-    "Judas' Tongue":   { type: "Trinket",      description: "Los Devil Deals cuestan 1 corazón rojo menos." },
-    "The Left Hand":   { type: "Pasivo",       description: "Todos los cofres del juego se convierten en Red Chests con drops demoníacos.", priorityNote: "Run-changing: cofres rojos en lugar de cofres normales = drops mucho mejores en todo el juego." },
+    "Guillotine":      { type: "Pasivo",       description: "+1 daño, +0.5 fire rate. Tu cabeza se vuelve un orbital que bloquea shots y daña por contacto; las lágrimas se disparan desde ella." },
+    "Judas' Tongue":   { type: "Trinket",      description: "Los items de Devil Room solo cuestan 1 heart container (sin cambios en costes de Soul Heart deals)." },
+    "The Left Hand":   { type: "Pasivo",       description: "Todos los cofres se reemplazan por Red Chests con drops aleatorios (incluyen pickups demoníacos y portales a Devil Room).", priorityNote: "Run-changing: cofres rojos en lugar de cofres normales = drops mucho mejores en todo el juego." },
     "Curved Horn":     { type: "Pasivo",       description: "+1 al daño." },
-    "Judas' Shadow":   { type: "Pasivo",       description: "Al morir, revives en la sala anterior como Black Judas (multiplicador x2 de daño inherente) con 2 Black Hearts.", priorityNote: "Segunda vida + el doble de daño al revivir gracias al modificador de Black Judas. Imprescindible en runs de Judas." },
-    "Betrayal":        { type: "Item activo",  description: "Los enemigos cercanos atacan a otros enemigos durante unos segundos." },
+    "Judas' Shadow":   { type: "Pasivo",       description: "Al morir, revives como Black Judas (que tiene x2 daño inherente) con 2 Black Hearts en la sala anterior.", priorityNote: "Segunda vida + el doble de daño al revivir gracias al modificador de Black Judas. Imprescindible en runs de Judas." },
+    "Betrayal":        { type: "Pasivo",       description: "Los enemigos pueden dañarse entre sí con proyectiles; al ser golpeados por otro enemigo, lo priorizan en lugar de a Isaac." },
     "Brown Baby":      { type: "Co-op baby",   description: "Baby co-op cosmético; deja poop al moverse." },
-    "My Shadow":       { type: "Pasivo",       description: "Genera 3 sombras de Charger amigas que persiguen enemigos." },
+    "My Shadow":       { type: "Pasivo",       description: "Spawnea una sombra que imita a Isaac; al ser tocada por enemigos invoca Chargers amigos (hasta 16) que duran la sala." },
     "Eye of Belial":   { type: "Pasivo",       description: "+1.5 range y lágrimas piercing. Tras atravesar un enemigo, ganan homing, x2 daño y x1.3 tamaño.", priorityNote: "Lágrimas piercing + homing post-perforación = top tier. Funciona con casi cualquier build." },
     "Shade":           { type: "Familiar",     description: "Familiar oscuro que dispara lágrimas hacia atrás." },
-    "Akeldama":        { type: "Pasivo",       description: "Tu cuerpo tiene una cola de lágrimas que daña enemigos cuando te mueves." },
-    "Redemption":      { type: "Item activo",  description: "Consume 1 corazón rojo para activar efectos angélicos en la habitación." },
+    "Akeldama":        { type: "Pasivo",       description: "En salas con enemigos, dejas un rastro de lágrimas spectrales que daña enemigos (3.5 daño fijo cada una, hasta 20)." },
+    "Redemption":      { type: "Pasivo",       description: "Si entras a una Devil Room y bajas al siguiente piso sin tomar nada de ella, ganas +1 Soul Heart y +1 daño." },
 
     // ===== BLUE BABY / ??? =====
     "Dead Baby":          { type: "Co-op baby",   description: "Baby co-op cosmético; mancha al suelo." },
-    "The D6":             { type: "Item activo",  description: "Reroll de items pasivos en la habitación." },
+    "The D6":             { type: "Item activo",  description: "Rerolla todos los items en pedestal de la sala actual usando el pool del cuarto. Recarga: 6 salas." },
     "Forget Me Now":      { type: "Item activo",  description: "Regenera el piso actual con la misma semilla pero distribución nueva." },
-    "Fate":               { type: "Pasivo",       description: "Te da vuelo y +1 Soul Heart." },
-    "???'s Soul":         { type: "Item activo",  description: "Genera un familiar Cabezón de ??? que persigue enemigos." },
+    "Fate":               { type: "Pasivo",       description: "Da vuelo y +1 Eternal Heart." },
+    "???'s Soul":         { type: "Trinket",      description: "Familiar que flota en zig-zag y dispara lágrimas spectrales+homing de 3.5 daño fijo." },
     "???'s Only Friend":  { type: "Familiar",     description: "Familiar que te sigue y dispara hacia donde apuntas." },
-    "Fate's Reward":      { type: "Pasivo",       description: "Las monedas tienen probabilidad de aplicar efectos especiales al recogerlas." },
+    "Fate's Reward":      { type: "Pasivo",       description: "Spawnea un familiar que dispara copias de tus lágrimas (mismo daño y efectos) a mitad de fire rate." },
     "Blue Baby":          { type: "Co-op baby",   description: "Baby co-op cosmético con forma de Blue Baby." },
-    "Cracked Dice":       { type: "Trinket",      description: "Cuando recibes daño, se hace un reroll aleatorio." },
-    "Meconium":           { type: "Pasivo",       description: "Probabilidad de aplicar el efecto Black Heart a enemigos al dispararles." },
-    "King Baby":          { type: "Familiar",     description: "Familiar que se queda quieto y replica todos tus disparos en su posición." },
-    "Eternal D6":         { type: "Pasivo",       description: "Como el D6, pero con recarga propia sin necesidad de baterías." },
-    "Montezuma's Revenge":{ type: "Familiar",     description: "Familiar que dispara fuego venenoso desde el trasero de Isaac." },
+    "Cracked Dice":       { type: "Trinket",      description: "Al recibir daño, 50% de chance de activar uno de D6, D8, D10, D12 o D20 aleatoriamente." },
+    "Meconium":           { type: "Pasivo",       description: "33% de probabilidad de que las cacas sean Black Poop; 5% de que un Black Poop destruido suelte un Black Heart." },
+    "King Baby":          { type: "Familiar",     description: "Familiar que va al frente de la cadena. Mientras disparas se queda quieto (y para a los demás familiares); los familiars de disparo auto-apuntan a enemigos." },
+    "Eternal D6":         { type: "Item activo",  description: "Como el D6, pero cada item rerolleado tiene 25% chance de desaparecer. Recarga: 2 salas." },
+    "Montezuma's Revenge":{ type: "Pasivo",       description: "Tras disparar 2.35s y soltar, dispara un Brimstone marrón corto y corn shots hacia atrás." },
 
     // ===== EVE =====
     "Crow Baby":         { type: "Co-op baby",   description: "Baby co-op cosmético." },
-    "Eve's Bird Foot":   { type: "Trinket",      description: "Al matar enemigos, probabilidad de spawnear un Dead Bird familiar para la sala actual." },
+    "Eve's Bird Foot":   { type: "Trinket",      description: "Al matar enemigos, chance (5%-100% según Luck) de spawnear hasta 1 Dead Bird por sala que daña enemigos." },
     "The Razor":         { type: "Item activo",  description: "Quita 1 corazón rojo completo (medio si lo usas múltiples veces en la misma sala en Repentance) y otorga +1.2 daño por el resto de la sala.", priorityNote: "Damage spike masivo. Perfecto contra bosses cuando tienes vida de sobra." },
     "Sacrificial Dagger":{ type: "Familiar",     description: "Daga que orbita y daña enemigos al contacto.", priorityNote: "Daño orbital constante. Una de las mejores defensas activas del juego." },
-    "Black Lipstick":    { type: "Trinket",      description: "Te da +1 Black Heart cada habitación nueva." },
+    "Black Lipstick":    { type: "Trinket",      description: "+10% probabilidad de que los corazones que aparezcan sean Black Hearts." },
     "Eve's Mascara":     { type: "Pasivo",       description: "x2 daño, pero -0.5 shot speed y reduce cadencia (en Repentance: net ~+33% DPS). Sinergiza con Mom's Knife/Epic Fetus." },
-    "Athame":            { type: "Pasivo",       description: "Al recibir daño, crea un aura oscura que daña enemigos cercanos." },
+    "Athame":            { type: "Pasivo",       description: "En Repentance: al matar un enemigo, chance (25% base, escala con Luck) de spawnear un anillo negro que daña enemigos por contacto." },
     "Lil' Baby":         { type: "Co-op baby",   description: "Baby co-op cosmético; versión mini." },
-    "Black Feather":     { type: "Pasivo",       description: "Cada item maligno que recojas te da +damage permanente." },
-    "Crow Heart":        { type: "Pasivo",       description: "+1 Black Heart al inicio." },
-    "Dull Razor":        { type: "Item activo",  description: "Te haces daño 'fake' (no quita vida real) pero activa efectos de hurt." },
+    "Black Feather":     { type: "Trinket",      description: "+0.5 daño por cada item/trinket maligno (Abaddon, Black Candle, Goat Head, Daemon's Tail, etc.)." },
+    "Crow Heart":        { type: "Trinket",      description: "El daño se aplica primero a los Red Hearts antes que a los Soul/Black/Rotten Hearts." },
+    "Dull Razor":        { type: "Item activo",  description: "Te daña sin perder vida, otorga i-frames y activa efectos on-hit. Recarga: 2 salas." },
     "Bird Cage":         { type: "Pasivo",       description: "Genera un familiar pájaro que se sienta en la cabeza de Isaac. Al recibir daño, salta al enemigo más cercano y se comporta como Dead Bird, volando alrededor y dañando enemigos." },
-    "Cracked Orb":       { type: "Trinket",      description: "Al recibir daño, deja un drop de Soul Heart aleatorio." },
+    "Cracked Orb":       { type: "Pasivo",       description: "Al recibir daño, abre puertas locked, revela y abre Secret/Super Secret Rooms adyacentes, revela una sala random y rompe tinted rocks." },
 
     // ===== SAMSON =====
     "Fighting Baby":     { type: "Co-op baby",   description: "Baby co-op cosmético; estilo combativo." },
     "Bloody Lust":       { type: "Pasivo",       description: "Cada vez que recibes daño en el piso, ganas damage up acumulativo (hasta +6.0 daño con 6 hits). Se resetea al cambiar de piso.", priorityNote: "Scaling brutal: cuanto más daño recibes en un piso, más fuerte pegas. Top tier para Samson y builds glass-cannon." },
-    "Blood Rights":      { type: "Item activo",  description: "Te quita 1 corazón rojo y daña a todos los enemigos visibles." },
-    "Blood Penny":       { type: "Trinket",      description: "Al ganar una moneda, drop adicional de medio corazón a veces." },
-    "Samson's Lock":     { type: "Trinket",      description: "+0.04 daño por enemigo matado (acumulativo)." },
-    "Samson's Chains":   { type: "Familiar",     description: "Cadenas con bola que rotan a tu alrededor y atrapan enemigos." },
-    "Blind Rage":        { type: "Pasivo",       description: "Invulnerabilidad temporal al recibir daño." },
+    "Blood Rights":      { type: "Item activo",  description: "Pierdes 1 Red Heart y todos los enemigos reciben 40 de daño. En Repentance, usos repetidos en la misma sala cuestan medio corazón." },
+    "Blood Penny":       { type: "Trinket",      description: "Al recoger monedas, chance de dropear medio Red Heart (escala con valor: 25% en penny hasta 94% en dime)." },
+    "Samson's Lock":     { type: "Trinket",      description: "Al matar enemigos, 1/15 chance de ganar +0.5 daño por la sala (hasta 10 procs)." },
+    "Samson's Chains":   { type: "Familiar",     description: "Bola con cadena al tobillo que bloquea proyectiles y daña enemigos por contacto." },
+    "Blind Rage":        { type: "Trinket",      description: "Duplica los i-frames tras recibir daño (también los de Holy Mantle)." },
     "Rage Baby":         { type: "Co-op baby",   description: "Baby co-op cosmético; estilo iracundo." },
-    "Lusty Blood":       { type: "Pasivo",       description: "Matar enemigos da damage up por habitación." },
-    "Stem Cell":         { type: "Trinket",      description: "Al entrar en habitación nueva, baja probabilidad de drop de corazón rojo." },
-    "Bloody Crown":      { type: "Trinket",      description: "El piso se vuelve más lineal y con más boss rooms." },
-    "Bloody Gust":       { type: "Pasivo",       description: "Al recibir daño, ráfaga de viento empuja enemigos lejos." },
-    "Empty Heart":       { type: "Trinket",      description: "Al entrar en habitación nueva, +1 contenedor de corazón vacío." },
+    "Lusty Blood":       { type: "Pasivo",       description: "Cada enemigo muerto da +0.5 daño en la sala (hasta +5). Resetea al cambiar de sala." },
+    "Stem Cell":         { type: "Trinket",      description: "Al bajar al siguiente piso, cura el 50% de tus contenedores vacíos (mínimo medio corazón)." },
+    "Bloody Crown":      { type: "Trinket",      description: "Aparecen Treasure Rooms en Womb/Utero/Scarred Womb/Corpse. Debes tenerlo al entrar al piso." },
+    "Bloody Gust":       { type: "Pasivo",       description: "Al recibir daño, +speed y +fire rate por el resto del piso. Stackea hasta 6 veces." },
+    "Empty Heart":       { type: "Pasivo",       description: "Al inicio de cada piso, si tienes ≤1 Red Heart, ganas un contenedor de corazón vacío." },
 
     // ===== AZAZEL =====
     "Begotten Baby":      { type: "Co-op baby",   description: "Baby co-op cosmético; mini Begotten." },
-    "Satanic Bible":      { type: "Item activo",  description: "Te da 1 Black Heart al usar." },
-    "Daemon's Tail":      { type: "Pasivo",       description: "Los drops de medio corazón se sustituyen por Black Hearts." },
-    "Abaddon":            { type: "Pasivo",       description: "Quita corazones rojos, da +2 Black Hearts, +damage y aura de miedo." },
+    "Satanic Bible":      { type: "Item activo",  description: "+1 Black Heart al usar. Recarga: 6 salas. En Repentance+ el boss del piso suelta un Devil Deal en vez del item normal." },
+    "Daemon's Tail":      { type: "Pasivo",       description: "80% de los heart drops se reemplazan por llaves; el resto se convierte en Black Hearts." },
+    "Abaddon":            { type: "Pasivo",       description: "+1.5 daño, +0.2 speed, convierte Red Hearts en Black Hearts y suma +2 Black Hearts; lágrimas con chance de aplicar fear." },
     "Demon Baby":         { type: "Familiar",     description: "Demonio que daña automáticamente enemigos que se acercan a Isaac." },
-    "The Nail":           { type: "Item activo",  description: "+1 contenedor de corazón, +damage en la habitación, rompe rocas." },
-    "Maw of the Void":    { type: "Pasivo",       description: "+1 daño. Al disparar continuamente durante ~2.35s y luego soltar, libera un anillo negro de Brimstone alrededor de Isaac que daña enemigos cercanos.",                                priorityNote: "Daño AoE periódico + boost de daño. Top tier para builds melee/short range." },
+    "The Nail":           { type: "Item activo",  description: "Al usar: +½ Black Heart, +2 daño y rompes obstáculos al caminar durante la sala. Recarga: 6 salas." },
+    "Maw of the Void":    { type: "Pasivo",       description: "Tras disparar continuamente ~2.35s y soltar, liberas un anillo negro de Brimstone que daña a todos los enemigos cercanos.", priorityNote: "Daño AoE periódico + boost de daño. Top tier para builds melee/short range." },
     "Black Baby":         { type: "Co-op baby",   description: "Baby co-op cosmético; aura oscura." },
     "Lilith":             { type: "Co-op baby",   description: "Baby co-op cosmético con la forma de Lilith." },
-    "Bat Wing":           { type: "Trinket",      description: "Al matar enemigos, probabilidad de drop de Black Heart." },
+    "Bat Wing":           { type: "Trinket",      description: "Al matar un enemigo, 5% chance de ganar vuelo el resto de la sala." },
     "Dark Prince's Crown":{ type: "Pasivo",       description: "Cuando tienes exactamente 1 corazón rojo (sin Soul Hearts): +2.0 fire rate, +1.5 range, +0.2 shot speed. Se pierde instantáneamente si subes o bajas.", priorityNote: "Glass-cannon top: mantener exactamente 1 red heart = build dominante en tear rate." },
     "Devil's Crown":      { type: "Trinket",      description: "Convierte cada Treasure Room en una Devil Treasure Room: los items vienen del Devil pool y se compran con corazones rojos. Cuenta como Devil Deal para spawn de Angel Rooms.", priorityNote: "Snowball brutal: acceso constante a Devil items en cada piso. Top tier para Azazel/Judas/Lilith." },
-    "Lil Abaddon":        { type: "Familiar",     description: "Mini Abaddon que crea una pequeña aura de daño cerca de Isaac." },
+    "Lil Abaddon":        { type: "Familiar",     description: "Familiar que tras cargar 1s genera un anillo negro tipo Maw of the Void que daña a los enemigos que lo tocan." },
 
     // ===== THE FORGOTTEN =====
-    "Marrow":            { type: "Item activo",  description: "Te da +1 hueso a tu inventario de Bone Hearts." },
+    "Marrow":            { type: "Pasivo",       description: "+1 Bone Heart y spawnea 3 Red Hearts al recogerlo." },
     "Slipped Rib":       { type: "Pasivo",       description: "Genera un hueso familiar orbital que refleja proyectiles enemigos (haciendo 6-7 daño fijo)." },
     "Pointy Rib":        { type: "Pasivo",       description: "Genera un hueso afilado orbital que daña enemigos al contacto." },
     "Jaw Bone":          { type: "Item activo",  description: "Boomerang de hueso que se lanza y vuelve a Isaac." },
     "Brittle Bones":     { type: "Pasivo",       description: "Convierte tu vida en 6 Bone Hearts vacíos. Al perder un Bone Heart, lanzas un anillo de 8 huesos que se fragmentan en más huesos. Cada Bone perdido da +tear rate permanente." },
-    "Divorce Papers":    { type: "Pasivo",       description: "+1 contenedor de Bone Heart y +0.5 daño." },
+    "Divorce Papers":    { type: "Pasivo",       description: "+1 Bone Heart, +0.7 tears y spawnea un Mysterious Paper trinket." },
     "Hallowed Ground":   { type: "Pasivo",       description: "Spawnea un White Poop familiar que se activa al recibir daño: aura x2.5 fire rate, +20% daño, lágrimas homing y 50% chance de bloquear daño. Reaparece al cambiar de sala.", priorityNote: "Familiar tanky + aura defensiva/ofensiva al recibir daño. Imprescindible para bosses difíciles." },
     "Bound Baby":        { type: "Co-op baby",   description: "Baby co-op cosmético; envuelto en cadenas." },
-    "Finger Bone":       { type: "Trinket",      description: "Cada cierto número de disparos, suelta una lágrima de hueso." },
-    "Dad's Ring":        { type: "Item activo",  description: "Genera un anillo brillante que ralentiza a enemigos dentro." },
+    "Finger Bone":       { type: "Trinket",      description: "Al recibir daño, 4% chance de ganar un Bone Heart." },
+    "Dad's Ring":        { type: "Item activo",  description: "Crea un anillo de luz alrededor de Isaac que petrifica enemigos al contacto." },
     "Book of the Dead":  { type: "Item activo",  description: "Al usarse, spawnea un bone familiar por cada enemigo matado en esa sala (máx 8). 80% bone orbital, 20% bone friend amistoso. Recarga: 6 salas.", priorityNote: "Ejército de familiares por uso. Top tier en salas con muchos enemigos." },
-    "Bone Spurs":        { type: "Pasivo",       description: "Tu hueso lanzado dispara mini-huesos en todas direcciones al impactar." },
-    "Spirit Shackles":   { type: "Pasivo",       description: "Al morir, revives como espíritu por unos segundos antes de morir definitivamente." },
+    "Bone Spurs":        { type: "Pasivo",       description: "Al matar enemigos, spawnean 1-2 huesos flotantes que bloquean shots y dañan enemigos por contacto." },
+    "Spirit Shackles":   { type: "Pasivo",       description: "Al morir, te conviertes en fantasma con medio corazón, vuelo y lágrimas spectrales 10s; si sobrevives, revives. Se recarga al recoger Soul/Black Heart." },
 
     // ===== LILITH =====
     "Goat Head Baby":       { type: "Co-op baby",   description: "Baby co-op cosmético con cabeza de cabra." },
     "Rune Bag":             { type: "Familiar",     description: "Saco que suelta runas cada pocas habitaciones." },
-    "Serpent's Kiss":       { type: "Pasivo",       description: "Probabilidad de envenenar enemigos con tus lágrimas." },
-    "Cambion Conception":   { type: "Pasivo",       description: "Cada 12 habitaciones sin recibir daño, genera un familiar permanente." },
-    "Succubus":             { type: "Familiar",     description: "Familiar que crea un aura de +daño cerca de Isaac." },
+    "Serpent's Kiss":       { type: "Pasivo",       description: "15% chance de lágrimas poison; enemigos que te tocan se envenenan y 20% chance de dropear Black Heart." },
+    "Cambion Conception":   { type: "Pasivo",       description: "Cada cierto número de hits recibidos (15/30/60/90 acumulados) spawnea un familiar demoníaco permanente. Hasta 4." },
+    "Succubus":             { type: "Familiar",     description: "Familiar con aura oscura que daña enemigos y aplica x1.5 daño a las lágrimas de Isaac mientras esté dentro." },
     "Immaculate Conception":{ type: "Pasivo",       description: "Cada 15 corazones pickups recogidos (de cualquier tipo) spawnea un familiar angélico permanente y dropea un Soul Heart. Hasta 5 familiars.", priorityNote: "Familiares permanentes farmeables con corazones pickups. Top scaling defensivo y ofensivo." },
     "Incubus":              { type: "Familiar",     description: "Familiar que copia las lágrimas de Isaac. En Repentance: 75% del daño de Isaac (100% solo para Lilith/Tainted Lilith).", priorityNote: "+75% daño efectivo (+100% en Lilith). Top tier en cualquier build, especialmente Lilith." },
     "Big Baby":             { type: "Co-op baby",   description: "Baby co-op cosmético de gran tamaño." },
     "Box of Friends":       { type: "Item activo",  description: "Duplica todos tus familiares durante la habitación.", priorityNote: "Sinergiza con cualquier build de familiares. +100% daño orbital temporal." },
-    "Duality":              { type: "Pasivo",       description: "En boss rooms aparecen tanto puerta Devil como Angel a la vez." },
-    "Euthanasia":           { type: "Pasivo",       description: "Probabilidad pequeña de matar enemigo al instante disparando agujas en todas direcciones." },
+    "Duality":              { type: "Pasivo",       description: "Cuando tras el boss aparece una puerta Devil o Angel, también aparece la otra. Entrar a una hace desaparecer la otra." },
+    "Euthanasia":           { type: "Pasivo",       description: "Chance (hasta 25% con Luck) de disparar una aguja con x3 daño que mata al instante a enemigos regulares y los hace explotar en 10 lágrimas." },
     "Blood Puppy":          { type: "Familiar",     description: "Perro de sangre que crece al matar enemigos; eventualmente ataca a Isaac." },
     "C Section":            { type: "Pasivo",       description: "Reemplaza tus lágrimas por un ataque de carga corta que dispara fetus tears con homing, piercing y spectral (75% del daño de Isaac)." },
 
     // ===== JACOB & ESAU =====
     "Double Baby":      { type: "Co-op baby",   description: "Baby co-op cosmético con dos cabezas." },
-    "The Stairway":     { type: "Pasivo",       description: "En boss rooms aparece una escalera que lleva a Angel Room garantizada." },
-    "Red Stew":         { type: "Item activo",  description: "+1 daño temporal en la habitación y cura completa." },
+    "The Stairway":     { type: "Pasivo",       description: "Genera una escalera al comienzo de cada piso que lleva a una tienda angelical única." },
+    "Red Stew":         { type: "Item activo",  description: "Cura completa y +21.6 daño temporal que decae durante ~3 minutos. Matar enemigos extiende el bonus." },
     "Birthright":       { type: "Pasivo",       description: "Da una mejora específica al personaje actual (cada uno tiene una distinta).", priorityNote: "Game-changing para muchos personajes. Vale la pena buscarlo siempre." },
     "Damocles":         { type: "Item activo",  description: "Al usarse, invoca una espada que cuelga sobre Isaac y duplica todos los items de pedestales (treasure, devil, shop, beggar, etc.). Tras recibir daño, la espada puede caer y matar a Isaac.", priorityNote: "Duplicación masiva de items. El riesgo vale mucho la pena: la espada cae con baja probabilidad (1/10000 por tick)." },
     "Rock Bottom":      { type: "Pasivo",       description: "Tus estadísticas nunca pueden bajar de su valor actual.", priorityNote: "Imprescindible para encadenar buffs temporales sin perderlos." },
-    "Vanishing Twin":   { type: "Trinket",      description: "El siguiente boss aparece duplicado pero da doble loot al ganar." },
+    "Vanishing Twin":   { type: "Pasivo",       description: "En boss rooms el boss aparece duplicado (75% vida, 20% slower); el clon suelta un item al morir." },
     "Illusion Baby":    { type: "Co-op baby",   description: "Baby co-op cosmético; ilusión." },
-    "Inner Child":      { type: "Trinket",      description: "Al morir, revives como una segunda vida." },
-    "Genesis":          { type: "Item activo",  description: "Te elimina todos tus items y te lleva a una habitación con un item nuevo aleatorio." },
-    "Suplex!":          { type: "Item activo",  description: "Agarra al enemigo más cercano y lo lanza contra otros." },
+    "Inner Child":      { type: "Pasivo",       description: "Al morir revives en la misma sala con ½ corazón, tamaño reducido y +0.2 speed, explotando en sangre que daña enemigos." },
+    "Genesis":          { type: "Item activo",  description: "Te lleva a un bedroom: te quita todos tus items y por cada uno te ofrece 3 a elegir. Restaura vida y te lleva al siguiente piso. Uso único." },
+    "Suplex!":          { type: "Item activo",  description: "Dash corto que agarra al primer enemigo que tocas, lo levantas con crosshair y lo aplastas (AoE con rock waves). Invulnerable durante el efecto. Recarga: 7s." },
     "Magic Skin":       { type: "Item activo",  description: "Al usarse consume 1 Heart Container (o Bone Heart, o 2 Soul Hearts) y genera un pedestal de item del pool de la sala. Cada uso deja un broken heart container.", priorityNote: "Generación farmeable de items a cambio de vida máxima. Cuidado: 12 broken hearts puede matarte." },
-    "Friend Finder":    { type: "Item activo",  description: "Genera un familiar aleatorio basado en items que ya tienes." },
+    "Friend Finder":    { type: "Item activo",  description: "Spawnea un enemigo friendly aleatorio (Clotty, Vis, Bony, etc.) que imita tus movimientos y dispara. Recarga: 4 salas." },
 
     // ===== THE LOST =====
     "-0- Baby":         { type: "Co-op baby",   description: "Baby co-op cosmético tipo The Lost." },
@@ -2187,181 +2201,181 @@
     "The Body":         { type: "Pasivo",       description: "+3 contenedores de corazón rojo permanentes y llenos.", priorityNote: "Survivability máxima: ningún otro item da 3 contenedores de una vez." },
     "The Soul":         { type: "Pasivo",       description: "+2 Soul Hearts permanentes y un aura azul que repele/desvía proyectiles enemigos (intensidad variable).", priorityNote: "Vida extra + defensa pasiva. Aura repelente top tier para esquivar bullet hell." },
     "The D100":         { type: "Item activo",  description: "Rerolla TODOS los items pasivos de Isaac, todos los pedestales y pickups de la sala, las rocas, los enemigos y modifica aleatoriamente stats (daño, tears, rango, velocidad).", priorityNote: "Run-saving total: resetea casi todo si la build no funciona. Recarga muy cara." },
-    "Sworn Protector":  { type: "Familiar",     description: "Familiar protector orbital que bloquea proyectiles." },
+    "Sworn Protector":  { type: "Familiar",     description: "Familiar orbital que bloquea y atrae proyectiles enemigos; chance de dropear Eternal Heart al bloquear 10 shots." },
     "White Baby":       { type: "Co-op baby",   description: "Baby co-op cosmético blanco." },
     "Zodiac":           { type: "Pasivo",       description: "Cada piso obtienes un buff aleatorio de los signos zodiacales." },
     "Dad's Lost Coin":  { type: "Trinket",      description: "Al recibir daño, drop adicional de 1 moneda." },
     "Holy Card":        { type: "Carta",        description: "Te da un Holy Mantle de un uso (en Repentance persiste hasta recibir daño). Recarga 4 salas si se usa con Blank Card.", priorityNote: "Holy Mantle reutilizable con Blank Card = defensa renovable cada 4 salas. Salvavidas para The Lost." },
-    "Lost Soul":        { type: "Familiar",     description: "Familiar fantasma; si muere, se pierde permanentemente." },
-    "Hungry Soul":      { type: "Familiar",     description: "Familiar fantasma que come enemigos." },
+    "Lost Soul":        { type: "Familiar",     description: "Familiar fantasma que muere de un hit pero respawnea cada piso. Si sobrevive hasta el siguiente piso, da una recompensa (Soul Hearts, Eternal Hearts o un item)." },
+    "Hungry Soul":      { type: "Familiar",     description: "33% chance al matar un enemigo de spawnear un fantasma amistoso que persigue enemigos, daña por contacto y explota a los 7s." },
 
     // ===== KEEPER =====
     "Super Greed Baby": { type: "Co-op baby",   description: "Baby co-op cosmético tipo Greed." },
     "Wooden Nickel":    { type: "Item activo",  description: "~60% de probabilidad de soltar una moneda (penny/nickel/dime) al usarse. Recarga por sala." },
-    "Store Key":        { type: "Item activo",  description: "Genera una llave a la siguiente tienda del piso." },
-    "Deep Pockets":     { type: "Pasivo",       description: "+6 al máximo de monedas que puedes llevar." },
-    "Karma":            { type: "Trinket",      description: "Donar a la Greed Donation Machine te da suerte extra." },
-    "Sticky Nickel":    { type: "Trinket",      description: "Tienes un níquel pegajoso que se cae al recibir daño." },
+    "Store Key":        { type: "Trinket",      description: "Las tiendas pueden abrirse sin gastar llaves." },
+    "Deep Pockets":     { type: "Pasivo",       description: "Eleva el cap de monedas a 999. Las salas sin reward generan 1-3 monedas aleatorias." },
+    "Karma":            { type: "Trinket",      description: "Al donar a Donation Machines, chance de ganar Luck, curarte, spawnear Beggar o devolverte una moneda." },
+    "Sticky Nickel":    { type: "Pickup",       description: "Moneda pegajosa que se queda en el suelo; necesita una explosión para liberarse y dar 5 monedas." },
     "Penny":            { type: "Pasivo",       description: "Al entrar en habitación nueva: +1 moneda." },
     "Noose Baby":       { type: "Co-op baby",   description: "Baby co-op cosmético; cuerda al cuello." },
-    "Rib of Greed":     { type: "Trinket",      description: "Al recibir daño, drop de 5-10 monedas." },
-    "Eye of Greed":     { type: "Pasivo",       description: "Tus lágrimas convierten enemigos en estatuas de oro que se rompen al matar." },
+    "Rib of Greed":     { type: "Trinket",      description: "Previene Greed en tiendas/Secret Rooms y aumenta los drops de monedas a costa de los de corazones." },
+    "Eye of Greed":     { type: "Pasivo",       description: "Cada 20 lágrimas dispara una golden tear (cuesta 1 penny) que dora y petrifica enemigos; al morir sueltan 1-3 monedas." },
     "Crooked Penny":    { type: "Item activo",  description: "50% de probabilidad de duplicar todos los items/pickups/cofres en la sala; 50% de que desaparezcan y solo quede una penny. Con buena Luck mejora.", priorityNote: "Riesgo/recompensa top tier. Con Luck alta o Birthright, multiplicación masiva. Save-scumming posible en Repentance." },
-    "Keeper's Sack":    { type: "Trinket",      description: "Al entrar en habitación nueva, probabilidad de drop de pennies." },
-    "Keeper's Box":     { type: "Item activo",  description: "Genera un Beggar aleatorio (heart/key/coin/bomb/devil)." },
+    "Keeper's Sack":    { type: "Pasivo",       description: "Spawnea 3 monedas y 1 llave al recogerlo; cada 3 monedas gastadas da un stat boost cíclico (daño/range/speed)." },
+    "Keeper's Box":     { type: "Item activo",  description: "Spawnea un pickup o item del pool de tienda que debe comprarse al precio normal. Recarga: 4 salas." },
 
     // ===== TAINTED ISAAC =====
-    "Mom's Lock":       { type: "Trinket",      description: "Si Isaac muere, desbloqueo de pre-mortem." },
-    "Soul of Isaac":    { type: "Carta",        description: "Aplica un efecto temporal de D6 al usarse." },
-    "Mega Chest":       { type: "Pickup",       description: "Cofre grande con drops mejorados." },
-    "The Stars?":       { type: "Carta inv.",   description: "Te teletransporta a un Treasure Room aleatorio del piso." },
-    "Spindown Dice":    { type: "Item activo",  description: "Reroll de un item a la calidad inmediatamente inferior (Quality--)." },
-    "Dice Bag":         { type: "Trinket",      description: "Cada cierto número de habitaciones, usa un dado aleatorio automáticamente." },
+    "Mom's Lock":       { type: "Trinket",      description: "25% chance por sala de aplicar el efecto de un item pasivo de Mom aleatorio." },
+    "Soul of Isaac":    { type: "Carta",        description: "Rerolea los items de la sala cíclicamente: cada 1s los items vuelven a su forma original y la nueva." },
+    "Mega Chest":       { type: "Pickup",       description: "Cofre grande que suelta 2 items aleatorios y varios pickups." },
+    "The Stars?":       { type: "Carta inv.",   description: "Quita tu item pasivo más antiguo y genera 2 pedestales del pool de la sala actual." },
+    "Spindown Dice":    { type: "Item activo",  description: "Rerolla pedestales restando -1 a su ID interno hasta encontrar un item válido (suele mejorar la calidad)." },
+    "Dice Bag":         { type: "Trinket",      description: "50% chance al entrar a una nueva sala de darte un dado de un solo uso aleatorio." },
     "Glitched Crown":   { type: "Pasivo",       description: "Los pedestales muestran 5 items que cambian rápido; eliges con el disparo." },
 
     // ===== TAINTED CAIN =====
     "Gilded Key":       { type: "Trinket",      description: "Llaves doradas que abren puertas y cofres sin gastarse." },
-    "Soul of Cain":     { type: "Carta",        description: "Abre todas las puertas (incluyendo Devil/Angel) del piso." },
-    "Gold Pill":        { type: "Pickup",       description: "Pill dorada: aplica el efecto y persiste durante toda la run." },
-    "Wheel of Fortune?":{ type: "Carta inv.",   description: "Genera una Slot Machine o Fortune Telling Machine aleatoria." },
-    "Bag of Crafting":  { type: "Item activo",  description: "Bolsa de crafteo de Tainted Cain: combina 8 pickups para crear un item." },
-    "Lucky Sack":       { type: "Trinket",      description: "Los sacos tienen más probabilidad de soltar pickups buenos." },
-    "Blue Key":         { type: "Trinket",      description: "Aplica efecto Blue Key: cofres azules adicionales en cada habitación." },
+    "Soul of Cain":     { type: "Carta",        description: "Abre todas las puertas de la sala actual y crea Red Rooms en paredes válidas." },
+    "Gold Pill":        { type: "Pickup",       description: "Pill dorada que aplica el efecto y, si es positivo, dura el resto del piso." },
+    "Wheel of Fortune?":{ type: "Carta inv.",   description: "Invoca un efecto aleatorio de Dice Room (variable e impredecible)." },
+    "Bag of Crafting":  { type: "Item activo",  description: "Bolsa de Tainted Cain: combina 8 pickups para craftear un item (calidad según los pickups). El swipe ataca y recolecta pickups." },
+    "Lucky Sack":       { type: "Trinket",      description: "Spawnea un Grab Bag al empezar cada piso." },
+    "Blue Key":         { type: "Trinket",      description: "Las puertas que requieren llave no la consumen y te llevan a una mini-sala azul con enemigos." },
 
     // ===== TAINTED APOLLYON =====
-    "Cricket Leg":          { type: "Trinket",      description: "Al matar enemigos, drop ocasional de una mosca aleatoria." },
-    "Soul of Apollyon":     { type: "Carta",        description: "Genera 4 langostas que atacan enemigos por la habitación." },
+    "Cricket Leg":          { type: "Trinket",      description: "Al matar un enemigo, 1/6 chance de spawnear una langosta aleatoria (hasta 4 por kill)." },
+    "Soul of Apollyon":     { type: "Carta",        description: "Spawnea 15 langostas aleatorias que atacan enemigos en la sala." },
     "Rotten Beggar":        { type: "Beggar",       description: "Beggar que da pickups malos (rotten heart, etc.) a cambio de monedas." },
     "The Tower?":           { type: "Carta inv.",   description: "Lluvia de troll bombs sobre la habitación." },
-    "Abyss":                { type: "Item activo",  description: "Cualquier item pasivo se puede convertir en una mosca permanente." },
-    "Apollyon's Best Friend":{ type: "Item activo", description: "Convoca un familiar mosca grande con daño elevado." },
-    "Echo Chamber":         { type: "Pasivo",       description: "Las cartas, pills y runas se duplican al usarse." },
+    "Abyss":                { type: "Item activo",  description: "Destruye todos los items en pedestal de la sala y los convierte en langostas únicas con habilidades según el item. Recarga: 4 salas." },
+    "Apollyon's Best Friend":{ type: "Trinket",     description: "Spawnea una langosta familiar tipo Abyss que daña enemigos." },
+    "Echo Chamber":         { type: "Pasivo",       description: "Al usar una carta/pill/runa, también se aplican las últimas 3 cartas/pills/runas usadas anteriormente." },
 
     // ===== TAINTED MAGDALENA =====
-    "Holy Crown":         { type: "Trinket",      description: "Empiezas cada piso con Holy Mantle activado." },
-    "Soul of Magdalene":  { type: "Carta",        description: "Suelta 6 medios corazones rojos." },
-    "Queen of Hearts":    { type: "Pickup",       description: "Corazón con doble valor (cura más)." },
-    "The Lovers?":        { type: "Carta inv.",   description: "+2 contenedores de corazón rojo permanentes." },
-    "Hypercoagulation":   { type: "Pasivo",       description: "Tus drops de heart dejan rastro de sangre que daña enemigos." },
-    "Mother's Kiss":      { type: "Trinket",      description: "+1 contenedor de corazón al recoger el trinket." },
-    "Belly Jelly":        { type: "Pasivo",       description: "Te impulsa con sacudidas; ganas +damage tras quedarte quieto un rato." },
+    "Holy Crown":         { type: "Trinket",      description: "Aparece una Treasure Room y un Shop en Cathedral." },
+    "Soul of Magdalene":  { type: "Carta",        description: "Crea un aura por la sala: los enemigos que mates dropean medio Red Heart que despawnea en 2s." },
+    "Queen of Hearts":    { type: "Carta",        description: "Dropea 1-20 Red Hearts completos en el suelo." },
+    "The Lovers?":        { type: "Carta inv.",   description: "Crea un pedestal del pool de la sala, pero convierte 1 Red Heart Container (o 2 Soul Hearts) en un Broken Heart." },
+    "Hypercoagulation":   { type: "Pasivo",       description: "Al recibir daño, dropeas un Red Heart impulsado lejos que despawnea en 1.5s." },
+    "Mother's Kiss":      { type: "Trinket",      description: "+1 contenedor de corazón mientras lo lleves (relleno al recogerlo)." },
+    "Belly Jelly":        { type: "Pasivo",       description: "Los enemigos que te tocan rebotan y reciben daño contra paredes/obstáculos. 50% chance de evitar contact damage y de reflejar proyectiles." },
 
     // ===== TAINTED BETHANY =====
-    "Expansion Pack":    { type: "Trinket",      description: "Los items activos también te dan un pequeño efecto pasivo." },
-    "Soul of Bethany":   { type: "Carta",        description: "Recarga todos tus items activos con +2 cargas extra." },
-    "Confessional":      { type: "Item activo",  description: "Donar un item activo da una recompensa proporcional." },
-    "The Hierophant?":   { type: "Carta inv.",   description: "+2 Bone Hearts permanentes." },
+    "Expansion Pack":    { type: "Trinket",      description: "Al usar un activo, también dispara el efecto de otro item activo aleatorio." },
+    "Soul of Bethany":   { type: "Carta",        description: "Spawnea 6 wisps azules que orbitan a Isaac y disparan." },
+    "Confessional":      { type: "Pickup",       description: "Machine en Super Secret/Angel Rooms: a costa de vida (como Blood Donation), chance de dar Soul/Eternal Hearts, items de Angel Room o \"You Feel Blessed!\"." },
+    "The Hierophant?":   { type: "Carta inv.",   description: "Spawnea 2 Bone Hearts en el suelo cerca de Isaac." },
     "Lemegeton":         { type: "Item activo",  description: "Genera un wisp de un item aleatorio que se queda permanentemente." },
-    "Beth's Essence":    { type: "Trinket",      description: "Aumenta los efectos de los wisps que generes." },
-    "Vengeful Spirit":   { type: "Pasivo",       description: "Al recibir daño, convoca un espíritu vengador que ataca enemigos." },
+    "Beth's Essence":    { type: "Trinket",      description: "Al entrar a Angel Room spawnea 5 wisps; donar a Beggars chance de generar wisps." },
+    "Vengeful Spirit":   { type: "Pasivo",       description: "Al recibir daño, spawnea un wisp rojo que dispara lágrimas spectrales (hasta 6 por piso)." },
 
     // ===== TAINTED EDEN =====
-    "Nuh Uh!":           { type: "Trinket",      description: "Al usar un item activo, tus stats no bajan (anula penalizaciones)." },
-    "Soul of Eden":      { type: "Carta",        description: "Reroll completo de todos los pedestales del piso." },
-    "Wild Card":         { type: "Carta",        description: "Reutiliza el último item activo, card o pill que usaste." },
-    "The World?":        { type: "Carta inv.",   description: "Revela todas las puertas y items en pedestales del piso." },
-    "Corrupted Data":    { type: "Item activo",  description: "Glitchea items y enemigos creando efectos aleatorios impredecibles." },
-    "Modeling Clay":     { type: "Trinket",      description: "Cada piso, un item aleatorio se transforma en otro de mayor calidad." },
+    "Nuh Uh!":           { type: "Trinket",      description: "Desde el Chapter 4, los spawns de monedas y llaves se reemplazan por pickups aleatorios." },
+    "Soul of Eden":      { type: "Carta",        description: "Rerolea todos los pickups, trinkets e items de la sala (los items usan pools aleatorios)." },
+    "Wild Card":         { type: "Carta",        description: "Copia el efecto de la última pill, carta, runa, Soul Stone o item activo usado." },
+    "The World?":        { type: "Carta inv.",   description: "Crea un trap door que siempre lleva a un Crawl Space." },
+    "Corrupted Data":    { type: "Pasivo",       description: "Achievement permanente: Secret Rooms tienen 1/60 chance y I AM ERROR rooms 1/16 chance de generar items glitched (tipo TMTRAINER)." },
+    "Modeling Clay":     { type: "Trinket",      description: "50% chance al entrar a una nueva sala de copiar el efecto de un item pasivo aleatorio." },
     "TMTRAINER":         { type: "Pasivo",       description: "Convierte todos los items en items glitched con efectos aleatorios (riesgo/recompensa extremo)." },
 
     // ===== TAINTED JUDAS =====
-    "Your Soul":         { type: "Trinket",      description: "Al usar Dark Arts, deja una sombra Your Soul que persigue enemigos." },
-    "Soul of Judas":     { type: "Carta",        description: "Aplica el efecto de Dark Arts (invisibilidad + multiplicador de daño)." },
+    "Your Soul":         { type: "Trinket",      description: "Te permite tomar 1 item de Devil Deal/Black Market gratis; se consume al usarlo." },
+    "Soul of Judas":     { type: "Carta",        description: "Aplica el efecto de Dark Arts durante 3s. Cada enemigo/proyectil tocado da +daño temporal." },
     "Black Sack":        { type: "Pickup",       description: "Saco negro con drops de calidad oscura." },
-    "The Magician?":     { type: "Carta inv.",   description: "+5 al daño durante la habitación." },
-    "Dark Arts":         { type: "Item activo",  description: "Invisibilidad temporal + multiplicador de daño al siguiente hit." },
-    "Number Magnet":     { type: "Pasivo",       description: "Atrae pickups hacia Isaac automáticamente." },
-    "Sanguine Bond":     { type: "Pasivo",       description: "Al recibir daño, drop adicional de Black Heart." },
+    "The Magician?":     { type: "Carta inv.",   description: "Otorga un aura azul que repele proyectiles y enemigos durante 1 minuto." },
+    "Dark Arts":         { type: "Item activo",  description: "+1.0 speed durante 1s; atraviesa enemigos/proyectiles congelándolos, y al final hace un AoE blast escalado con lo que tocaste." },
+    "Number Magnet":     { type: "Trinket",      description: "+10% chance de Devil Room, previene Krampus y cambia el layout de Devil Rooms a uno especial con más items y Black Hearts." },
+    "Sanguine Bond":     { type: "Pasivo",       description: "Spawnea spikes en la Devil Room que al chocar otorgan recompensas aleatorias (daño/monedas/Black Hearts/items/Leviathan)." },
 
     // ===== TAINTED LAZARUS =====
-    "Torn Pocket":       { type: "Trinket",      description: "Al recibir daño, drop aleatorio de monedas, llaves o bombas." },
-    "Soul of Lazarus":   { type: "Carta",        description: "Mata a Tainted Lazarus pero revive como su forma alternativa." },
+    "Torn Pocket":       { type: "Trinket",      description: "Al recibir daño, dropeas 2 pickups aleatorios de tu inventario (excepto corazones/pills/cards)." },
+    "Soul of Lazarus":   { type: "Carta",        description: "Al morir, revives automáticamente en la misma sala con medio corazón y 1.5s de invulnerabilidad." },
     "Wooden Chest":      { type: "Pickup",       description: "Cofre de madera con drops de tipo wood (pickups básicos)." },
-    "Judgement?":        { type: "Carta inv.",   description: "Genera un Beggar aleatorio en la habitación." },
-    "Flip":              { type: "Item activo",  description: "Alterna entre Lazarus y Flipped Lazarus, intercambiando sus items." },
-    "Torn Card":         { type: "Carta",        description: "Lanza 4 lágrimas en cruz en las direcciones cardinales." },
-    "Salvation":         { type: "Pasivo",       description: "Cada vez que recibas daño, dispara una columna de luz hacia abajo." },
+    "Judgement?":        { type: "Carta inv.",   description: "Spawnea un Shop Restock Machine cerca de Isaac." },
+    "Flip":              { type: "Item activo",  description: "Pedestales muestran un item \"ghost\" oculto; al usar, intercambias el visible con el ghost (puedes coger ambos). Para Tainted Lazarus también cambia de forma." },
+    "Torn Card":         { type: "Trinket",      description: "Cada 15 lágrimas disparas una lágrima Ipecac+Reflection (explosiva y rebotante)." },
+    "Salvation":         { type: "Pasivo",       description: "Aura angélica: enemigos dentro >1s reciben un beam central y 4 beams en cruz. El aura crece al recibir daño." },
 
     // ===== TAINTED FORGOTTEN =====
-    "Polished Bone":           { type: "Trinket",      description: "Disparar tus huesos crea pequeñas bone tears adicionales." },
-    "Soul of The Forgotten":   { type: "Carta",        description: "Convoca a un familiar Soul of The Forgotten temporal." },
+    "Polished Bone":           { type: "Trinket",      description: "25% chance al limpiar una sala de spawnear un Bony amistoso (25% son Black Bony)." },
+    "Soul of The Forgotten":   { type: "Carta",        description: "Spawnea a The Forgotten como personaje secundario controlable durante la sala." },
     "Golden Battery":          { type: "Pickup",       description: "Batería dorada que recarga tus items con cargas extra." },
-    "Death?":                  { type: "Carta inv.",   description: "Daña a todos los enemigos visibles a la mitad de su vida." },
-    "Decap Attack":            { type: "Pasivo",       description: "La cabeza del Soul se puede lanzar como proyectil y volver." },
+    "Death?":                  { type: "Carta inv.",   description: "Spawnea un bone familiar por cada enemigo muerto en la sala (similar a Book of the Dead)." },
+    "Decap Attack":            { type: "Item activo",  description: "Isaac despega y lanza su cabeza (24 daño impacto, 4/tick en el suelo); la cabeza dispara y bloquea proyectiles." },
     "Hollow Heart":            { type: "Trinket",      description: "Al inicio de cada piso, +1 Bone Heart." },
-    "Isaac's Tomb":            { type: "Item activo",  description: "Convoca una tumba que actúa como sacrificio (daño/reward)." },
+    "Isaac's Tomb":            { type: "Pasivo",       description: "Spawnea un Old Chest al inicio de cada piso (Soul Hearts, trinkets, items de Angel Room)." },
 
     // ===== TAINTED JACOB & ESAU =====
-    "RC Remote":                 { type: "Trinket",      description: "Permite controlar a Esau (o un familiar) con el segundo joystick." },
-    "Soul of Jacob and Esau":    { type: "Carta",        description: "Convoca dos espíritus aliados que disparan." },
-    "Golden Trinket":            { type: "Pickup",       description: "Trinket dorado con doble efecto del trinket original." },
+    "RC Remote":                 { type: "Trinket",      description: "Los familiares se controlan con tus mismos inputs; hold drop para moverte solo y dejarlos quietos." },
+    "Soul of Jacob and Esau":    { type: "Carta",        description: "Spawnea a Esau como personaje secundario controlable durante la sala (con items igualados a Isaac)." },
+    "Golden Trinket":            { type: "Trinket",      description: "Tipo de trinket: duplica el efecto del trinket base (similar a Mom's Box)." },
     "The Sun? and The Moon?":    { type: "Carta inv.",   description: "Sun: cura y revela el piso. Moon: te lleva al Hidden Room." },
-    "Anima Sola":                { type: "Item activo",  description: "Inmoviliza al enemigo más cercano durante unos segundos." },
-    "Found Soul":                { type: "Pasivo",       description: "Familiar fantasma; al morir suelta un item." },
-    "Esau Jr.":                  { type: "Item activo",  description: "Te transforma en Esau Jr., una versión adulta jugable." },
+    "Anima Sola":                { type: "Item activo",  description: "Encadena al enemigo más cercano durante 5 segundos. Recarga: 15 segundos." },
+    "Found Soul":                { type: "Trinket",      description: "Familiar fantasma que imita tu movimiento (tipo J&E) con vuelo y lágrimas spectrales al 50% de tu daño. Muere de un hit y respawnea cada piso." },
+    "Esau Jr.":                  { type: "Item activo",  description: "Te intercambia con Esau Jr. (+2 daño, 3 Black Hearts, vuelo). Coins/bombs/keys compartidos; si uno muere, mueren ambos." },
 
     // ===== TAINTED EVE =====
-    "Strange Key":      { type: "Trinket",      description: "Tus llaves no se gastan al abrir puertas (no consumibles)." },
-    "Soul of Eve":      { type: "Carta",        description: "Spawnea 4 lágrimas de sangre con homing." },
+    "Strange Key":      { type: "Trinket",      description: "Abre el paso a ??? (Blue Womb) sin importar el tiempo de la run; con Pandora's Box genera 6 items random." },
+    "Soul of Eve":      { type: "Carta",        description: "Spawnea 14 Dead Birds que entran desde fuera y atacan enemigos por 10s." },
     "Horse Pill":       { type: "Pickup",       description: "Pill grande con doble efecto del pill original." },
-    "The Empress?":     { type: "Carta inv.",   description: "+damage y +velocidad durante la habitación." },
-    "Sumptorium":       { type: "Item activo",  description: "Convoca 3 Clots aliados que disparan por ti." },
-    "Lil Clot":         { type: "Familiar",     description: "Clot familiar que dispara lágrimas por ti." },
-    "Heartbreak":       { type: "Pasivo",       description: "Cada contenedor de corazón vale la mitad pero permite más contenedores." },
+    "The Empress?":     { type: "Carta inv.",   description: "+2 Red Hearts temporales, +1.5 fire rate y -0.1 speed durante 1 minuto." },
+    "Sumptorium":       { type: "Item activo",  description: "Pierdes ½ corazón y spawnea un Clot familiar que copia tus disparos (mecánica especial para Tainted Eve)." },
+    "Lil Clot":         { type: "Trinket",      description: "Spawnea un Clot familiar que copia tu movimiento y dispara al 35% de tu daño (muere tras 3 hits)." },
+    "Heartbreak":       { type: "Pasivo",       description: "Te da 3 Broken Hearts y +0.25 daño por cada uno. Al recibir daño mortal, +2 broken hearts y trigger del Necronomicon (40 daño AoE)." },
 
     // ===== TAINTED AZAZEL =====
-    "Wicked Crown":     { type: "Trinket",      description: "Los items en pedestal valen como rerolls del D6." },
-    "Soul of Azazel":   { type: "Carta",        description: "Te otorga un mini Brimstone temporal con daño elevado." },
-    "Hell Game":        { type: "Item activo",  description: "Beggar diabólico con recompensas demoníacas potentes." },
-    "The Devil?":       { type: "Carta inv.",   description: "+damage masivo durante la habitación." },
-    "Hemoptysis":       { type: "Item activo",  description: "Pierde medio corazón rojo y crea una nube de sangre que daña enemigos." },
-    "Azazel's Stump":   { type: "Pasivo",       description: "Brimstone con +daño pero range corto." },
-    "Azazel's Rage":    { type: "Pasivo",       description: "Acumulas rabia al hacer daño; al llenarse, libera un Brimstone gigante." },
+    "Wicked Crown":     { type: "Trinket",      description: "Aparece una Treasure Room y un Shop en Sheol." },
+    "Soul of Azazel":   { type: "Carta",        description: "Activa Mega Blast (láser gigantesco) durante 7.5 segundos." },
+    "Hell Game":        { type: "Pickup",       description: "Beggar: pagas un corazón, eliges una de 3 calaveras y ganas una recompensa (heart/coin/bomb/key/card/Black Heart/Devil item) o un Spider enemigo." },
+    "The Devil?":       { type: "Carta inv.",   description: "Aplica el efecto de Bible y otorga vuelo + Seraphim familiar durante 30 segundos." },
+    "Hemoptysis":       { type: "Pasivo",       description: "Al doble tap del disparo, Isaac estornuda sangre (x1.5 daño + knockback) que aplica una maldición que potencia daño tipo Brimstone." },
+    "Azazel's Stump":   { type: "Trinket",      description: "33% chance al limpiar una sala de transformarte temporalmente en Azazel (brimstone corto, +daño, vuelo)." },
+    "Azazel's Rage":    { type: "Pasivo",       description: "Cada 4 salas limpiadas, el siguiente cuarto con enemigos dispara automáticamente un Brimstone gigante." },
 
     // ===== TAINTED BLUE BABY (T. ???) =====
-    "Dingle Berry":     { type: "Trinket",      description: "Al moverte, dejas un rastro de poop friendlies que dañan enemigos." },
-    "Soul of ???":      { type: "Carta",        description: "Suelta 3 fly-poops que persiguen enemigos." },
-    "Charming Poop":    { type: "Familiar",     description: "Poop que aplica charm a enemigos cercanos." },
-    "The Emperor?":     { type: "Carta inv.",   description: "Te lleva directamente al boss room del piso." },
-    "IBS":              { type: "Pasivo",       description: "Cada cierto número de disparos, generas un poop aleatorio." },
-    "Ring Cap":         { type: "Trinket",      description: "+1 bomba con efecto doble al explotar." },
-    "The Swarm":        { type: "Pasivo",       description: "Al recibir daño, suelta moscas amigas que atacan enemigos." },
+    "Dingle Berry":     { type: "Trinket",      description: "Al limpiar una sala spawnea un Dip friendly aleatorio." },
+    "Soul of ???":      { type: "Carta",        description: "Lanza 8 poison farts y 7 Butt Bombs en 2s, dejando brown creep que da +1.5 fire rate y +1 daño." },
+    "Charming Poop":    { type: "Pickup",       description: "Poop especial que al recibir daño/destruirse spawnea Dip familiars amistosos (tipo Dirty Mind)." },
+    "The Emperor?":     { type: "Carta inv.",   description: "Te teletransporta a una boss room extra con un boss más fuerte; al salir vuelves a la sala original con el reward." },
+    "IBS":              { type: "Pasivo",       description: "Tras hacer suficiente daño a un enemigo, al soltar el disparo lanzas una habilidad random de Tainted ??? (poop, fart, explosión, etc.)." },
+    "Ring Cap":         { type: "Trinket",      description: "Cada bomba que coloques genera una segunda bomba adyacente sin gastar pickup." },
+    "The Swarm":        { type: "Pasivo",       description: "Te da 8 moscas orbitales (+1 por sala limpiada, hasta 16). Las que bloquean shots se convierten en Blue Flies." },
 
     // ===== TAINTED SAMSON =====
-    "Temporary Tattoo": { type: "Trinket",      description: "Al recibir daño, +damage temporal en la habitación." },
-    "Soul of Samson":   { type: "Carta",        description: "Berserk durante 5 segundos (melee + invulnerable)." },
-    "Crane Game":       { type: "Item activo",  description: "Máquina que da un item aleatorio (50/50 funciona o destruye)." },
-    "Strength?":        { type: "Carta inv.",   description: "+1 contenedor temporal y +damage hasta morir." },
-    "Berserk!":         { type: "Item activo",  description: "Te vuelves invulnerable y atacas a melee con damage masivo." },
-    "Swallowed M80":    { type: "Pasivo",       description: "Al recibir daño, explota una bomba en tu posición." },
-    "Larynx":           { type: "Pasivo",       description: "+damage con cooldown reducido en disparos." },
+    "Temporary Tattoo": { type: "Trinket",      description: "Al completar una Challenge Room dropea un cofre; en Boss Challenge Room dropea un item extra de boss." },
+    "Soul of Samson":   { type: "Carta",        description: "Berserk durante 10 segundos: melee + speed/daño extra." },
+    "Crane Game":       { type: "Pickup",       description: "Machine: cuesta 5¢ por intento, 25% chance de dar item; tras 3 items obtenidos, explota." },
+    "Strength?":        { type: "Carta inv.",   description: "Durante 1 minuto, los enemigos están débiles: más lentos, reciben x2 daño y solo pueden hacer ½ corazón por golpe." },
+    "Berserk!":         { type: "Item activo",  description: "Berserk 5s con melee (jawbone x3 daño), +0.4 speed, +3 daño, refleja proyectiles. Se carga haciendo daño." },
+    "Swallowed M80":    { type: "Trinket",      description: "Al recibir daño, 50% chance de explotar (185 daño AoE, sin dañar a Isaac)." },
+    "Larynx":           { type: "Item activo",  description: "Isaac grita haciendo daño AoE y empujando enemigos. Recarga 12 salas + 1 carga por daño recibido." },
 
     // ===== TAINTED LILITH =====
-    "The Twins":          { type: "Trinket",      description: "Habilita el segundo joystick para controlar el familiar Incubus." },
-    "Soul of Lilith":     { type: "Carta",        description: "Genera un Incubus temporal durante la habitación." },
+    "The Twins":          { type: "Trinket",      description: "50% chance al entrar a una sala de duplicar un familiar (o spawnear Brother Bobby/Sister Maggy si no tienes)." },
+    "Soul of Lilith":     { type: "Carta",        description: "Otorga un familiar permanente del pool de Baby Shop." },
     "Fool's Gold":        { type: "Pickup",       description: "Moneda dorada con efecto sonoro especial; cuenta como 1 penny." },
-    "The High Priestess?":{ type: "Carta inv.",   description: "Genera dos pickups aleatorios en la habitación." },
-    "Gello":              { type: "Pasivo",       description: "Genera un familiar Gello que duplica tus lágrimas." },
-    "Adoption Papers":    { type: "Trinket",      description: "Los familiares persisten entre runs (similar a Eden's Blessing)." },
-    "Twisted Pair":       { type: "Pasivo",       description: "Dos familiares fantasma orbitando que disparan." },
+    "The High Priestess?":{ type: "Carta inv.",   description: "La pierna de Mom pisa repetidamente sobre Isaac durante 1 minuto (similar a Broken Shovel)." },
+    "Gello":              { type: "Item activo",  description: "Spawnea un familiar demonio (por la sala) que dispara hacia donde apuntas al 75% de tu daño. Recarga: 2 salas." },
+    "Adoption Papers":    { type: "Trinket",      description: "Las tiendas y Black Markets venden familiars del pool Baby Shop a 10 monedas." },
+    "Twisted Pair":       { type: "Pasivo",       description: "Dos familiares demonio que flotan a los lados y disparan lágrimas (37.5% del daño de Isaac cada uno)." },
 
     // ===== TAINTED THE LOST =====
-    "Kid's Drawing":    { type: "Trinket",      description: "Al entrar en habitación nueva, activa Holy Mantle temporal." },
-    "Soul of The Lost": { type: "Carta",        description: "Te hace invulnerable durante 10 segundos." },
+    "Kid's Drawing":    { type: "Trinket",      description: "Cuenta como un item de Guppy (mientras lo tengas)." },
+    "Soul of The Lost": { type: "Carta",        description: "Te convierte temporalmente en The Lost por la sala (vuelo + Holy Mantle de un uso)." },
     "Haunted Chest":    { type: "Pickup",       description: "Cofre con drops mejorados pero spawnea un ghost al abrirlo." },
-    "The Fool?":        { type: "Carta inv.",   description: "Te quita todos los items que tienes (uso especial)." },
-    "Ghost Bombs":      { type: "Pasivo",       description: "Tus bombas se vuelven ghost bombs que atraviesan paredes y enemigos." },
-    "Crystal Key":      { type: "Trinket",      description: "Las llaves pueden abrir múltiples cosas (puertas y cofres a la vez)." },
-    "Sacred Orb":       { type: "Trinket",      description: "Los pedestales rerollean automáticamente si el item es de baja calidad." },
+    "The Fool?":        { type: "Carta inv.",   description: "Dropea todos tus hearts, trinkets y pickups en el suelo, dejándote a medio corazón (no afecta a los items pasivos)." },
+    "Ghost Bombs":      { type: "Pasivo",       description: "+5 bombas. Tus bombas, al explotar, crean ghosts que persiguen enemigos y dañan por contacto (½ daño/tick) hasta explotar a los 10s." },
+    "Crystal Key":      { type: "Trinket",      description: "Al limpiar una sala, chance (33%-100% con copias) de abrir una Red Room adyacente." },
+    "Sacred Orb":       { type: "Pasivo",       description: "Items de calidad 0-1 se rerolean siempre; calidad 2 con 33% chance." },
 
     // ===== TAINTED KEEPER =====
-    "Keeper's Bargain": { type: "Trinket",      description: "Los Devil Deals cuestan monedas en vez de corazones." },
-    "Soul of The Keeper":{ type: "Carta",       description: "+6 monedas al usar." },
-    "Golden Penny":     { type: "Pickup",       description: "Moneda dorada: vale 1 penny pero da +luck temporal." },
-    "The Hanged Man?":  { type: "Carta inv.",   description: "+1 contenedor de corazón rojo permanente." },
-    "Keeper's Kin":     { type: "Pasivo",       description: "Genera 3 familiares Keeper que disparan por ti." },
-    "Cursed Penny":     { type: "Trinket",      description: "Cada cierto tiempo te da -damage pero +monedas." },
-    "Strawman":         { type: "Item activo",  description: "Convoca un Strawman amigo que dispara por ti (cuesta vida)." },
+    "Keeper's Bargain": { type: "Trinket",      description: "50% chance de que los items de Devil/Black Market cuesten monedas en lugar de corazones (15¢ por contenedor)." },
+    "Soul of The Keeper":{ type: "Carta",       description: "Dropea 1-25 monedas aleatorias en el suelo." },
+    "Golden Penny":     { type: "Pickup",       description: "Moneda dorada: vale 1 moneda y otorga +luck." },
+    "The Hanged Man?":  { type: "Carta inv.",   description: "Te transforma visualmente en Keeper durante 30s (triple shot, x0.51 daño, -0.1 speed); los enemigos muertos sueltan monedas." },
+    "Keeper's Kin":     { type: "Pasivo",       description: "Las rocas spawnean blue spiders cuando hay enemigos, y al destruirse sueltan 0-2 blue spiders adicionales." },
+    "Cursed Penny":     { type: "Trinket",      description: "Al recoger una moneda, te teletransporta a una sala aleatoria (el tipo depende del tipo de moneda)." },
+    "Strawman":         { type: "Item activo",  description: "Spawnea a Keeper como personaje secundario controlable (usa monedas como vida); al morir Keeper, libera 5 blue spiders y se consume." },
   };
 
   // MARK_STRATEGY: por cada personaje (slug), array de 13 elementos (uno por mark 0..12).
@@ -3593,7 +3607,6 @@
           <div class="tt-head-text">
             <span class="tt-title">${escapeHtml(itemName)}</span>
             <div class="tt-meta">${metaText}</div>
-            <div class="tt-chips">${prioChip}${rankChip}${tierChip}</div>
           </div>
         </div>
       </div>
