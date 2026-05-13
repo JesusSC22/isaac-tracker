@@ -5553,6 +5553,7 @@
       cell.className = 'item-cell' + (seen[String(it.id)] ? ' seen' : '');
       cell.dataset.itemId = it.id;
       cell.dataset.itemName = it.name;
+      cell.dataset.itemDesc = it.desc || '';
       const img = document.createElement('img');
       img.src = 'item_icons/' + it.sprite;
       img.alt = it.name;
@@ -5595,7 +5596,12 @@
     const seen = cell.classList.contains('seen');
     const info = _itemInfoFor(name) || {};
     const type = info.type || '';
-    const desc = info.description || 'Sin descripción aún.';
+    // Priority: hand-written rich description from ITEM_INFO (Spanish, detailed)
+    // → in-game pickup description from stringtable (Spanish, short)
+    // → fallback placeholder.
+    const desc = info.description
+      || cell.dataset.itemDesc
+      || 'Sin descripción.';
     const tierClass = seen ? 'tier-s' : 'tier-c';
     const statusChip = seen
       ? '<span class="tt-diff tier-s">✔ Tocado</span>'
