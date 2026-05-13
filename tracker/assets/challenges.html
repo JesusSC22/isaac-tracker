@@ -5557,7 +5557,15 @@
       img.src = 'item_icons/' + it.sprite;
       img.alt = it.name;
       img.loading = 'lazy';
+      // Prevent the inner <img> from being the event target for mouse moves —
+      // simplifies hover handling on the parent cell.
+      img.style.pointerEvents = 'none';
       cell.appendChild(img);
+      // Per-cell mouseenter/mouseleave matches the pattern used by challenges
+      // and character cells, and avoids the spurious mouseout-on-child-element
+      // firings that delegation suffers from.
+      cell.addEventListener('mouseenter', () => showItemTooltip(cell));
+      cell.addEventListener('mouseleave', hideTooltip);
       frag.appendChild(cell);
     }
     grid.innerHTML = '';
@@ -5582,6 +5590,7 @@
   }
 
   function showItemTooltip(cell) {
+    if (_ctrlLocked) return;
     const name = cell.dataset.itemName || '';
     const seen = cell.classList.contains('seen');
     const info = _itemInfoFor(name) || {};
@@ -5591,7 +5600,7 @@
     const statusChip = seen
       ? '<span class="tt-diff tier-s">✔ Tocado</span>'
       : '<span class="tt-diff tier-c">✗ Te falta</span>';
-    const html = `
+    tooltipEl.innerHTML = `
       <div class="tt-card-header ${tierClass}">
         <div class="tt-head-row">
           <div class="tt-head-text">
@@ -5606,23 +5615,10 @@
           <div class="tt-block-body">${escapeHtml(desc)}</div>
         </div>
       </div>`;
-    const tt = document.getElementById('tooltip');
-    tt.innerHTML = html;
-    tt.classList.add('visible');
+    cancelHideTooltip();
+    tooltipEl.classList.add('visible');
     positionTooltip(cell);
   }
-
-  (function wireItemsGridEvents() {
-    const grid = document.getElementById('items-grid');
-    if (!grid) return;
-    grid.addEventListener('mouseover', e => {
-      const cell = e.target.closest('.item-cell');
-      if (cell) showItemTooltip(cell);
-    });
-    grid.addEventListener('mouseout', e => {
-      if (e.target.closest('.item-cell')) hideTooltip();
-    });
-  })();
 
   // Initial render (no state yet — everything renders as "te falta").
   renderItemsGrid();
