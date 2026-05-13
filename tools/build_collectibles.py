@@ -116,11 +116,17 @@ def parse_items_xml(items_xml: Path) -> list[dict]:
             continue
         gfx = elem.get("gfx") or ""
         name_attr = elem.get("name") or ""
+        hidden = elem.get("hidden") == "true"
         if gfx:
             human = humanize_filename(gfx)
         else:
             human = humanize_name_key(name_attr)
-        removed = not gfx or human.upper().startswith("REMOVED")
+        # `hidden="true"` items are internal/duplicate variants of an existing
+        # collectible (e.g. id=59 is a hidden duplicate of id=34 Book of Belial,
+        # id=656 mirrors id=577 Damocles). The save reuses the original id's
+        # bit, not the hidden one — so the hidden slot would always look
+        # "missing" and produce a confusing duplicate in the grid. Drop them.
+        removed = not gfx or human.upper().startswith("REMOVED") or hidden
         out.append(
             {"id": item_id, "name": human, "gfx_filename": gfx, "removed": removed}
         )
