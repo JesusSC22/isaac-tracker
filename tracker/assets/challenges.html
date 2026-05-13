@@ -365,6 +365,22 @@
       line-height: 1.5;
     }
     .tt-block-body b { color: #fff; font-weight: 700; }
+    .tt-block-body .tt-bullets {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .tt-block-body .tt-bullets li {
+      position: relative;
+      padding-left: 14px;
+      margin: 2px 0;
+    }
+    .tt-block-body .tt-bullets li::before {
+      content: "•";
+      position: absolute;
+      left: 2px;
+      color: rgba(255,255,255,0.45);
+    }
 
     .tt-block-note {
       display: block;
@@ -5590,23 +5606,35 @@
     if (lbl) lbl.textContent = `Ítems: ${done} / ${total}  (${pct}%)`;
   }
 
+  // Convert EID-style descriptions (one fact per line) into an HTML list. If
+  // the input has no newlines, return a single escaped paragraph.
+  function _descToHtml(desc) {
+    if (!desc) return '';
+    const lines = String(desc).split('\n').map(s => s.trim()).filter(Boolean);
+    if (lines.length <= 1) return escapeHtml(lines[0] || '');
+    return '<ul class="tt-bullets">' + lines.map(l => `<li>${escapeHtml(l)}</li>`).join('') + '</ul>';
+  }
+
   function showItemTooltip(cell) {
     if (_ctrlLocked) return;
     const name = cell.dataset.itemName || '';
     const seen = cell.classList.contains('seen');
     const info = _itemInfoFor(name) || {};
     const type = info.type || '';
-    // Priority: hand-written rich description from ITEM_INFO (Spanish, detailed)
-    // → in-game pickup description from stringtable (Spanish, short)
-    // → fallback placeholder.
+    // Priority for description:
+    //   ITEM_INFO hand-written rich (most curated, ~160 items)
+    //   → EID detailed Spanish (from External Item Descriptions mod, ~717 items)
+    //   → stringtable short Spanish (fallback)
     const desc = info.description
       || cell.dataset.itemDesc
       || 'Sin descripción.';
+    const priorityNote = info.priorityNote || '';
     const tierClass = seen ? 'tier-s' : 'tier-c';
     const statusChip = seen
       ? '<span class="tt-diff tier-s">✔ Tocado</span>'
       : '<span class="tt-diff tier-c">✗ Te falta</span>';
-    tooltipEl.innerHTML = `
+
+    let html = `
       <div class="tt-card-header ${tierClass}">
         <div class="tt-head-row">
           <div class="tt-head-text">
@@ -5618,9 +5646,17 @@
       <div class="tt-body">
         <div class="tt-block effect">
           <div class="tt-block-label">💫 Efecto</div>
-          <div class="tt-block-body">${escapeHtml(desc)}</div>
-        </div>
-      </div>`;
+          <div class="tt-block-body">${_descToHtml(desc)}</div>
+        </div>`;
+    if (priorityNote) {
+      html += `
+        <div class="tt-block howto">
+          <div class="tt-block-label">⭐ Por qué importa</div>
+          <div class="tt-block-body">${escapeHtml(priorityNote)}</div>
+        </div>`;
+    }
+    html += `</div>`;
+    tooltipEl.innerHTML = html;
     cancelHideTooltip();
     tooltipEl.classList.add('visible');
     positionTooltip(cell);
