@@ -29,11 +29,8 @@
       margin-right: auto;
     }
 
-    /* Vista Desafíos mantiene su ancho cómodo (la lista no se estira a 1200px) */
-    #view-challenges {
-      max-width: 520px;
-      margin: 0 auto;
-    }
+    /* Vista Desafíos: usa todo el ancho con cuadrícula adaptativa, igual que Logros */
+    /* (sin max-width) */
     /* Vista Personajes: contenedor estrecho (barras y botones), pero el grid
        interno rompe a todo el ancho con su propio transform. */
     #view-characters {
@@ -54,7 +51,7 @@
       height: 1.4em;
       width: auto;
       vertical-align: -0.25em;
-      margin-right: 10px;
+      margin: 0 10px;
       image-rendering: pixelated;
       image-rendering: -moz-crisp-edges;
     }
@@ -143,29 +140,46 @@
       min-width: 26px;
     }
 
+    /* Chip de tier/dificultad: minimalista — punto de color + texto gris */
     .diff-chip {
       margin-left: auto;
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      padding: 0;
+      background: none;
+      border: none;
+      box-shadow: none;
+      text-shadow: none;
+      border-radius: 0;
+      font-weight: 500;
+      font-size: 0.78rem;
+      letter-spacing: 0.3px;
       white-space: nowrap;
-      color: white;
+      color: #8b95ad;
       flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      text-transform: lowercase;
+    }
+    .diff-chip::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 5px currentColor;
     }
 
-    .diff-chip.facil       { background: #27ae60; }
-    .diff-chip.medio       { background: #f39c12; }
-    .diff-chip.dificil     { background: #e74c3c; }
-    .diff-chip.muy-dificil { background: #8e44ad; }
+    /* Color del punto por dificultad/tier (currentColor para el glow) */
+    .diff-chip.facil::before       { background: #2ecc71; color: #2ecc71; }
+    .diff-chip.medio::before       { background: #f39c12; color: #f39c12; }
+    .diff-chip.dificil::before     { background: #e74c3c; color: #e74c3c; }
+    .diff-chip.muy-dificil::before { background: #af6fc8; color: #af6fc8; }
 
-    .diff-chip.tier-s { background: #ffd700; color: #1a1a2e; }
-    .diff-chip.tier-a { background: #e94560; }
-    .diff-chip.tier-b { background: #f39c12; }
-    .diff-chip.tier-c { background: #3498db; }
-    .diff-chip.tier-d { background: #7f8c8d; }
+    .diff-chip.tier-s::before { background: #ffd700; color: #ffd700; }
+    .diff-chip.tier-a::before { background: #e94560; color: #e94560; }
+    .diff-chip.tier-b::before { background: #f39c12; color: #f39c12; }
+    .diff-chip.tier-c::before { background: #3498db; color: #3498db; }
+    .diff-chip.tier-d::before { background: #95a5a6; color: #95a5a6; }
 
     .tt-diff.tier-s { background: linear-gradient(135deg, #ffd700, #ffb300); color: #1a1a2e; box-shadow: 0 1px 4px rgba(255,215,0,0.35); }
     .tt-diff.tier-a { background: linear-gradient(135deg, #e94560, #c0392b); color: white; }
@@ -471,6 +485,67 @@
     .view { display: none; }
     .view.active { display: block; }
 
+    /* ==== Items tab — Cuadrícula adaptativa ==== */
+    #view-items .progress-bar-container {
+      height: 18px;
+      max-width: 720px;
+      margin: 0 auto 10px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+    #view-items #itemsProgressBar {
+      background: linear-gradient(90deg, #f39c12 0%, #f5b041 100%);
+      box-shadow: 0 0 12px rgba(243,156,18,0.45);
+    }
+    #view-items .progress-label {
+      text-align: center;
+      font-size: 1rem;
+      color: #cfd5e8;
+      margin-bottom: 24px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    #items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+      gap: 6px;
+      padding: 8px 0;
+    }
+    .item-cell {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      background: #16213e;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: help;
+      transition: transform 0.1s, background 0.15s;
+      overflow: hidden;
+    }
+    .item-cell:hover {
+      transform: scale(1.12);
+      z-index: 2;
+      background: #1f2c4a;
+    }
+    .item-cell img {
+      width: 92%;
+      height: 92%;
+      object-fit: contain;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      filter: grayscale(1) brightness(0.42);
+      opacity: 0.65;
+      transition: filter 0.2s, opacity 0.2s;
+    }
+    .item-cell.seen img {
+      filter: none;
+      opacity: 1;
+    }
+    .item-cell.seen {
+      background: linear-gradient(135deg, #1f2c4a 0%, #283759 100%);
+      box-shadow: inset 0 0 0 1px rgba(243,156,18,0.35);
+    }
+
     /* ==== Achievements tab — Cuadrícula adaptativa ==== */
     #view-achievements .progress-bar-container {
       height: 18px;
@@ -492,6 +567,93 @@
     }
     #achievements-list {
       margin-top: 8px;
+    }
+
+    /* Buscador de logros */
+    .ach-search {
+      max-width: 720px;
+      margin: 0 auto 22px;
+      position: relative;
+    }
+    .ach-search input {
+      width: 100%;
+      padding: 13px 44px 13px 46px;
+      background: linear-gradient(135deg, #1f2c4a 0%, #19243f 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .ach-search input:focus {
+      border-color: rgba(233,69,96,0.55);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 0 0 3px rgba(233,69,96,0.18);
+    }
+    .ach-search input::placeholder {
+      color: #6a7791;
+    }
+    .ach-search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8b95ad;
+      font-size: 1.05rem;
+      pointer-events: none;
+    }
+    .ach-search-clear {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: #cfd5e8;
+      font-size: 0.9rem;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      font-family: inherit;
+      padding: 0;
+    }
+    .ach-search-clear:hover {
+      background: rgba(233,69,96,0.45);
+      color: #fff;
+    }
+    .ach-search.has-value .ach-search-clear {
+      display: flex;
+    }
+    /* Mensaje "sin resultados" */
+    .ach-search-empty {
+      display: none;
+      max-width: 720px;
+      margin: 0 auto 22px;
+      padding: 28px 22px;
+      background: #16213e;
+      border: 1px dashed rgba(255,255,255,0.10);
+      border-radius: 10px;
+      color: #8b95ad;
+      font-style: italic;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    .ach-search-empty.visible {
+      display: block;
+    }
+    /* Items y categorías filtradas por búsqueda */
+    .ach-item.filtered-out {
+      display: none;
+    }
+    .ach-category.filtered-empty {
+      display: none;
     }
     .ach-category {
       margin-bottom: 24px;
@@ -564,13 +726,19 @@
       align-items: center;
       padding: 14px 18px;
       gap: 14px;
-      background: #16213e;
+      background: #101a30;
       border-top: none;
       transition: background 0.15s, transform 0.1s;
       position: relative;
     }
     .ach-item:hover {
-      background: #1d2a4a;
+      background: #182441;
+    }
+    .ach-item.done {
+      background: linear-gradient(90deg, rgba(95,200,130,0.12), rgba(95,200,130,0.04) 60%, rgba(95,200,130,0.02)), #16213e;
+    }
+    .ach-item.done:hover {
+      background: linear-gradient(90deg, rgba(95,200,130,0.18), rgba(95,200,130,0.07) 60%, rgba(95,200,130,0.03)), #1d2a4a;
     }
     .ach-item.done::before {
       content: '';
@@ -678,6 +846,169 @@
       .ach-category-header {
         padding: 14px 18px;
       }
+      #list ul {
+        grid-template-columns: 1fr;
+      }
+      #list li {
+        padding: 12px 14px;
+      }
+      #view-challenges .section-title {
+        padding: 14px 18px;
+      }
+    }
+
+    /* ==== Desafíos en cuadrícula adaptativa (mismo formato que Logros) ==== */
+    #view-challenges .progress-bar-container {
+      height: 18px;
+      max-width: 720px;
+      margin: 0 auto 10px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+    #view-challenges #progressBar {
+      background: linear-gradient(90deg, #e94560 0%, #ff6b85 100%);
+      box-shadow: 0 0 12px rgba(233,69,96,0.5);
+    }
+    #view-challenges .progress-label {
+      text-align: center;
+      font-size: 1rem;
+      color: #cfd5e8;
+      margin-bottom: 24px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    /* Header de tier (S/A/B/C/D) con look de categoría */
+    #view-challenges .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #e94560;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      padding: 16px 22px;
+      background: linear-gradient(135deg, #1f2c4a 0%, #263555 100%);
+      border: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 2px solid rgba(233,69,96,0.2);
+      border-radius: 12px 12px 0 0;
+      margin: 0;
+    }
+    /* Cuadrícula de tarjetas dentro de cada tier */
+    #list ul {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1px;
+      background: rgba(255,255,255,0.05);
+      padding: 1px;
+      margin: 0 0 24px;
+      border-radius: 0 0 12px 12px;
+      border: 1px solid rgba(255,255,255,0.04);
+      border-top: none;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.28);
+      overflow: hidden;
+    }
+    /* Cada desafío como tarjeta */
+    #list li {
+      display: flex;
+      align-items: center;
+      padding: 14px 18px;
+      gap: 14px;
+      background: #101a30;
+      cursor: default;
+      transition: background 0.15s, transform 0.1s;
+      position: relative;
+      border-radius: 0;
+    }
+    /* En modo standalone (sin .exe) la lista sí es clickeable */
+    body:not(.tracker-locked) #list li {
+      cursor: pointer;
+    }
+    #list li:hover {
+      background: #182441;
+    }
+    #list li.done {
+      background: linear-gradient(90deg, rgba(95,200,130,0.12), rgba(95,200,130,0.04) 60%, rgba(95,200,130,0.02)), #16213e;
+    }
+    #list li.done:hover {
+      background: linear-gradient(90deg, rgba(95,200,130,0.18), rgba(95,200,130,0.07) 60%, rgba(95,200,130,0.03)), #1d2a4a;
+    }
+    #list li.done::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #5fc882, #3da866);
+      box-shadow: 0 0 8px rgba(95,200,130,0.4);
+    }
+    /* Estado ✓/✗ a la izquierda (estilo idéntico al de Logros) */
+    #list li .ch-status {
+      flex: 0 0 24px;
+      font-size: 1.4rem;
+      line-height: 1;
+      text-align: center;
+      font-weight: bold;
+    }
+    #list li.done .ch-status {
+      color: #5fc882;
+      text-shadow: 0 0 10px rgba(95,200,130,0.5);
+    }
+    #list li:not(.done) .ch-status {
+      color: #3a4666;
+    }
+    /* Sprite del item que se desbloquea al completar el reto */
+    #list li .ch-sprite {
+      flex: 0 0 52px;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 30% 30%, #14233f, #0a1320);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    #list li .ch-sprite img {
+      max-width: 48px;
+      max-height: 48px;
+      image-rendering: pixelated;
+      display: block;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+    }
+    #list li:not(.done) .ch-sprite img {
+      filter: grayscale(0.85) brightness(0.55);
+    }
+    #list li .label {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 1.05rem;
+      color: #fff;
+      line-height: 1.3;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    #list li.done .label {
+      color: #7a8ba0;
+      text-decoration: line-through;
+      text-decoration-color: rgba(95,200,130,0.5);
+      text-decoration-thickness: 2px;
+      font-weight: 500;
+    }
+    #list li .num {
+      color: #6a7791;
+      font-size: 0.85rem;
+      min-width: 30px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    #list li .diff-chip {
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    /* Reset button: mantenerlo centrado y no estirado */
+    #view-challenges > .reset-btn {
+      max-width: 320px;
     }
 
     .tainted-toggle {
@@ -1086,12 +1417,13 @@
 </div>
 
 <div class="container">
-  <h1><img src="icons/godhead.png" alt="" class="title-icon">Isaac Tracker</h1>
+  <h1><img src="icons/godhead.png" alt="" class="title-icon">Isaac Tracker<img src="icons/godhead.png" alt="" class="title-icon"></h1>
 
   <div class="tabs">
     <button class="tab active" data-view="challenges">Desafíos</button>
     <button class="tab" data-view="characters">Personajes</button>
     <button class="tab" data-view="achievements">Logros</button>
+    <button class="tab" data-view="items">Ítems</button>
   </div>
 
   <div class="view active" id="view-challenges">
@@ -1124,12 +1456,28 @@
     </div>
     <div class="progress-label" id="achProgressLabel">Logros: 0 / 641</div>
 
+    <div class="ach-search">
+      <span class="ach-search-icon" aria-hidden="true">🔍</span>
+      <input type="text" id="achSearchInput" placeholder="Buscar logros (nombre, descripción o #ID)…" autocomplete="off" spellcheck="false">
+      <button type="button" class="ach-search-clear" id="achSearchClear" aria-label="Limpiar búsqueda">✕</button>
+    </div>
+    <div class="ach-search-empty" id="achSearchEmpty">No hay resultados para tu búsqueda.</div>
+
     <div id="achievements-list"></div>
+  </div>
+
+  <div class="view" id="view-items">
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="itemsProgressBar"></div>
+    </div>
+    <div class="progress-label" id="itemsProgressLabel">Ítems: 0 / 0</div>
+    <div id="items-grid"></div>
   </div>
 </div>
 
 <div class="challenge-tooltip" id="tooltip"></div>
 
+<script src="items_inline.js"></script>
 <script>
   const CHARACTERS = [
     {
@@ -3760,10 +4108,21 @@
         const li = document.createElement('li');
         if (checked) li.classList.add('done');
 
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.id = id;
-        cb.checked = checked;
+        const status = document.createElement('span');
+        status.className = 'ch-status';
+        status.textContent = checked ? '✓' : '✕';
+
+        // Sprite del item que se desbloquea al completar el reto
+        const rewardAchId = CHALLENGE_REWARD_ACH_ID[c.num];
+        const sprite = document.createElement('span');
+        sprite.className = 'ch-sprite';
+        if (rewardAchId) {
+          const img = document.createElement('img');
+          img.src = `ach_icons/${rewardAchId}.webp`;
+          img.alt = '';
+          img.loading = 'lazy';
+          sprite.appendChild(img);
+        }
 
         const label = document.createElement('span');
         label.className = 'label';
@@ -3781,16 +4140,18 @@
         diffChip.className = `diff-chip ${diffClass}`;
         diffChip.textContent = info ? info.dificultad : '';
 
-        li.appendChild(cb);
+        li.appendChild(status);
+        li.appendChild(sprite);
         li.appendChild(label);
         li.appendChild(diffChip);
 
-        li.addEventListener('click', (e) => {
-          if (e.target !== cb) cb.checked = !cb.checked;
+        li.addEventListener('click', () => {
           const s = loadState();
-          s[id] = cb.checked;
+          const newChecked = !s[id];
+          s[id] = newChecked;
           saveState(s);
-          li.classList.toggle('done', cb.checked);
+          li.classList.toggle('done', newChecked);
+          status.textContent = newChecked ? '✓' : '✕';
           updateProgress(s);
         });
 
@@ -4224,643 +4585,643 @@
   // FASE 1 — IDs verificados desde la wiki + agusaenz constants.py.
   // FASE 2/3/4 completan items, trinkets, marcas, otros.
   const ACH_FULL_DATA = [
-    {i:1,c:"personajes",n:"Magdalene",u:"Have 7 or more Red Heart containers at one time"},
-    {i:2,c:"personajes",n:"Cain",u:"Hold 55 coins at one time"},
-    {i:3,c:"personajes",n:"Judas",u:"Defeat Satan"},
-    {i:4,c:"hitos",n:"The Womb",u:"Defeat Mom"},
-    {i:5,c:"items",n:"The Harbingers",u:"Defeat Mom"},
-    {i:6,c:"items",n:"A Cube of Meat",u:"Defeat Mom"},
-    {i:7,c:"items",n:"The Book of Revelations",u:"Defeat a Harbinger"},
-    {i:8,c:"items",n:"A Noose",u:"Defeat Mom's Heart 3 times"},
-    {i:9,c:"items",n:"The Nail",u:"Complete Boss Rush as Azazel"},
-    {i:10,c:"items",n:"A Quarter",u:"Defeat Mom's Heart 8 times"},
-    {i:11,c:"items",n:"A Fetus in a Jar",u:"Defeat Mom's Heart 9 times"},
-    {i:12,c:"items",n:"A Small Rock",u:"Destroy 100 Tinted Rocks"},
-    {i:13,c:"items",n:"Monstro's Tooth",u:"Beat chapter 1"},
-    {i:14,c:"items",n:"Lil' Chubby",u:"Beat chapter 2"},
-    {i:15,c:"items",n:"Loki's Horns",u:"Defeat Lokii"},
-    {i:16,c:"items",n:"Something From The Future",u:"Beat The Basement 40 times"},
-    {i:17,c:"items",n:"Something Cute",u:"Beat chapter 2 30 times"},
-    {i:18,c:"items",n:"Something Sticky",u:"Beat chapter 3 20 times"},
-    {i:19,c:"items",n:"A Bandage",u:"Make a Super Bandage Girl by picking up 4 Balls of Bandages in one run; see unlocking Super Meat Boy & Super Bandage Girl"},
-    {i:20,c:"items",n:"A Cross",u:"Defeat Isaac as Magdalene"},
-    {i:21,c:"items",n:"A Bag of Pennies",u:"Defeat Isaac as Cain"},
-    {i:22,c:"items",n:"The Book of Sin",u:"Defeat all 7 deadly sins"},
-    {i:23,c:"items",n:"Little Gish",u:"Defeat Gish"},
-    {i:24,c:"items",n:"Little Steven",u:"Defeat Steven"},
-    {i:25,c:"items",n:"Little C.H.A.D.",u:"Defeat C.H.A.D."},
-    {i:26,c:"items",n:"A Gamekid",u:"Visit 10 Arcades"},
-    {i:27,c:"items",n:"A Halo",u:"Defeat Mom, Mom's Heart or It Lives using The Bible"},
-    {i:28,c:"items",n:"Mr. Mega",u:"Destroy 10 Tinted Rocks"},
-    {i:29,c:"personajes",n:"The D6",u:"Defeat Isaac as ???"},
-    {i:30,c:"items",n:"The Scissors",u:"Die 100 times"},
-    {i:31,c:"items",n:"The Parasite",u:"Pick up any 2 of the following items in a single run: Bob's Rotten Head, Dead Cat, Cricket's Head, Tammy's Head"},
-    {i:32,c:"personajes",n:"???",u:"Defeat Mom's Heart 10 times"},
-    {i:33,c:"hitos",n:"Everything Is Terrible!!!",u:"Defeat Mom's Heart 5 times"},
-    {i:34,c:"items",n:"It Lives!",u:"Defeat Mom's Heart 11 times"},
-    {i:35,c:"items",n:"Mom's Contact",u:"Obtain three Yes Mother? items in one run"},
-    {i:36,c:"items",n:"The Necronomicon",u:"Use XIII - Death 4 times"},
-    {i:37,c:"hitos",n:"Basement Boy",u:"Beat chapter 1 without taking damage"},
-    {i:38,c:"hitos",n:"Spelunker Boy",u:"Beat chapter 2 without taking damage"},
-    {i:39,c:"hitos",n:"Dark Boy",u:"Beat chapter 3 without taking damage"},
-    {i:40,c:"hitos",n:"Mama's Boy",u:"Beat chapter 4 without taking damage"},
-    {i:41,c:"hitos",n:"Golden God!",u:"Defeat ??? and The Lamb"},
-    {i:42,c:"personajes",n:"Eve",u:"Don't pick up any hearts for 2 floors in a row"},
-    {i:43,c:"items",n:"Mom's Knife",u:"Defeat Satan as Isaac"},
-    {i:44,c:"items",n:"The Razor",u:"Defeat Satan as Eve"},
-    {i:45,c:"items",n:"Guardian Angel",u:"Defeat Satan as Magdalene"},
-    {i:46,c:"items",n:"A Bag of Bombs",u:"Defeat Satan as Cain"},
-    {i:47,c:"items",n:"Demon Baby",u:"Defeat The Lamb as Azazel"},
-    {i:48,c:"items",n:"Forget Me Now",u:"Defeat Satan as ???"},
-    {i:49,c:"items",n:"The D20",u:"Defeat ??? as Isaac"},
-    {i:50,c:"items",n:"Celtic Cross",u:"Defeat ??? as Magdalene"},
-    {i:51,c:"items",n:"Abel",u:"Defeat The Lamb as Cain"},
-    {i:52,c:"trinkets",n:"Curved Horn",u:"Defeat The Lamb as Judas"},
-    {i:53,c:"items",n:"Sacrificial Dagger",u:"Defeat ??? as Eve"},
-    {i:54,c:"items",n:"Bloody Lust",u:"Defeat Isaac as Samson"},
-    {i:55,c:"trinkets",n:"Blood Penny",u:"Defeat ??? as Samson"},
-    {i:56,c:"items",n:"Blood Rights",u:"Defeat Satan as Samson"},
-    {i:57,c:"items",n:"The Polaroid",u:"Defeat Isaac 5 times"},
-    {i:58,c:"items",n:"Dad's Key",u:"Pick up both Key Pieces from the Angels in one run"},
-    {i:59,c:"items",n:"Blue Candle",u:"Donate 900 coins to the Donation Machine"},
-    {i:60,c:"trinkets",n:"Burnt Penny",u:"Complete Beans! (challenge #13)"},
-    {i:61,c:"trinkets",n:"Lucky Toe",u:"Blow up 20 Shopkeepers"},
-    {i:62,c:"items",n:"Epic Fetus",u:"Complete The Family Man (challenge #19)"},
-    {i:63,c:"items",n:"SMB Super Fan",u:"Complete It's in the Cards (challenge #14)"},
-    {i:64,c:"trinkets",n:"Counterfeit Coin",u:"Play the Shell Game 100 times"},
-    {i:65,c:"items",n:"Guppy's Hairball",u:"Become Guppy"},
-    {i:66,c:"items",n:"A Forgotten Horseman",u:"Take 10 items from Angel Rooms"},
-    {i:67,c:"personajes",n:"Samson",u:"Complete 2 floors in a row without taking damage"},
-    {i:68,c:"items",n:"Something Icky",u:"Defeat Isaac 10 times"},
-    {i:69,c:"hitos",n:"!Platinum God!",u:"Collect all non-DLC items in the game, unlock all of the secrets and endings minus The Lost and his 6 unlockable items"},
-    {i:70,c:"trinkets",n:"Isaac's Head",u:"Complete Boss Rush as Isaac"},
-    {i:71,c:"trinkets",n:"Maggy's Faith",u:"Defeat The Lamb as Magdalene"},
-    {i:72,c:"trinkets",n:"Judas' Tongue",u:"Defeat Satan as Judas"},
-    {i:73,c:"trinkets",n:"???'s Soul",u:"Defeat The Lamb as ???"},
-    {i:74,c:"trinkets",n:"Samson's Lock",u:"Defeat The Lamb as Samson"},
-    {i:75,c:"trinkets",n:"Cain's Eye",u:"Defeat ??? as Cain"},
-    {i:76,c:"trinkets",n:"Eve's Bird Foot",u:"Defeat Isaac as Eve"},
-    {i:77,c:"trinkets",n:"The Left Hand",u:"Defeat Ultra Pride as any character, or ??? as Judas"},
-    {i:78,c:"items",n:"The Negative",u:"Defeat Satan 5 times"},
-    {i:79,c:"personajes",n:"Azazel",u:"Make 3 deals with the Devil in one run"},
-    {i:80,c:"personajes",n:"Lazarus",u:"Have 4 or more Soul Hearts at one time"},
-    {i:81,c:"personajes",n:"Eden",u:"Complete chapter 4"},
-    {i:82,c:"personajes",n:"The Lost",u:"Die in a Sacrifice Room while holding Missing Poster"},
-    {i:83,c:"hitos",n:"Dead Boy",u:"Complete chapter 6 without taking damage"},
-    {i:84,c:"hitos",n:"The Real Platinum God",u:"Collect every non-DLC item and unlock every ending."},
-    {i:85,c:"trinkets",n:"Lucky Rock",u:"Destroy 100 rocks"},
-    {i:86,c:"hitos",n:"The Cellar",u:"Beat all The Basement bosses (not restricted to beating bosses in The Basement)"},
-    {i:87,c:"hitos",n:"The Catacombs",u:"Beat all The Caves bosses (not restricted to beating bosses in The Caves)"},
-    {i:88,c:"hitos",n:"The Necropolis",u:"Beat all The Depths bosses (not restricted to beating bosses in The Depths)"},
-    {i:89,c:"trinkets",n:"Rune of Hagalaz",u:"Complete Pitch Black (challenge #1)"},
-    {i:90,c:"trinkets",n:"Rune of Jera",u:"Complete High Brow (challenge #2)"},
-    {i:91,c:"trinkets",n:"Rune of Ehwaz",u:"Complete Head Trauma (challenge #3)"},
-    {i:92,c:"trinkets",n:"Rune of Dagaz",u:"Complete Darkness Falls (challenge #4)"},
-    {i:93,c:"trinkets",n:"Rune of Ansuz",u:"Complete The Tank (challenge #5)"},
-    {i:94,c:"trinkets",n:"Rune of Perthro",u:"Complete Solar System (challenge #6)"},
-    {i:95,c:"trinkets",n:"Rune of Berkano",u:"Complete Purist (challenge #20)"},
-    {i:96,c:"trinkets",n:"Rune of Algiz",u:"Complete Cat Got Your Tongue (challenge #8)"},
-    {i:97,c:"trinkets",n:"Chaos Card",u:"Complete Demo Man (challenge #9)"},
-    {i:98,c:"trinkets",n:"Credit Card",u:"Complete Cursed (challenge #10)"},
-    {i:99,c:"trinkets",n:"Rules Card",u:"Complete Glass Cannon (challenge #11)"},
-    {i:100,c:"trinkets",n:"Card Against Humanity",u:"Complete When Life Gives You Lemons (challenge #12)"},
-    {i:101,c:"trinkets",n:"Swallowed Penny",u:"Complete Slow Roll (challenge #15)"},
-    {i:102,c:"items",n:"Robo-Baby 2.0",u:"Complete Computer Savvy (challenge #16)"},
-    {i:103,c:"items",n:"Death's Touch",u:"Complete Waka Waka (challenge #17)"},
-    {i:104,c:"items",n:"Technology .5",u:"Complete The Host (challenge #18)"},
-    {i:105,c:"items",n:"Missing No.",u:"Complete Boss Rush as Lazarus"},
-    {i:106,c:"items",n:"Isaac's Tears",u:"Defeat Isaac as Isaac"},
-    {i:107,c:"items",n:"Guillotine",u:"Defeat Isaac as Judas"},
-    {i:108,c:"items",n:"Judas' Shadow",u:"Complete Boss Rush as Judas"},
-    {i:109,c:"items",n:"Maggy's Bow",u:"Complete Boss Rush as Magdalene"},
-    {i:110,c:"items",n:"Cain's Other Eye",u:"Complete Boss Rush as Cain"},
-    {i:111,c:"trinkets",n:"Black Lipstick",u:"Defeat The Lamb as Eve"},
-    {i:112,c:"items",n:"Eve's Mascara",u:"Complete Boss Rush as Eve"},
-    {i:113,c:"items",n:"Fate",u:"Defeat ??? as ???"},
-    {i:114,c:"items",n:"???'s Only Friend",u:"Complete Boss Rush as ???"},
-    {i:115,c:"items",n:"Samson's Chains",u:"Complete Boss Rush as Samson"},
-    {i:116,c:"items",n:"Lazarus' Rags",u:"Defeat Isaac as Lazarus"},
-    {i:117,c:"trinkets",n:"Broken Ankh",u:"Defeat Satan as Lazarus"},
-    {i:118,c:"trinkets",n:"Store Credit",u:"Defeat ??? as Lazarus"},
-    {i:119,c:"items",n:"Pandora's Box",u:"Defeat The Lamb as Lazarus"},
-    {i:120,c:"trinkets",n:"Suicide King",u:"Complete Suicide King (challenge #7)"},
-    {i:121,c:"items",n:"Blank Card",u:"Defeat Isaac as Eden"},
-    {i:122,c:"items",n:"Book of Secrets",u:"Defeat Satan as Eden"},
-    {i:123,c:"trinkets",n:"Mysterious Paper",u:"Beat ??? as Eden"},
-    {i:124,c:"items",n:"Mystery Sack",u:"Defeat The Lamb as Eden"},
-    {i:125,c:"items",n:"Undefined",u:"Complete Boss Rush as Eden"},
-    {i:126,c:"items",n:"Satanic Bible",u:"Defeat Isaac as Azazel"},
-    {i:127,c:"trinkets",n:"Daemon's Tail",u:"Defeat Satan as Azazel"},
-    {i:128,c:"items",n:"Abaddon",u:"Defeat ??? as Azazel"},
-    {i:129,c:"items",n:"Isaac's Heart",u:"Defeat Isaac as The Lost"},
-    {i:130,c:"items",n:"The Mind",u:"Defeat Satan as The Lost"},
-    {i:131,c:"items",n:"The Body",u:"Defeat ??? as The Lost"},
-    {i:132,c:"items",n:"The Soul",u:"Defeat The Lamb as The Lost"},
-    {i:133,c:"items",n:"The D100",u:"Complete Boss Rush as The Lost"},
-    {i:134,c:"items",n:"Blue Map",u:"Donate 10 coins to the Donation Machine"},
-    {i:135,c:"items",n:"There's Options",u:"Donate 50 coins to the Donation Machine"},
-    {i:136,c:"items",n:"Black Candle",u:"Donate 150 coins to the Donation Machine"},
-    {i:137,c:"items",n:"Red Candle",u:"Donate 400 coins to the Donation Machine"},
-    {i:138,c:"items",n:"Stop Watch",u:"Donate 999 coins to the Donation Machine"},
-    {i:139,c:"items",n:"Wire Coat Hanger",u:"Defeat Mom's Heart 4 times"},
-    {i:140,c:"items",n:"Ipecac",u:"Defeat Mom's Heart 6 times"},
-    {i:141,c:"items",n:"Experimental Treatment",u:"Defeat Mom's Heart 7 times"},
-    {i:142,c:"items",n:"Krampus",u:"Take 20 items from Devil Rooms"},
-    {i:143,c:"items",n:"Head of Krampus",u:"Defeat Krampus"},
-    {i:144,c:"hitos",n:"Super Meat Boy",u:"Make a Super Meat Boy by picking up Cube of Meat 4 times in one run; see methods to create a Super Meat Boy"},
-    {i:145,c:"items",n:"Butter Bean",u:"Destroy 100 poops"},
-    {i:146,c:"items",n:"Little Baggy",u:"Collect 2 of either Roid Rage, The Virus, Growth Hormones, Experimental Treatment or Speed Ball"},
-    {i:147,c:"items",n:"Blood Bag",u:"Use the Blood Donation Machine 30 times"},
-    {i:148,c:"items",n:"The D4",u:"Blow up 30 Arcade machines"},
-    {i:149,c:"trinkets",n:"Missing Poster",u:"Defeat The Lamb as Isaac"},
-    {i:150,c:"items",n:"Rubber Cement",u:"Defeat Mom's Heart 2 times"},
-    {i:151,c:"hitos",n:"Store Upgrade lv.1",u:"Donate 20 coins to the Donation Machine"},
-    {i:152,c:"hitos",n:"Store Upgrade lv.2",u:"Donate 100 coins to the Donation Machine"},
-    {i:153,c:"hitos",n:"Store Upgrade lv.3",u:"Donate 200 coins to the Donation Machine"},
-    {i:154,c:"hitos",n:"Store Upgrade lv.4",u:"Donate 600 coins to the Donation Machine"},
-    {i:155,c:"items",n:"Angels",u:"Complete chapter 6"},
-    {i:156,c:"items",n:"Godhead",u:"Earn all 5 / 9 (except the cent sign for Ultra Greed) / 10 / 12 completion marks on Hard mode as The Lost"},
-    {i:157,c:"retos",n:"Darkness Falls",u:"Defeat Mom's Heart 11 times"},
-    {i:158,c:"retos",n:"The Tank",u:"Have 7 or more Red Heart containers at one time"},
-    {i:159,c:"retos",n:"Solar System",u:"Defeat Mom's Heart 3 times"},
-    {i:160,c:"retos",n:"Suicide King",u:"Defeat Mom's Heart 11 times"},
-    {i:161,c:"retos",n:"Cat Got Your Tongue",u:"Become Guppy"},
-    {i:162,c:"retos",n:"Demo Man",u:"Defeat Mom's Heart 9 times"},
-    {i:163,c:"retos",n:"Cursed!",u:"Have 7 or more Red Heart Containers at one time"},
-    {i:164,c:"retos",n:"Glass Cannon",u:"Beat The Family Man (challenge #19) and defeat Lokii"},
-    {i:165,c:"retos",n:"The Family Man",u:"Pick up both Key Pieces from the Angels in one run"},
-    {i:166,c:"retos",n:"Purist",u:"Defeat Mom"},
-    {i:167,c:"marcas",n:"Lost Baby",u:"Defeat Mom's Heart on Hard mode as Isaac"},
-    {i:168,c:"marcas",n:"Cute Baby",u:"Defeat Mom's Heart on Hard mode as Magdalene"},
-    {i:169,c:"marcas",n:"Crow Baby",u:"Defeat Mom's Heart on Hard mode as Eve"},
-    {i:170,c:"marcas",n:"Shadow Baby",u:"Defeat Mom's Heart on Hard mode as Judas"},
-    {i:171,c:"marcas",n:"Glass Baby",u:"Defeat Mom's Heart on Hard mode as Cain"},
-    {i:172,c:"marcas",n:"Wrapped Baby",u:"Defeat Mom's Heart on Hard mode as Lazarus"},
-    {i:173,c:"marcas",n:"Begotten Baby",u:"Defeat Mom's Heart on Hard mode as Azazel"},
-    {i:174,c:"marcas",n:"Dead Baby",u:"Defeat Mom's Heart on Hard mode as ???"},
-    {i:175,c:"marcas",n:"-0- Baby",u:"Defeat Mom's Heart on Hard mode as The Lost"},
-    {i:176,c:"marcas",n:"Glitch Baby",u:"Defeat Mom's Heart on Hard mode as Eden"},
-    {i:177,c:"marcas",n:"Fighting Baby",u:"Defeat Mom's Heart on Hard mode as Samson"},
-    {i:178,c:"hitos",n:"Lord of the Flies",u:"Become Beelzebub"},
-    {i:179,c:"items",n:"Fart Baby",u:"Defeat Hush as Isaac"},
-    {i:180,c:"items",n:"Purity",u:"Defeat Hush as Magdalene"},
-    {i:181,c:"items",n:"D12",u:"Defeat Hush as Cain"},
-    {i:182,c:"items",n:"Betrayal",u:"Defeat Hush as Judas"},
-    {i:183,c:"items",n:"Fate's Reward",u:"Defeat Hush as ???"},
-    {i:184,c:"items",n:"Athame",u:"Defeat Hush as Eve"},
-    {i:185,c:"items",n:"Blind Rage",u:"Defeat Hush as Samson"},
-    {i:186,c:"items",n:"Maw of the Void",u:"Defeat Hush as Azazel"},
-    {i:187,c:"items",n:"Empty Vessel",u:"Defeat Hush as Lazarus"},
-    {i:188,c:"items",n:"Eden's Blessing",u:"Defeat Hush as Eden"},
-    {i:189,c:"items",n:"Sworn Protector",u:"Defeat Hush as The Lost"},
-    {i:190,c:"items",n:"Incubus",u:"Defeat Hush as Lilith"},
-    {i:191,c:"personajes",n:"Keeper now holds... A Penny!",u:"Defeat Hush as Keeper"},
-    {i:192,c:"items",n:"Lil' Chest",u:"Defeat Ultra Greed as Isaac"},
-    {i:193,c:"items",n:"Censer",u:"Defeat Ultra Greed as Magdalene"},
-    {i:194,c:"items",n:"Evil Eye",u:"Defeat Ultra Greed as Cain"},
-    {i:195,c:"items",n:"My Shadow",u:"Defeat Ultra Greed as Judas"},
-    {i:196,c:"trinkets",n:"Cracked Dice",u:"Defeat Ultra Greed as ???"},
-    {i:197,c:"trinkets",n:"Black Feather",u:"Defeat Ultra Greed as Eve"},
-    {i:198,c:"items",n:"Lusty Blood",u:"Defeat Ultra Greed as Samson"},
-    {i:199,c:"personajes",n:"Lilith",u:"Defeat Ultra Greed as Azazel"},
-    {i:200,c:"items",n:"Key Bum",u:"Defeat Ultra Greed as Lazarus"},
-    {i:201,c:"items",n:"GB Bug",u:"Defeat Ultra Greed as Eden"},
-    {i:202,c:"items",n:"Zodiac",u:"Defeat Ultra Greed as The Lost"},
-    {i:203,c:"items",n:"Box of Friends",u:"Defeat Ultra Greed as Lilith"},
-    {i:204,c:"trinkets",n:"Rib of Greed",u:"Defeat Ultra Greed as Keeper"},
-    {i:205,c:"marcas",n:"Cry Baby",u:"Defeat Mega Satan as Isaac"},
-    {i:206,c:"marcas",n:"Red Baby",u:"Defeat Mega Satan as Magdalene"},
-    {i:207,c:"marcas",n:"Green Baby",u:"Defeat Mega Satan as Cain"},
-    {i:208,c:"marcas",n:"Brown Baby",u:"Defeat Mega Satan as Judas"},
-    {i:209,c:"marcas",n:"Blue Baby",u:"Defeat Mega Satan as ???"},
-    {i:210,c:"marcas",n:"Lil' Baby",u:"Defeat Mega Satan as Eve"},
-    {i:211,c:"marcas",n:"Rage Baby",u:"Defeat Mega Satan as Samson"},
-    {i:212,c:"marcas",n:"Black Baby",u:"Defeat Mega Satan as Azazel"},
-    {i:213,c:"marcas",n:"Long Baby",u:"Defeat Mega Satan as Lazarus"},
-    {i:214,c:"marcas",n:"Yellow Baby",u:"Defeat Mega Satan as Eden"},
-    {i:215,c:"marcas",n:"White Baby",u:"Defeat Mega Satan as The Lost"},
-    {i:216,c:"marcas",n:"Big Baby",u:"Defeat Mega Satan as Lilith"},
-    {i:217,c:"marcas",n:"Noose Baby",u:"Defeat Mega Satan as Keeper"},
-    {i:218,c:"items",n:"Rune Bag",u:"Defeat Isaac as Lilith"},
-    {i:219,c:"items",n:"Cambion Conception",u:"Defeat ??? as Lilith"},
-    {i:220,c:"items",n:"Serpent's Kiss",u:"Defeat Satan as Lilith"},
-    {i:221,c:"items",n:"Succubus",u:"Defeat The Lamb as Lilith"},
-    {i:222,c:"items",n:"Immaculate Conception",u:"Complete Boss Rush as Lilith"},
-    {i:223,c:"marcas",n:"Goat Head Baby",u:"Defeat Mom's Heart on Hard mode as Lilith"},
-    {i:224,c:"trinkets",n:"Gold Heart",u:"Complete XXXXXXXXL (challenge #21)"},
-    {i:225,c:"trinkets",n:"Get out of Jail Free Card",u:"Complete SPEED! (challenge #22)"},
-    {i:226,c:"trinkets",n:"Gold Bomb",u:"Complete Blue Bomber (challenge #23)"},
-    {i:227,c:"trinkets",n:"2 new pills",u:"Complete PAY TO PLAY (challenge #24)"},
-    {i:228,c:"trinkets",n:"2 new pills",u:"Complete Have a Heart (challenge #25)"},
-    {i:229,c:"trinkets",n:"Poker Chip",u:"Complete I RULE! (challenge #26)"},
-    {i:230,c:"trinkets",n:"Stud Finder",u:"Complete BRAINS! (challenge #27)"},
-    {i:231,c:"items",n:"D8",u:"Complete PRIDE DAY! (challenge #28)"},
-    {i:232,c:"items",n:"Kidney Stone",u:"Complete Onan's Streak (challenge #29)"},
-    {i:233,c:"trinkets",n:"Blank Rune",u:"Complete The Guardian (challenge #30)"},
-    {i:234,c:"hitos",n:"Blue Womb",u:"Defeat Mom's Heart 10 times"},
-    {i:235,c:"hitos",n:"1001%",u:"Unlock all of the secrets and endings, and collect every item in the game"},
-    {i:236,c:"personajes",n:"Keeper holds Wooden Nickel",u:"Defeat Isaac as Keeper"},
-    {i:237,c:"personajes",n:"Keeper holds Store Key",u:"Defeat Satan as Keeper"},
-    {i:238,c:"items",n:"Deep Pockets",u:"Defeat ??? as Keeper"},
-    {i:239,c:"trinkets",n:"Karma",u:"Defeat The Lamb as Keeper"},
-    {i:240,c:"trinkets",n:"Sticky Nickels",u:"Complete Boss Rush as Keeper"},
-    {i:241,c:"marcas",n:"Super Greed Baby",u:"Defeat Mom's Heart on Hard mode as Keeper"},
-    {i:242,c:"trinkets",n:"Lucky Pennies",u:"Donate 1 coin to the Greed Donation Machine"},
-    {i:243,c:"hitos",n:"Special Hanging Shopkeepers",u:"Donate 10 coins to the Greed Donation Machine"},
-    {i:244,c:"items",n:"Wooden Nickel",u:"Donate 30 coins to the Greed Donation Machine"},
-    {i:245,c:"personajes",n:"Cain holds Paperclip",u:"Donate 68 coins to the Greed Donation Machine"},
-    {i:246,c:"hitos",n:"Everything is Terrible 2!!!",u:"Donate 111 coins to the Greed Donation Machine"},
-    {i:247,c:"hitos",n:"Special Shopkeepers",u:"Donate 234 coins to the Greed Donation Machine"},
-    {i:248,c:"personajes",n:"Eve now holds Razor Blade",u:"Donate 439 coins to the Greed Donation Machine"},
-    {i:249,c:"trinkets",n:"Store Key",u:"Donate 666 coins to the Greed Donation Machine"},
-    {i:250,c:"personajes",n:"Lost holds Holy Mantle",u:"Donate 879 coins to the Greed Donation Machine"},
-    {i:251,c:"personajes",n:"Keeper",u:"Donate 1000 coins to the Greed Donation Machine"},
-    {i:252,c:"marcas",n:"Hive Baby",u:"Earn all Hard mode completion marks as ???"},
-    {i:253,c:"marcas",n:"Buddy Baby",u:"Earn all Hard mode completion marks as Isaac"},
-    {i:254,c:"marcas",n:"Colorful Baby",u:"Earn all Hard mode completion marks as Magdalene"},
-    {i:255,c:"marcas",n:"Whore Baby",u:"Earn all Hard mode completion marks as Eve"},
-    {i:256,c:"marcas",n:"Cracked Baby",u:"Earn all Hard mode completion marks as Eden"},
-    {i:257,c:"marcas",n:"Dripping Baby",u:"Earn all Hard mode completion marks as Lazarus"},
-    {i:258,c:"marcas",n:"Blinding Baby",u:"Use Blank Card while holding XIX - The Sun"},
-    {i:259,c:"marcas",n:"Sucky Baby",u:"Earn all Hard mode completion marks as Azazel"},
-    {i:260,c:"marcas",n:"Dark Baby",u:"Earn all Hard mode completion marks as Lilith"},
-    {i:261,c:"marcas",n:"Picky Baby",u:"Earn all Hard mode completion marks as Cain"},
-    {i:262,c:"marcas",n:"Revenge Baby",u:"Earn all Hard mode completion marks as Samson"},
-    {i:263,c:"marcas",n:"Belial Baby",u:"Earn all Hard mode completion marks as Judas"},
-    {i:264,c:"marcas",n:"Sale Baby",u:"Earn all Hard mode completion marks as Keeper"},
-    {i:265,c:"retos",n:"XXXXXXXXL",u:"Defeat Mom"},
-    {i:266,c:"retos",n:"SPEED!",u:"Defeat Mom"},
-    {i:267,c:"retos",n:"Blue Bomber",u:"Destroy 10 Tinted Rocks and defeat Mom's Heart 11 times"},
-    {i:268,c:"retos",n:"PAY TO PLAY",u:"Defeat Isaac as Cain"},
-    {i:269,c:"retos",n:"Have a Heart",u:"Defeat Mom"},
-    {i:270,c:"retos",n:"I RULE!",u:"Defeat ??? or The Lamb, and defeat Satan as Isaac"},
-    {i:271,c:"retos",n:"BRAINS!",u:"Defeat Isaac 5 times"},
-    {i:272,c:"retos",n:"PRIDE DAY!",u:"Defeat Mom"},
-    {i:273,c:"retos",n:"Onan's Streak",u:"Defeat Mom"},
-    {i:274,c:"retos",n:"The Guardian",u:"Defeat Mom"},
-    {i:275,c:"hitos",n:"Generosity",u:"Donate 999 coins to the Greed Donation Machine"},
-    {i:276,c:"items",n:"Mega",u:"Defeat Mega Satan as every character"},
-    {i:277,c:"retos",n:"Backasswards",u:"Defeat ??? or The Lamb"},
-    {i:278,c:"retos",n:"Aprils fool",u:"Defeat Mom"},
-    {i:279,c:"retos",n:"Pokey Mans",u:"Defeat Mom's Heart 11 times"},
-    {i:280,c:"retos",n:"Ultra Hard",u:"Defeat ??? or The Lamb. Possession of The Polaroid/ The Negative is required, barring getting to Dark Room through a Sacrifice Room."},
-    {i:281,c:"retos",n:"PONG",u:"Defeat Isaac 5 times"},
-    {i:282,c:"items",n:"D Infinity",u:"Defeat Delirium as Isaac"},
-    {i:283,c:"items",n:"Eucharist",u:"Defeat Delirium as Magdalene"},
-    {i:284,c:"trinkets",n:"Silver Dollar",u:"Defeat Delirium as Cain"},
-    {i:285,c:"items",n:"Shade",u:"Defeat Delirium as Judas"},
-    {i:286,c:"marcas",n:"King Baby",u:"Defeat Delirium as ???"},
-    {i:287,c:"trinkets",n:"Bloody Crown",u:"Defeat Delirium as Samson"},
-    {i:288,c:"items",n:"Dull Razor",u:"Defeat Delirium as Eve"},
-    {i:289,c:"items",n:"Eden's Soul",u:"Defeat Delirium as Eden"},
-    {i:290,c:"items",n:"Dark Prince's Crown",u:"Defeat Delirium as Azazel"},
-    {i:291,c:"items",n:"Compound Fracture",u:"Defeat Delirium as Lazarus"},
-    {i:292,c:"items",n:"Euthanasia",u:"Defeat Delirium as Lilith"},
-    {i:293,c:"trinkets",n:"Holy Card",u:"Defeat Delirium as The Lost"},
-    {i:294,c:"items",n:"Crooked Penny",u:"Defeat Delirium as Keeper"},
-    {i:295,c:"items",n:"Void",u:"Defeat Delirium as Apollyon"},
-    {i:296,c:"items",n:"D1",u:"Defeat Ultra Greedier as Isaac"},
-    {i:297,c:"items",n:"Glyph of Balance",u:"Defeat Ultra Greedier as Magdalene"},
-    {i:298,c:"items",n:"Sack of Sacks",u:"Defeat Ultra Greedier as Cain"},
-    {i:299,c:"items",n:"Eye of Belial",u:"Defeat Ultra Greedier as Judas"},
-    {i:300,c:"trinkets",n:"Meconium",u:"Defeat Ultra Greedier as ???"},
-    {i:301,c:"trinkets",n:"Stem Cell",u:"Defeat Ultra Greedier as Samson"},
-    {i:302,c:"trinkets",n:"Crow Heart",u:"Defeat Ultra Greedier as Eve"},
-    {i:303,c:"items",n:"Metronome",u:"Defeat Ultra Greedier as Eden"},
-    {i:304,c:"trinkets",n:"Bat Wing",u:"Defeat Ultra Greedier as Azazel"},
-    {i:305,c:"items",n:"Plan C",u:"Defeat Ultra Greedier as Lazarus"},
-    {i:306,c:"items",n:"Duality",u:"Defeat Ultra Greedier as Lilith"},
-    {i:307,c:"items",n:"Dad's Lost Coin",u:"Defeat Ultra Greedier as The Lost"},
-    {i:308,c:"items",n:"Eye of Greed",u:"Defeat Ultra Greedier as Keeper"},
-    {i:309,c:"trinkets",n:"Black Rune",u:"Defeat Ultra Greedier as Apollyon"},
-    {i:310,c:"trinkets",n:"Locust of Wrath",u:"Defeat Isaac as Apollyon"},
-    {i:311,c:"trinkets",n:"Locust of Pestilence",u:"Defeat Satan as Apollyon"},
-    {i:312,c:"trinkets",n:"Locust of Famine",u:"Defeat ??? as Apollyon"},
-    {i:313,c:"trinkets",n:"Locust of Death",u:"Defeat The Lamb as Apollyon"},
-    {i:314,c:"trinkets",n:"Locust of Conquest",u:"Complete Boss Rush as Apollyon"},
-    {i:315,c:"items",n:"Hushy",u:"Defeat Hush as Apollyon"},
-    {i:316,c:"items",n:"Brown Nugget",u:"Defeat Ultra Greed as Apollyon"},
-    {i:317,c:"marcas",n:"Mort Baby",u:"Defeat Mega Satan as Apollyon"},
-    {i:318,c:"items",n:"Smelter",u:"Defeat Mom's Heart or It Lives! on Hard mode as Apollyon"},
-    {i:319,c:"marcas",n:"Apollyon Baby",u:"Earn all Hard mode completion marks as Apollyon"},
-    {i:320,c:"hitos",n:"New Area",u:"Defeat Hush"},
-    {i:321,c:"trinkets",n:"Once More with Feeling!",u:"Complete a Victory Lap, defeating The Lamb"},
-    {i:322,c:"trinkets",n:"Hat trick!",u:"Get a 3-win streak"},
-    {i:323,c:"hitos",n:"5 Nights at Mom's",u:"Get a 5-win streak, using a different character for each win"},
-    {i:324,c:"trinkets",n:"Sin collector",u:"Collect every entry in the Bestiary"},
-    {i:325,c:"trinkets",n:"Dedication",u:"Participate in 31 daily challenges (they don't have to be consecutive; it will still count if you die in the first room)"},
-    {i:326,c:"trinkets",n:"ZIP!",u:"Defeat The Lamb in under 20 minutes"},
-    {i:327,c:"trinkets",n:"It's the Key",u:"Defeat The Lamb without taking hearts, coins, and bombs through an entire run"},
-    {i:328,c:"trinkets",n:"Mr. Resetter!",u:"Reset 7 times in a row"},
-    {i:329,c:"trinkets",n:"Living on the edge",u:"Complete a Chapter (floors I and II) after The Basement, start-to-finish, with only half a heart of health (can use The Lost)"},
-    {i:330,c:"trinkets",n:"U Broke It!",u:"Obtain 50 items on a run (e.g., via two Steam Sale and Restock - Duplicate passives/familiars count towards the total, e.g., multiple Breakfast)"},
-    {i:331,c:"personajes",n:"Laz Bleeds More!",u:"Complete Backasswards (challenge #31)"},
-    {i:332,c:"personajes",n:"Maggy Now Holds a Pill!",u:"Complete Aprils Fool (challenge #32)"},
-    {i:333,c:"trinkets",n:"Charged Key",u:"Complete Pokey Mans (challenge #33)"},
-    {i:334,c:"personajes",n:"Samson Feels Healthy!",u:"Complete Ultra Hard (challenge #34)"},
-    {i:335,c:"items",n:"Greed's Gullet",u:"Complete Pong (challenge #35)"},
-    {i:336,c:"trinkets",n:"The Marathon",u:"Get a 5-win streak in the daily challenges ( You must have a score of above 0 on the score screen)"},
-    {i:337,c:"hitos",n:"RERUN",u:"Complete 3 Victory Laps and start a 4th"},
-    {i:338,c:"items",n:"Delirious",u:"Defeat Delirium"},
-    {i:339,c:"hitos",n:"1000000%",u:"Collect every item in the game, unlock all secrets and endings, and complete the bestiary"},
-    {i:340,c:"personajes",n:"Apollyon",u:"Defeat Mega Satan"},
-    {i:341,c:"hitos",n:"Greedier!",u:"Donate 500 coins to the Greed Donation Machine"},
-    {i:342,c:"hitos",n:"Burning Basement",u:"Defeat Mom's Heart 11 times"},
-    {i:343,c:"hitos",n:"Flooded Caves",u:"Defeat It Lives 16 times"},
-    {i:344,c:"hitos",n:"Dank Depths",u:"Defeat It Lives 21 times"},
-    {i:345,c:"hitos",n:"Scarred Womb",u:"Defeat It Lives 30 times"},
-    {i:346,c:"items",n:"Something wicked this way comes!",u:"Defeat ??? as 3 different characters"},
-    {i:347,c:"items",n:"Something wicked this way comes+!",u:"Defeat ??? as 6 different characters"},
-    {i:348,c:"hitos",n:"The gate is open!",u:"Defeat The Lamb"},
-    {i:349,c:"items",n:"Black Hole",u:"Defeat 20 portals"},
-    {i:350,c:"items",n:"Mystery Gift",u:"Destroy 500 rocks"},
-    {i:351,c:"items",n:"Sprinkler",u:"Beat chapter 1 without taking damage"},
-    {i:352,c:"items",n:"Angry Fly",u:"Become Beelzebub"},
-    {i:353,c:"items",n:"Bozo",u:"Destroy 5 rainbow poops"},
-    {i:354,c:"items",n:"Broken Modem",u:"Complete 7 daily challenges (by touching the trophy at the end)"},
-    {i:355,c:"items",n:"Buddy in a Box",u:"Pick up 5 familiars in a single run"},
-    {i:356,c:"items",n:"Fast Bombs",u:"Defeat Little Horn 20 times"},
-    {i:357,c:"items",n:"Lil Delirium",u:"Defeat Delirium for the 1st time"},
-    {i:358,c:"trinkets",n:"Hairpin",u:"Recharge using Lil' Batteries 20 times"},
-    {i:359,c:"trinkets",n:"Wooden Cross",u:"Sleep in a bed"},
-    {i:360,c:"trinkets",n:"Butter!",u:"Complete 2 Victory Laps and start a 3rd"},
-    {i:361,c:"trinkets",n:"Huge Growth",u:"Increase in size 5 times in a single run. Sources of increased size include \"One Makes you Larger\" pills, XI - Strength, and Magic Mushroom"},
-    {i:362,c:"trinkets",n:"Ancient Recall",u:"Use cards and runes 20 times"},
-    {i:363,c:"trinkets",n:"Era Walk",u:"Have both the Broken Watch and the Stop Watch in your collection"},
-    {i:364,c:"items",n:"Coupon",u:"Purchase from Shops, Devil deals or Black Markets 50 times"},
-    {i:365,c:"items",n:"Telekinesis",u:"Beat chapter 2 without taking damage"},
-    {i:366,c:"items",n:"Moving Box",u:"Use Pandora's Box in Dark Room"},
-    {i:367,c:"items",n:"Jumper Cables",u:"Pick up any 3 of the following items/trinkets in a single run: 9 Volt, The Battery, Car Battery, AAA Battery, Watch Battery"},
-    {i:368,c:"items",n:"Leprosy",u:"Beat chapter 3 without taking damage"},
-    {i:369,c:"items",n:"Technology Zero",u:"Pick up two technology items in one run"},
-    {i:370,c:"trinkets",n:"Filigree Feather",u:"Acquire both key pieces"},
-    {i:371,c:"items",n:"Mr. ME!",u:"Open 20 Locked Chests"},
-    {i:372,c:"items",n:"7 Seals",u:"Defeat all 5 Harbingers"},
-    {i:373,c:"items",n:"Angelic Prism",u:"Defeat an Angel 10 times"},
-    {i:374,c:"items",n:"Pop!",u:"Beat chapter 4 without taking damage"},
-    {i:375,c:"trinkets",n:"Door Stop",u:"Blow up doors and Secret Room walls 50 times"},
-    {i:376,c:"items",n:"Death's List",u:"Take 25 Devil deals"},
-    {i:377,c:"items",n:"Haemolacria",u:"Acquire Blood Clot 10 times"},
-    {i:378,c:"items",n:"Lachryphagy",u:"Collect 10 \"tears up\" items or pills in one run"},
-    {i:379,c:"items",n:"Schoolbag",u:"Enter every Shop from chapter 1 through chapter 3 in one run"},
-    {i:380,c:"items",n:"Trisagion",u:"Take 25 items from Angel Rooms"},
-    {i:381,c:"trinkets",n:"Extension Cord",u:"Have The Battery, 9 Volt, and Car Battery in your collection"},
-    {i:382,c:"items",n:"Flat Stone",u:"Acquire Rubber Cement 5 times"},
-    {i:383,c:"items",n:"Sacrificial Altar",u:"Take 50 Devil deals"},
-    {i:384,c:"items",n:"Lil Spewer",u:"Die to your own explosion from Ipecac, Bob's Rotten Head, or Horf! pill"},
-    {i:385,c:"items",n:"Blanket",u:"Sleep in 10 beds"},
-    {i:386,c:"items",n:"Marbles",u:"Use 5 Gulp! pills in one run"},
-    {i:387,c:"items",n:"Mystery Egg",u:"Spawn three charmed enemies in the same room"},
-    {i:388,c:"trinkets",n:"Rotten Penny",u:"Have 20 Blue Flies at the same time"},
-    {i:389,c:"trinkets",n:"Baby-Bender",u:"Use I - The Magician or Telepathy for Dummies while already having homing tears"},
-    {i:390,c:"personajes",n:"The Forgotten",u:"It's complicated"},
-    {i:391,c:"trinkets",n:"Bone Heart",u:"It's complicated"},
-    {i:392,c:"items",n:"Marrow",u:"Defeat Mom's Heart or It Lives! on Hard mode as The Forgotten"},
-    {i:393,c:"items",n:"Slipped Rib",u:"Defeat Isaac as The Forgotten"},
-    {i:394,c:"items",n:"Pointy Rib",u:"Defeat Satan as The Forgotten"},
-    {i:395,c:"items",n:"Jaw Bone",u:"Defeat ??? as The Forgotten"},
-    {i:396,c:"items",n:"Brittle Bones",u:"Defeat The Lamb as The Forgotten"},
-    {i:397,c:"items",n:"Divorce Papers",u:"Complete Boss Rush as The Forgotten"},
-    {i:398,c:"items",n:"Hallowed Ground",u:"Defeat Hush as The Forgotten"},
-    {i:399,c:"trinkets",n:"Finger Bone",u:"Defeat Ultra Greed as The Forgotten"},
-    {i:400,c:"items",n:"Dad's Ring",u:"Defeat Ultra Greedier as The Forgotten"},
-    {i:401,c:"items",n:"Book of the Dead",u:"Defeat Delirium as The Forgotten"},
-    {i:402,c:"marcas",n:"Bone Baby",u:"Earn all Hard mode completion marks as The Forgotten"},
-    {i:403,c:"marcas",n:"Bound Baby",u:"Defeat Mega Satan as The Forgotten"},
-    {i:404,c:"personajes",n:"Bethany",u:"Defeat Mom's Heart/It Lives on hard mode as Lazarus, without dying"},
-    {i:405,c:"personajes",n:"Jacob and Esau",u:"Defeat Mother"},
-    {i:406,c:"hitos",n:"The Planetarium",u:"Collect three of the following in a single run: Signs of the Zodiac, Magic 8 Ball, Tiny Planet, and Crystal Ball"},
-    {i:407,c:"hitos",n:"A Secret Exit",u:"Defeat Hush 3 times"},
-    {i:408,c:"trinkets",n:"Forgotten Lullaby",u:"Blow up The Siren's skull after defeating her"},
-    {i:409,c:"items",n:"Fruity Plum",u:"Defeat Baby Plum 10 times"},
-    {i:410,c:"items",n:"Plum Flute",u:"Allow Baby Plum to escape instead of defeating her"},
-    {i:411,c:"trinkets",n:"Rotten Heart",u:"Enter the Corpse for the first time"},
-    {i:412,c:"hitos",n:"Dross",u:"Defeat all bosses in Downpour"},
-    {i:413,c:"hitos",n:"Ashpit",u:"Defeat all bosses in the Mines"},
-    {i:414,c:"hitos",n:"Gehenna",u:"Defeat all bosses in the Mausoleum"},
-    {i:415,c:"trinkets",n:"Red Key",u:"Open the large version of Mom's Box in Home"},
-    {i:416,c:"marcas",n:"Wisp Baby",u:"Defeat Mom's Heart or It Lives! on Hard mode as Bethany"},
-    {i:417,c:"items",n:"Book of Virtues",u:"Defeat Isaac as Bethany"},
-    {i:418,c:"items",n:"Urn of Souls",u:"Defeat Satan as Bethany"},
-    {i:419,c:"trinkets",n:"Blessed Penny",u:"Defeat ??? as Bethany"},
-    {i:420,c:"items",n:"Alabaster Box",u:"Defeat The Lamb as Bethany"},
-    {i:421,c:"trinkets",n:"Beth's Faith",u:"Complete Boss Rush as Bethany"},
-    {i:422,c:"items",n:"Soul Locket",u:"Defeat Ultra Greed as Bethany"},
-    {i:423,c:"items",n:"Divine Intervention",u:"Defeat Hush as Bethany"},
-    {i:424,c:"items",n:"Vade Retro",u:"Defeat Ultra Greedier as Bethany"},
-    {i:425,c:"items",n:"Star of Bethlehem",u:"Defeat Delirium as Bethany"},
-    {i:426,c:"marcas",n:"Hope Baby",u:"Earn all Hard mode completion marks as Bethany"},
-    {i:427,c:"marcas",n:"Glowing Baby",u:"Defeat Mega Satan as Bethany"},
-    {i:428,c:"marcas",n:"Double Baby",u:"Defeat Mom's Heart or It Lives! on Hard mode as Jacob and Esau"},
-    {i:429,c:"items",n:"The Stairway",u:"Defeat Isaac as Jacob and Esau"},
-    {i:430,c:"items",n:"Red Stew",u:"Defeat Satan as Jacob and Esau"},
-    {i:431,c:"items",n:"Birthright",u:"Defeat ??? as Jacob and Esau"},
-    {i:432,c:"items",n:"Damocles",u:"Defeat The Lamb as Jacob and Esau"},
-    {i:433,c:"items",n:"Rock Bottom",u:"Complete Boss Rush as Jacob and Esau"},
-    {i:434,c:"items",n:"Inner Child",u:"Defeat Ultra Greed as Jacob and Esau"},
-    {i:435,c:"items",n:"Vanishing Twin",u:"Defeat Hush as Jacob and Esau"},
-    {i:436,c:"items",n:"Genesis",u:"Defeat Ultra Greedier as Jacob and Esau"},
-    {i:437,c:"items",n:"Suplex!",u:"Defeat Delirium as Jacob and Esau"},
-    {i:438,c:"marcas",n:"Solomon's Baby",u:"Earn all Hard mode completion marks as Jacob and Esau"},
-    {i:439,c:"marcas",n:"Illusion Baby",u:"Defeat Mega Satan as Jacob and Esau"},
-    {i:440,c:"items",n:"Meat Cleaver",u:"Defeat Mother as Isaac"},
-    {i:441,c:"items",n:"Options?",u:"Defeat The Beast as Isaac"},
-    {i:442,c:"items",n:"Yuck Heart",u:"Defeat Mother as Magdalene"},
-    {i:443,c:"items",n:"Candy Heart",u:"Defeat The Beast as Magdalene"},
-    {i:444,c:"items",n:"Guppy's Eye",u:"Defeat Mother as Cain"},
-    {i:445,c:"items",n:"A Pound of Flesh",u:"Defeat The Beast as Cain"},
-    {i:446,c:"items",n:"Akeldama",u:"Defeat Mother as Judas"},
-    {i:447,c:"items",n:"Redemption",u:"Defeat The Beast as Judas"},
-    {i:448,c:"items",n:"Eternal D6",u:"Defeat Mother as ???"},
-    {i:449,c:"items",n:"Montezuma's Revenge",u:"Defeat The Beast as ???"},
-    {i:450,c:"items",n:"Bird Cage",u:"Defeat Mother as Eve"},
-    {i:451,c:"items",n:"Cracked Orb",u:"Defeat The Beast as Eve"},
-    {i:452,c:"items",n:"Bloody Gust",u:"Defeat Mother as Samson"},
-    {i:453,c:"items",n:"Empty Heart",u:"Defeat The Beast as Samson"},
-    {i:454,c:"trinkets",n:"Devil's Crown",u:"Defeat Mother as Azazel"},
-    {i:455,c:"items",n:"Lil Abaddon",u:"Defeat The Beast as Azazel"},
-    {i:456,c:"items",n:"Tinytoma",u:"Defeat Mother as Lazarus"},
-    {i:457,c:"items",n:"Astral Projection",u:"Defeat The Beast as Lazarus"},
-    {i:458,c:"trinkets",n:"M",u:"Defeat Mother as Eden"},
-    {i:459,c:"items",n:"Everything Jar",u:"Defeat The Beast as Eden"},
-    {i:460,c:"items",n:"Lost Soul",u:"Defeat Mother as The Lost"},
-    {i:461,c:"items",n:"Hungry Soul",u:"Defeat The Beast as The Lost"},
-    {i:462,c:"items",n:"Blood Puppy",u:"Defeat Mother as Lilith"},
-    {i:463,c:"items",n:"C Section",u:"Defeat The Beast as Lilith"},
-    {i:464,c:"items",n:"Keeper's Sack",u:"Defeat Mother as Keeper"},
-    {i:465,c:"items",n:"Keeper's Box",u:"Defeat The Beast as Keeper"},
-    {i:466,c:"items",n:"Lil Portal",u:"Defeat Mother as Apollyon"},
-    {i:467,c:"items",n:"Worm Friend",u:"Defeat The Beast as Apollyon"},
-    {i:468,c:"items",n:"Bone Spurs",u:"Defeat Mother as The Forgotten"},
-    {i:469,c:"items",n:"Spirit Shackles",u:"Defeat The Beast as The Forgotten"},
-    {i:470,c:"items",n:"Revelation",u:"Defeat Mother as Bethany"},
-    {i:471,c:"items",n:"Jar of Wisps",u:"Defeat The Beast as Bethany"},
-    {i:472,c:"items",n:"Magic Skin",u:"Defeat Mother as Jacob and Esau"},
-    {i:473,c:"items",n:"Friend Finder",u:"Defeat The Beast as Jacob and Esau"},
-    {i:474,c:"personajes",n:"The Broken",u:"Use the Red Key or Cracked Key in Home as Isaac"},
-    {i:475,c:"personajes",n:"The Dauntless",u:"Use the Red Key or Cracked Key in Home as Magdalene"},
-    {i:476,c:"personajes",n:"The Hoarder",u:"Use the Red Key or Cracked Key in Home as Cain"},
-    {i:477,c:"personajes",n:"The Deceiver",u:"Use the Red Key or Cracked Key in Home as Judas"},
-    {i:478,c:"personajes",n:"The Soiled",u:"Use the Red Key or Cracked Key in Home as ???"},
-    {i:479,c:"personajes",n:"The Curdled",u:"Use the Red Key or Cracked Key in Home as Eve"},
-    {i:480,c:"personajes",n:"The Savage",u:"Use the Red Key or Cracked Key in Home as Samson"},
-    {i:481,c:"personajes",n:"The Benighted",u:"Use the Red Key or Cracked Key in Home as Azazel"},
-    {i:482,c:"personajes",n:"The Enigma",u:"Use the Red Key or Cracked Key in Home as Lazarus"},
-    {i:483,c:"personajes",n:"The Capricious",u:"Use the Red Key or Cracked Key in Home as Eden"},
-    {i:484,c:"personajes",n:"The Baleful",u:"Use the Red Key or Cracked Key in Home as The Lost"},
-    {i:485,c:"personajes",n:"The Harlot",u:"Use the Red Key or Cracked Key in Home as Lilith"},
-    {i:486,c:"personajes",n:"The Miser",u:"Use the Red Key or Cracked Key in Home as Keeper"},
-    {i:487,c:"personajes",n:"The Empty",u:"Use the Red Key or Cracked Key in Home as Apollyon"},
-    {i:488,c:"personajes",n:"The Fettered",u:"Use the Red Key or Cracked Key in Home as The Forgotten"},
-    {i:489,c:"personajes",n:"The Zealot",u:"Use the Red Key or Cracked Key in Home as Bethany"},
-    {i:490,c:"personajes",n:"The Deserter",u:"Use the Red Key or Cracked Key in Home as Jacob and Esau"},
-    {i:491,c:"items",n:"Glitched Crown",u:"Defeat The Beast as Tainted Isaac"},
-    {i:492,c:"items",n:"Belly Jelly",u:"Defeat The Beast as Tainted Magdalene"},
-    {i:493,c:"trinkets",n:"Blue Key",u:"Defeat The Beast as Tainted Cain"},
-    {i:494,c:"items",n:"Sanguine Bond",u:"Defeat The Beast as Tainted Judas"},
-    {i:495,c:"items",n:"The Swarm",u:"Defeat The Beast as Tainted ???"},
-    {i:496,c:"items",n:"Heartbreak",u:"Defeat The Beast as Tainted Eve"},
-    {i:497,c:"items",n:"Larynx",u:"Defeat The Beast as Tainted Samson"},
-    {i:498,c:"items",n:"Azazel's Rage",u:"Defeat The Beast as Tainted Azazel"},
-    {i:499,c:"items",n:"Salvation",u:"Defeat The Beast as Tainted Lazarus"},
-    {i:500,c:"items",n:"TMTRAINER",u:"Defeat The Beast as Tainted Eden"},
-    {i:501,c:"items",n:"Sacred Orb",u:"Defeat The Beast as Tainted Lost"},
-    {i:502,c:"items",n:"Twisted Pair",u:"Defeat The Beast as Tainted Lilith"},
-    {i:503,c:"items",n:"Strawman",u:"Defeat The Beast as Tainted Keeper"},
-    {i:504,c:"items",n:"Echo Chamber",u:"Defeat The Beast as Tainted Apollyon"},
-    {i:505,c:"items",n:"Isaac's Tomb",u:"Defeat The Beast as Tainted Forgotten"},
-    {i:506,c:"items",n:"Vengeful Spirit",u:"Defeat The Beast as Tainted Bethany"},
-    {i:507,c:"items",n:"Esau Jr.",u:"Defeat The Beast as Tainted Jacob"},
-    {i:508,c:"retos",n:"Bloody Mary",u:"Defeat Mom's Heart/It Lives on hard mode as Lazarus, without dying, defeat Mom's Heart 11 times and unlock Blood Bag"},
-    {i:509,c:"retos",n:"Baptism by Fire",u:"Defeat Satan as Bethany, defeat Mom's Heart 11 times and unlock Maggy's Faith"},
-    {i:510,c:"retos",n:"Isaac's Awakening",u:"Defeat Mother"},
-    {i:511,c:"retos",n:"Seeing Double",u:"Defeat Mother"},
-    {i:512,c:"retos",n:"Pica Run",u:"Defeat Mom's Heart 11 times and Unlock Marbles"},
-    {i:513,c:"retos",n:"Hot Potato",u:"Use the Red Key or Cracked Key in Home as The Forgotten"},
-    {i:514,c:"retos",n:"Cantripped!",u:"Use the Red Key or Cracked Key in Home as Cain"},
-    {i:515,c:"retos",n:"Red Redemption",u:"Use the Red Key or Cracked Key in Home as Jacob and Esau"},
-    {i:516,c:"retos",n:"DELETE THIS",u:"Use the Red Key or Cracked Key in Home as Eden"},
-    {i:517,c:"items",n:"Dirty Mind",u:"Complete Scat Man (challenge #36)"},
-    {i:518,c:"trinkets",n:"Sigil of Baphomet",u:"Complete Bloody Mary (challenge #37)"},
-    {i:519,c:"items",n:"Purgatory",u:"Complete Baptism by Fire (challenge #38)"},
-    {i:520,c:"items",n:"Spirit Sword",u:"Complete Isaac's Awakening (challenge #39)"},
-    {i:521,c:"trinkets",n:"Broken Glasses",u:"Complete Seeing Double (challenge #40)"},
-    {i:522,c:"trinkets",n:"Ice Cube",u:"Complete Pica Run (challenge #41)"},
-    {i:523,c:"trinkets",n:"Charged Penny",u:"Donate to several Battery Bums until they pay out with an item"},
-    {i:524,c:"trinkets",n:"The Fool",u:"Defeat Ultra Greedier as Tainted Lost"},
-    {i:525,c:"trinkets",n:"The Magician",u:"Defeat Ultra Greedier as Tainted Judas"},
-    {i:526,c:"trinkets",n:"The High Priestess",u:"Defeat Ultra Greedier as Tainted Lilith"},
-    {i:527,c:"trinkets",n:"The Empress",u:"Defeat Ultra Greedier as Tainted Eve"},
-    {i:528,c:"trinkets",n:"The Emperor",u:"Defeat Ultra Greedier as Tainted ???"},
-    {i:529,c:"trinkets",n:"The Hierophant",u:"Defeat Ultra Greedier as Tainted Bethany"},
-    {i:530,c:"trinkets",n:"The Lovers",u:"Defeat Ultra Greedier as Tainted Magdalene"},
-    {i:531,c:"trinkets",n:"The Chariot",u:"Complete Hot Potato (challenge #42)"},
-    {i:532,c:"trinkets",n:"Justice",u:"Complete Cantripped (challenge #43)"},
-    {i:533,c:"trinkets",n:"The Hermit",u:"Complete Red Redemption (challenge #44)"},
-    {i:534,c:"trinkets",n:"Wheel of Fortune",u:"Defeat Ultra Greedier as Tainted Cain"},
-    {i:535,c:"trinkets",n:"Strength",u:"Defeat Ultra Greedier as Tainted Samson"},
-    {i:536,c:"trinkets",n:"The Hanged Man",u:"Defeat Ultra Greedier as Tainted Keeper"},
-    {i:537,c:"trinkets",n:"Death",u:"Defeat Ultra Greedier as Tainted Forgotten"},
-    {i:538,c:"trinkets",n:"Temperance",u:"Complete DELETE THIS (challenge #45)"},
-    {i:539,c:"trinkets",n:"The Devil",u:"Defeat Ultra Greedier as Tainted Azazel"},
-    {i:540,c:"trinkets",n:"The Tower",u:"Defeat Ultra Greedier as Tainted Apollyon"},
-    {i:541,c:"trinkets",n:"The Stars",u:"Defeat Ultra Greedier as Tainted Isaac"},
-    {i:542,c:"trinkets",n:"The Sun and the Moon",u:"Defeat Ultra Greedier as Tainted Jacob"},
-    {i:543,c:"trinkets",n:"Judgement",u:"Defeat Ultra Greedier as Tainted Lazarus"},
-    {i:544,c:"trinkets",n:"The World",u:"Defeat Ultra Greedier as Tainted Eden"},
-    {i:545,c:"trinkets",n:"Old Capacitor",u:"Kill 10 Battery Bums"},
-    {i:546,c:"items",n:"Brimstone Bombs",u:"Kill Hornfel before he can escape after breaking his minecart"},
-    {i:547,c:"items",n:"Mega Mush",u:"Earn all Hard mode completion marks for all non-tainted characters"},
-    {i:548,c:"trinkets",n:"Mom's Lock",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Isaac"},
-    {i:549,c:"trinkets",n:"Dice Bag",u:"Defeat Mother as Tainted Isaac"},
-    {i:550,c:"trinkets",n:"Holy Crown",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Magdalene"},
-    {i:551,c:"trinkets",n:"Mother's Kiss",u:"Defeat Mother as Tainted Magdalene"},
-    {i:552,c:"trinkets",n:"Gilded Key",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Cain"},
-    {i:553,c:"trinkets",n:"Lucky Sack",u:"Defeat Mother as Tainted Cain"},
-    {i:554,c:"trinkets",n:"Your Soul",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Judas"},
-    {i:555,c:"trinkets",n:"Number Magnet",u:"Defeat Mother as Tainted Judas"},
-    {i:556,c:"trinkets",n:"Dingle Berry",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted ???"},
-    {i:557,c:"trinkets",n:"Ring Cap",u:"Defeat Mother as Tainted ???"},
-    {i:558,c:"trinkets",n:"Strange Key",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Eve"},
-    {i:559,c:"trinkets",n:"Lil Clot",u:"Defeat Mother as Tainted Eve"},
-    {i:560,c:"trinkets",n:"Temporary Tattoo",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Samson"},
-    {i:561,c:"trinkets",n:"Swallowed M80",u:"Defeat Mother as Tainted Samson"},
-    {i:562,c:"trinkets",n:"Wicked Crown",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Azazel"},
-    {i:563,c:"trinkets",n:"Azazel's Stump",u:"Defeat Mother as Tainted Azazel"},
-    {i:564,c:"trinkets",n:"Torn Pocket",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Lazarus"},
-    {i:565,c:"trinkets",n:"Torn Card",u:"Defeat Mother as Tainted Lazarus"},
-    {i:566,c:"trinkets",n:"Nuh Uh!",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Eden"},
-    {i:567,c:"trinkets",n:"Modeling Clay",u:"Defeat Mother as Tainted Eden"},
-    {i:568,c:"trinkets",n:"Kid's Drawing",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Lost"},
-    {i:569,c:"trinkets",n:"Crystal Key",u:"Defeat Mother as Tainted Lost"},
-    {i:570,c:"trinkets",n:"The Twins",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Lilith"},
-    {i:571,c:"trinkets",n:"Adoption Papers",u:"Defeat Mother as Tainted Lilith"},
-    {i:572,c:"trinkets",n:"Keeper's Bargain",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Keeper"},
-    {i:573,c:"trinkets",n:"Cursed Penny",u:"Defeat Mother as Tainted Keeper"},
-    {i:574,c:"trinkets",n:"Cricket Leg",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Apollyon"},
-    {i:575,c:"trinkets",n:"Apollyon's Best Friend",u:"Defeat Mother as Tainted Apollyon"},
-    {i:576,c:"trinkets",n:"Polished Bone",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Forgotten"},
-    {i:577,c:"trinkets",n:"Hollow Heart",u:"Defeat Mother as Tainted Forgotten"},
-    {i:578,c:"trinkets",n:"Expansion Pack",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Bethany"},
-    {i:579,c:"trinkets",n:"Beth's Essence",u:"Defeat Mother as Tainted Bethany"},
-    {i:580,c:"trinkets",n:"RC Remote",u:"Defeat Isaac, ???, Satan and The Lamb as Tainted Jacob"},
-    {i:581,c:"trinkets",n:"Found Soul",u:"Defeat Mother as Tainted Jacob"},
-    {i:582,c:"items",n:"Member Card",u:"Spend 40+ coins in a single Shop"},
-    {i:583,c:"items",n:"Golden Razor",u:"Obtain 99 coins. Then spend every single one of them in a single run"},
-    {i:584,c:"items",n:"Spindown Dice",u:"Defeat Delirium as Tainted Isaac"},
-    {i:585,c:"items",n:"Hypercoagulation",u:"Defeat Delirium as Tainted Magdalene"},
-    {i:586,c:"items",n:"Bag of Crafting",u:"Defeat Delirium as Tainted Cain"},
-    {i:587,c:"items",n:"Dark Arts",u:"Defeat Delirium as Tainted Judas"},
-    {i:588,c:"items",n:"IBS",u:"Defeat Delirium as Tainted ???"},
-    {i:589,c:"items",n:"Sumptorium",u:"Defeat Delirium as Tainted Eve"},
-    {i:590,c:"items",n:"Berserk!",u:"Defeat Delirium as Tainted Samson"},
-    {i:591,c:"items",n:"Hemoptysis",u:"Defeat Delirium as Tainted Azazel"},
-    {i:592,c:"items",n:"Flip",u:"Defeat Delirium as Tainted Lazarus"},
-    {i:593,c:"hitos",n:"Corrupted Data",u:"Defeat Delirium as Tainted Eden"},
-    {i:594,c:"items",n:"Ghost Bombs",u:"Defeat Delirium as Tainted Lost"},
-    {i:595,c:"items",n:"Gello",u:"Defeat Delirium as Tainted Lilith"},
-    {i:596,c:"items",n:"Keeper's Kin",u:"Defeat Delirium as Tainted Keeper"},
-    {i:597,c:"items",n:"Abyss",u:"Defeat Delirium as Tainted Apollyon"},
-    {i:598,c:"items",n:"Decap Attack",u:"Defeat Delirium as Tainted Forgotten"},
-    {i:599,c:"items",n:"Lemegeton",u:"Defeat Delirium as Tainted Bethany"},
-    {i:600,c:"items",n:"Anima Sola",u:"Defeat Delirium as Tainted Jacob"},
-    {i:601,c:"trinkets",n:"Mega Chest",u:"Defeat Mega Satan as Tainted Isaac"},
-    {i:602,c:"trinkets",n:"Queen of Hearts",u:"Defeat Mega Satan as Tainted Magdalene"},
-    {i:603,c:"trinkets",n:"Gold Pill",u:"Defeat Mega Satan as Tainted Cain"},
-    {i:604,c:"trinkets",n:"Black Sack",u:"Defeat Mega Satan as Tainted Judas"},
-    {i:605,c:"hitos",n:"Charming Poop",u:"Defeat Mega Satan as Tainted ???"},
-    {i:606,c:"trinkets",n:"Horse Pill",u:"Defeat Mega Satan as Tainted Eve"},
-    {i:607,c:"hitos",n:"Crane Game",u:"Defeat Mega Satan as Tainted Samson"},
-    {i:608,c:"hitos",n:"Hell Game",u:"Defeat Mega Satan as Tainted Azazel"},
-    {i:609,c:"trinkets",n:"Wooden Chest",u:"Defeat Mega Satan as Tainted Lazarus"},
-    {i:610,c:"trinkets",n:"Wild Card",u:"Defeat Mega Satan as Tainted Eden"},
-    {i:611,c:"trinkets",n:"Haunted Chest",u:"Defeat Mega Satan as Tainted Lost"},
-    {i:612,c:"hitos",n:"Fool's Gold",u:"Defeat Mega Satan as Tainted Lilith"},
-    {i:613,c:"trinkets",n:"Golden Penny",u:"Defeat Mega Satan as Tainted Keeper"},
-    {i:614,c:"hitos",n:"Rotten Beggar",u:"Defeat Mega Satan as Tainted Apollyon"},
-    {i:615,c:"trinkets",n:"Golden Battery",u:"Defeat Mega Satan as Tainted Forgotten"},
-    {i:616,c:"hitos",n:"Confessional",u:"Defeat Mega Satan as Tainted Bethany"},
-    {i:617,c:"hitos",n:"Golden Trinket",u:"Defeat Mega Satan as Tainted Jacob"},
-    {i:618,c:"trinkets",n:"Soul of Isaac",u:"Defeat Hush and Boss Rush as Tainted Isaac"},
-    {i:619,c:"trinkets",n:"Soul of Magdalene",u:"Defeat Hush and Boss Rush as Tainted Magdalene"},
-    {i:620,c:"trinkets",n:"Soul of Cain",u:"Defeat Hush and Boss Rush as Tainted Cain"},
-    {i:621,c:"trinkets",n:"Soul of Judas",u:"Defeat Hush and Boss Rush as Tainted Judas"},
-    {i:622,c:"trinkets",n:"Soul of ???",u:"Defeat Hush and Boss Rush as Tainted ???"},
-    {i:623,c:"trinkets",n:"Soul of Eve",u:"Defeat Hush and Boss Rush as Tainted Eve"},
-    {i:624,c:"trinkets",n:"Soul of Samson",u:"Defeat Hush and Boss Rush as Tainted Samson"},
-    {i:625,c:"trinkets",n:"Soul of Azazel",u:"Defeat Hush and Boss Rush as Tainted Azazel"},
-    {i:626,c:"trinkets",n:"Soul of Lazarus",u:"Defeat Hush and Boss Rush as Tainted Lazarus"},
-    {i:627,c:"trinkets",n:"Soul of Eden",u:"Defeat Hush and Boss Rush as Tainted Eden"},
-    {i:628,c:"trinkets",n:"Soul of the Lost",u:"Defeat Hush and Boss Rush as Tainted Lost"},
-    {i:629,c:"trinkets",n:"Soul of Lilith",u:"Defeat Hush and Boss Rush as Tainted Lilith"},
-    {i:630,c:"trinkets",n:"Soul of the Keeper",u:"Defeat Hush and Boss Rush as Tainted Keeper"},
-    {i:631,c:"trinkets",n:"Soul of Apollyon",u:"Defeat Hush and Boss Rush as Tainted Apollyon"},
-    {i:632,c:"trinkets",n:"Soul of the Forgotten",u:"Defeat Hush and Boss Rush as Tainted Forgotten"},
-    {i:633,c:"trinkets",n:"Soul of Bethany",u:"Defeat Hush and Boss Rush as Tainted Bethany"},
-    {i:634,c:"trinkets",n:"Soul of Jacob and Esau",u:"Defeat Hush and Boss Rush as Tainted Jacob"},
-    {i:635,c:"hitos",n:"A Strange Door",u:"Defeat Mother"},
-    {i:636,c:"items",n:"Death Certificate",u:"Earn all Hard mode completion marks for all characters, including tainted ones"},
-    {i:637,c:"hitos",n:"Dead God",u:"Unlock all the other achievements and collect every item in the game"},
+    {i:1,c:"personajes",n:"Magdalene",u:"Ten 7 o más Red Heart containers a la vez"},
+    {i:2,c:"personajes",n:"Cain",u:"Ten 55 monedas a la vez"},
+    {i:3,c:"personajes",n:"Judas",u:"Derrota a Satan"},
+    {i:4,c:"hitos",n:"The Womb",u:"Derrota a Mom"},
+    {i:5,c:"items",n:"The Harbingers",u:"Derrota a Mom"},
+    {i:6,c:"items",n:"A Cube of Meat",u:"Derrota a Mom"},
+    {i:7,c:"items",n:"The Book of Revelations",u:"Derrota a un Harbinger"},
+    {i:8,c:"items",n:"A Noose",u:"Derrota a Mom's Heart 3 veces"},
+    {i:9,c:"items",n:"The Nail",u:"Completa Boss Rush con Azazel"},
+    {i:10,c:"items",n:"A Quarter",u:"Derrota a Mom's Heart 8 veces"},
+    {i:11,c:"items",n:"A Fetus in a Jar",u:"Derrota a Mom's Heart 9 veces"},
+    {i:12,c:"items",n:"A Small Rock",u:"Destruye 100 Tinted Rocks"},
+    {i:13,c:"items",n:"Monstro's Tooth",u:"Pasa el capítulo 1"},
+    {i:14,c:"items",n:"Lil' Chubby",u:"Pasa el capítulo 2"},
+    {i:15,c:"items",n:"Loki's Horns",u:"Derrota a Lokii"},
+    {i:16,c:"items",n:"Something From The Future",u:"Pasa The Basement 40 veces"},
+    {i:17,c:"items",n:"Something Cute",u:"Pasa el capítulo 2 30 veces"},
+    {i:18,c:"items",n:"Something Sticky",u:"Pasa el capítulo 3 20 veces"},
+    {i:19,c:"items",n:"A Bandage",u:"Crea una Super Bandage Girl recogiendo 4 Balls of Bandages en una run"},
+    {i:20,c:"items",n:"A Cross",u:"Derrota a Isaac con Magdalene"},
+    {i:21,c:"items",n:"A Bag of Pennies",u:"Derrota a Isaac con Cain"},
+    {i:22,c:"items",n:"The Book of Sin",u:"Derrota a los 7 pecados capitales"},
+    {i:23,c:"items",n:"Little Gish",u:"Derrota a Gish"},
+    {i:24,c:"items",n:"Little Steven",u:"Derrota a Steven"},
+    {i:25,c:"items",n:"Little C.H.A.D.",u:"Derrota a C.H.A.D."},
+    {i:26,c:"items",n:"A Gamekid",u:"Visita 10 Arcades"},
+    {i:27,c:"items",n:"A Halo",u:"Derrota a Mom, Mom's Heart or It Lives usando The Bible"},
+    {i:28,c:"items",n:"Mr. Mega",u:"Destruye 10 Tinted Rocks"},
+    {i:29,c:"personajes",n:"The D6",u:"Derrota a Isaac con ???"},
+    {i:30,c:"items",n:"The Scissors",u:"Muere 100 veces"},
+    {i:31,c:"items",n:"The Parasite",u:"Recoge cualquier 2 de estos items en una sola run: Bob's Rotten Head, Dead Cat, Cricket's Head, Tammy's Head"},
+    {i:32,c:"personajes",n:"???",u:"Derrota a Mom's Heart 10 veces"},
+    {i:33,c:"hitos",n:"Everything Is Terrible!!!",u:"Derrota a Mom's Heart 5 veces"},
+    {i:34,c:"items",n:"It Lives!",u:"Derrota a Mom's Heart 11 veces"},
+    {i:35,c:"items",n:"Mom's Contact",u:"Consigue tres items Yes Mother? en una run"},
+    {i:36,c:"items",n:"The Necronomicon",u:"Usa XIII - Death 4 times"},
+    {i:37,c:"hitos",n:"Basement Boy",u:"Pasa el capítulo 1 sin recibir daño"},
+    {i:38,c:"hitos",n:"Spelunker Boy",u:"Pasa el capítulo 2 sin recibir daño"},
+    {i:39,c:"hitos",n:"Dark Boy",u:"Pasa el capítulo 3 sin recibir daño"},
+    {i:40,c:"hitos",n:"Mama's Boy",u:"Pasa el capítulo 4 sin recibir daño"},
+    {i:41,c:"hitos",n:"Golden God!",u:"Derrota a ??? y The Lamb"},
+    {i:42,c:"personajes",n:"Eve",u:"No recojas ningún corazón durante 2 pisos seguidos"},
+    {i:43,c:"items",n:"Mom's Knife",u:"Derrota a Satan con Isaac"},
+    {i:44,c:"items",n:"The Razor",u:"Derrota a Satan con Eve"},
+    {i:45,c:"items",n:"Guardian Angel",u:"Derrota a Satan con Magdalene"},
+    {i:46,c:"items",n:"A Bag of Bombs",u:"Derrota a Satan con Cain"},
+    {i:47,c:"items",n:"Demon Baby",u:"Derrota a The Lamb con Azazel"},
+    {i:48,c:"items",n:"Forget Me Now",u:"Derrota a Satan con ???"},
+    {i:49,c:"items",n:"The D20",u:"Derrota a ??? con Isaac"},
+    {i:50,c:"items",n:"Celtic Cross",u:"Derrota a ??? con Magdalene"},
+    {i:51,c:"items",n:"Abel",u:"Derrota a The Lamb con Cain"},
+    {i:52,c:"trinkets",n:"Curved Horn",u:"Derrota a The Lamb con Judas"},
+    {i:53,c:"items",n:"Sacrificial Dagger",u:"Derrota a ??? con Eve"},
+    {i:54,c:"items",n:"Bloody Lust",u:"Derrota a Isaac con Samson"},
+    {i:55,c:"trinkets",n:"Blood Penny",u:"Derrota a ??? con Samson"},
+    {i:56,c:"items",n:"Blood Rights",u:"Derrota a Satan con Samson"},
+    {i:57,c:"items",n:"The Polaroid",u:"Derrota a Isaac 5 veces"},
+    {i:58,c:"items",n:"Dad's Key",u:"Recoge las dos Key Pieces de los Ángeles en una run"},
+    {i:59,c:"items",n:"Blue Candle",u:"Dona 900 monedas a la Donation Machine"},
+    {i:60,c:"trinkets",n:"Burnt Penny",u:"Completa Beans! (reto #13)"},
+    {i:61,c:"trinkets",n:"Lucky Toe",u:"Vuela a 20 Shopkeepers"},
+    {i:62,c:"items",n:"Epic Fetus",u:"Completa The Family Man (reto #19)"},
+    {i:63,c:"items",n:"SMB Super Fan",u:"Completa It's in the Cards (reto #14)"},
+    {i:64,c:"trinkets",n:"Counterfeit Coin",u:"Juega al Shell Game 100 veces"},
+    {i:65,c:"items",n:"Guppy's Hairball",u:"Conviértete en Guppy"},
+    {i:66,c:"items",n:"A Forgotten Horseman",u:"Toma 10 items de Angel Rooms"},
+    {i:67,c:"personajes",n:"Samson",u:"Completa 2 pisos seguidos sin recibir daño"},
+    {i:68,c:"items",n:"Something Icky",u:"Derrota a Isaac 10 veces"},
+    {i:69,c:"hitos",n:"!Platinum God!",u:"Recoge todos los items sin DLC del juego, desbloquea todos los secretos y endings excepto The Lost y sus 6 items desbloqueables"},
+    {i:70,c:"trinkets",n:"Isaac's Head",u:"Completa Boss Rush con Isaac"},
+    {i:71,c:"trinkets",n:"Maggy's Faith",u:"Derrota a The Lamb con Magdalene"},
+    {i:72,c:"trinkets",n:"Judas' Tongue",u:"Derrota a Satan con Judas"},
+    {i:73,c:"trinkets",n:"???'s Soul",u:"Derrota a The Lamb con ???"},
+    {i:74,c:"trinkets",n:"Samson's Lock",u:"Derrota a The Lamb con Samson"},
+    {i:75,c:"trinkets",n:"Cain's Eye",u:"Derrota a ??? con Cain"},
+    {i:76,c:"trinkets",n:"Eve's Bird Foot",u:"Derrota a Isaac con Eve"},
+    {i:77,c:"trinkets",n:"The Left Hand",u:"Derrota a Ultra Pride con any character, or ??? as Judas"},
+    {i:78,c:"items",n:"The Negative",u:"Derrota a Satan 5 veces"},
+    {i:79,c:"personajes",n:"Azazel",u:"Haz 3 tratos con el Diablo en una run"},
+    {i:80,c:"personajes",n:"Lazarus",u:"Ten 4 o más Soul Hearts a la vez"},
+    {i:81,c:"personajes",n:"Eden",u:"Completa el capítulo 4"},
+    {i:82,c:"personajes",n:"The Lost",u:"Muere en una Sacrifice Room sosteniendo Missing Poster"},
+    {i:83,c:"hitos",n:"Dead Boy",u:"Completa el capítulo 6 sin recibir daño"},
+    {i:84,c:"hitos",n:"The Real Platinum God",u:"Recoge todos los items sin DLC y desbloquea todos los endings."},
+    {i:85,c:"trinkets",n:"Lucky Rock",u:"Destruye 100 rocas"},
+    {i:86,c:"hitos",n:"The Cellar",u:"Derrota a todos los jefes de The Basement (no es necesario derrotarlos dentro de The Basement)"},
+    {i:87,c:"hitos",n:"The Catacombs",u:"Derrota a todos los jefes de The Caves (no es necesario derrotarlos dentro de The Caves)"},
+    {i:88,c:"hitos",n:"The Necropolis",u:"Derrota a todos los jefes de The Depths (no es necesario derrotarlos dentro de The Depths)"},
+    {i:89,c:"trinkets",n:"Rune of Hagalaz",u:"Completa Pitch Black (reto #1)"},
+    {i:90,c:"trinkets",n:"Rune of Jera",u:"Completa High Brow (reto #2)"},
+    {i:91,c:"trinkets",n:"Rune of Ehwaz",u:"Completa Head Trauma (reto #3)"},
+    {i:92,c:"trinkets",n:"Rune of Dagaz",u:"Completa Darkness Falls (reto #4)"},
+    {i:93,c:"trinkets",n:"Rune of Ansuz",u:"Completa The Tank (reto #5)"},
+    {i:94,c:"trinkets",n:"Rune of Perthro",u:"Completa Solar System (reto #6)"},
+    {i:95,c:"trinkets",n:"Rune of Berkano",u:"Completa Purist (reto #20)"},
+    {i:96,c:"trinkets",n:"Rune of Algiz",u:"Completa Cat Got Your Tongue (reto #8)"},
+    {i:97,c:"trinkets",n:"Chaos Card",u:"Completa Demo Man (reto #9)"},
+    {i:98,c:"trinkets",n:"Credit Card",u:"Completa Cursed (reto #10)"},
+    {i:99,c:"trinkets",n:"Rules Card",u:"Completa Glass Cannon (reto #11)"},
+    {i:100,c:"trinkets",n:"Card Against Humanity",u:"Completa When Life Gives You Lemons (reto #12)"},
+    {i:101,c:"trinkets",n:"Swallowed Penny",u:"Completa Slow Roll (reto #15)"},
+    {i:102,c:"items",n:"Robo-Baby 2.0",u:"Completa Computer Savvy (reto #16)"},
+    {i:103,c:"items",n:"Death's Touch",u:"Completa Waka Waka (reto #17)"},
+    {i:104,c:"items",n:"Technology .5",u:"Completa The Host (reto #18)"},
+    {i:105,c:"items",n:"Missing No.",u:"Completa Boss Rush con Lazarus"},
+    {i:106,c:"items",n:"Isaac's Tears",u:"Derrota a Isaac con Isaac"},
+    {i:107,c:"items",n:"Guillotine",u:"Derrota a Isaac con Judas"},
+    {i:108,c:"items",n:"Judas' Shadow",u:"Completa Boss Rush con Judas"},
+    {i:109,c:"items",n:"Maggy's Bow",u:"Completa Boss Rush con Magdalene"},
+    {i:110,c:"items",n:"Cain's Other Eye",u:"Completa Boss Rush con Cain"},
+    {i:111,c:"trinkets",n:"Black Lipstick",u:"Derrota a The Lamb con Eve"},
+    {i:112,c:"items",n:"Eve's Mascara",u:"Completa Boss Rush con Eve"},
+    {i:113,c:"items",n:"Fate",u:"Derrota a ??? con ???"},
+    {i:114,c:"items",n:"???'s Only Friend",u:"Completa Boss Rush con ???"},
+    {i:115,c:"items",n:"Samson's Chains",u:"Completa Boss Rush con Samson"},
+    {i:116,c:"items",n:"Lazarus' Rags",u:"Derrota a Isaac con Lazarus"},
+    {i:117,c:"trinkets",n:"Broken Ankh",u:"Derrota a Satan con Lazarus"},
+    {i:118,c:"trinkets",n:"Store Credit",u:"Derrota a ??? con Lazarus"},
+    {i:119,c:"items",n:"Pandora's Box",u:"Derrota a The Lamb con Lazarus"},
+    {i:120,c:"trinkets",n:"Suicide King",u:"Completa Suicide King (reto #7)"},
+    {i:121,c:"items",n:"Blank Card",u:"Derrota a Isaac con Eden"},
+    {i:122,c:"items",n:"Book of Secrets",u:"Derrota a Satan con Eden"},
+    {i:123,c:"trinkets",n:"Mysterious Paper",u:"Pasa ??? con Eden"},
+    {i:124,c:"items",n:"Mystery Sack",u:"Derrota a The Lamb con Eden"},
+    {i:125,c:"items",n:"Undefined",u:"Completa Boss Rush con Eden"},
+    {i:126,c:"items",n:"Satanic Bible",u:"Derrota a Isaac con Azazel"},
+    {i:127,c:"trinkets",n:"Daemon's Tail",u:"Derrota a Satan con Azazel"},
+    {i:128,c:"items",n:"Abaddon",u:"Derrota a ??? con Azazel"},
+    {i:129,c:"items",n:"Isaac's Heart",u:"Derrota a Isaac con The Lost"},
+    {i:130,c:"items",n:"The Mind",u:"Derrota a Satan con The Lost"},
+    {i:131,c:"items",n:"The Body",u:"Derrota a ??? con The Lost"},
+    {i:132,c:"items",n:"The Soul",u:"Derrota a The Lamb con The Lost"},
+    {i:133,c:"items",n:"The D100",u:"Completa Boss Rush con The Lost"},
+    {i:134,c:"items",n:"Blue Map",u:"Dona 10 monedas a la Donation Machine"},
+    {i:135,c:"items",n:"There's Options",u:"Dona 50 monedas a la Donation Machine"},
+    {i:136,c:"items",n:"Black Candle",u:"Dona 150 monedas a la Donation Machine"},
+    {i:137,c:"items",n:"Red Candle",u:"Dona 400 monedas a la Donation Machine"},
+    {i:138,c:"items",n:"Stop Watch",u:"Dona 999 monedas a la Donation Machine"},
+    {i:139,c:"items",n:"Wire Coat Hanger",u:"Derrota a Mom's Heart 4 veces"},
+    {i:140,c:"items",n:"Ipecac",u:"Derrota a Mom's Heart 6 veces"},
+    {i:141,c:"items",n:"Experimental Treatment",u:"Derrota a Mom's Heart 7 veces"},
+    {i:142,c:"items",n:"Krampus",u:"Toma 20 items de Devil Rooms"},
+    {i:143,c:"items",n:"Head of Krampus",u:"Derrota a Krampus"},
+    {i:144,c:"hitos",n:"Super Meat Boy",u:"Crea un Super Meat Boy recogiendo Cube of Meat 4 veces en una run"},
+    {i:145,c:"items",n:"Butter Bean",u:"Destruye 100 popós"},
+    {i:146,c:"items",n:"Little Baggy",u:"Recoge 2 de: Roid Rage, The Virus, Growth Hormones, Experimental Treatment or Speed Ball"},
+    {i:147,c:"items",n:"Blood Bag",u:"Usa the Blood Donation Machine 30 times"},
+    {i:148,c:"items",n:"The D4",u:"Vuela 30 máquinas de Arcade"},
+    {i:149,c:"trinkets",n:"Missing Poster",u:"Derrota a The Lamb con Isaac"},
+    {i:150,c:"items",n:"Rubber Cement",u:"Derrota a Mom's Heart 2 veces"},
+    {i:151,c:"hitos",n:"Store Upgrade lv.1",u:"Dona 20 monedas a la Donation Machine"},
+    {i:152,c:"hitos",n:"Store Upgrade lv.2",u:"Dona 100 monedas a la Donation Machine"},
+    {i:153,c:"hitos",n:"Store Upgrade lv.3",u:"Dona 200 monedas a la Donation Machine"},
+    {i:154,c:"hitos",n:"Store Upgrade lv.4",u:"Dona 600 monedas a la Donation Machine"},
+    {i:155,c:"items",n:"Angels",u:"Completa el capítulo 6"},
+    {i:156,c:"items",n:"Godhead",u:"Consigue todas las marcas (5 / 9 sin el signo de centavo de Ultra Greed / 10 / 12) en modo Difícil con The Lost"},
+    {i:157,c:"retos",n:"Darkness Falls",u:"Derrota a Mom's Heart 11 veces"},
+    {i:158,c:"retos",n:"The Tank",u:"Ten 7 o más Red Heart containers a la vez"},
+    {i:159,c:"retos",n:"Solar System",u:"Derrota a Mom's Heart 3 veces"},
+    {i:160,c:"retos",n:"Suicide King",u:"Derrota a Mom's Heart 11 veces"},
+    {i:161,c:"retos",n:"Cat Got Your Tongue",u:"Conviértete en Guppy"},
+    {i:162,c:"retos",n:"Demo Man",u:"Derrota a Mom's Heart 9 veces"},
+    {i:163,c:"retos",n:"Cursed!",u:"Ten 7 o más Red Heart Containers a la vez"},
+    {i:164,c:"retos",n:"Glass Cannon",u:"Pasa The Family Man (challenge #19) and defeat Lokii"},
+    {i:165,c:"retos",n:"The Family Man",u:"Recoge las dos Key Pieces de los Ángeles en una run"},
+    {i:166,c:"retos",n:"Purist",u:"Derrota a Mom"},
+    {i:167,c:"marcas",n:"Lost Baby",u:"Derrota a Mom's Heart en modo Difícil con Isaac"},
+    {i:168,c:"marcas",n:"Cute Baby",u:"Derrota a Mom's Heart en modo Difícil con Magdalene"},
+    {i:169,c:"marcas",n:"Crow Baby",u:"Derrota a Mom's Heart en modo Difícil con Eve"},
+    {i:170,c:"marcas",n:"Shadow Baby",u:"Derrota a Mom's Heart en modo Difícil con Judas"},
+    {i:171,c:"marcas",n:"Glass Baby",u:"Derrota a Mom's Heart en modo Difícil con Cain"},
+    {i:172,c:"marcas",n:"Wrapped Baby",u:"Derrota a Mom's Heart en modo Difícil con Lazarus"},
+    {i:173,c:"marcas",n:"Begotten Baby",u:"Derrota a Mom's Heart en modo Difícil con Azazel"},
+    {i:174,c:"marcas",n:"Dead Baby",u:"Derrota a Mom's Heart en modo Difícil con ???"},
+    {i:175,c:"marcas",n:"-0- Baby",u:"Derrota a Mom's Heart en modo Difícil con The Lost"},
+    {i:176,c:"marcas",n:"Glitch Baby",u:"Derrota a Mom's Heart en modo Difícil con Eden"},
+    {i:177,c:"marcas",n:"Fighting Baby",u:"Derrota a Mom's Heart en modo Difícil con Samson"},
+    {i:178,c:"hitos",n:"Lord of the Flies",u:"Conviértete en Beelzebub"},
+    {i:179,c:"items",n:"Fart Baby",u:"Derrota a Hush con Isaac"},
+    {i:180,c:"items",n:"Purity",u:"Derrota a Hush con Magdalene"},
+    {i:181,c:"items",n:"D12",u:"Derrota a Hush con Cain"},
+    {i:182,c:"items",n:"Betrayal",u:"Derrota a Hush con Judas"},
+    {i:183,c:"items",n:"Fate's Reward",u:"Derrota a Hush con ???"},
+    {i:184,c:"items",n:"Athame",u:"Derrota a Hush con Eve"},
+    {i:185,c:"items",n:"Blind Rage",u:"Derrota a Hush con Samson"},
+    {i:186,c:"items",n:"Maw of the Void",u:"Derrota a Hush con Azazel"},
+    {i:187,c:"items",n:"Empty Vessel",u:"Derrota a Hush con Lazarus"},
+    {i:188,c:"items",n:"Eden's Blessing",u:"Derrota a Hush con Eden"},
+    {i:189,c:"items",n:"Sworn Protector",u:"Derrota a Hush con The Lost"},
+    {i:190,c:"items",n:"Incubus",u:"Derrota a Hush con Lilith"},
+    {i:191,c:"personajes",n:"Keeper now holds... A Penny!",u:"Derrota a Hush con Keeper"},
+    {i:192,c:"items",n:"Lil' Chest",u:"Derrota a Ultra Greed con Isaac"},
+    {i:193,c:"items",n:"Censer",u:"Derrota a Ultra Greed con Magdalene"},
+    {i:194,c:"items",n:"Evil Eye",u:"Derrota a Ultra Greed con Cain"},
+    {i:195,c:"items",n:"My Shadow",u:"Derrota a Ultra Greed con Judas"},
+    {i:196,c:"trinkets",n:"Cracked Dice",u:"Derrota a Ultra Greed con ???"},
+    {i:197,c:"trinkets",n:"Black Feather",u:"Derrota a Ultra Greed con Eve"},
+    {i:198,c:"items",n:"Lusty Blood",u:"Derrota a Ultra Greed con Samson"},
+    {i:199,c:"personajes",n:"Lilith",u:"Derrota a Ultra Greed con Azazel"},
+    {i:200,c:"items",n:"Key Bum",u:"Derrota a Ultra Greed con Lazarus"},
+    {i:201,c:"items",n:"GB Bug",u:"Derrota a Ultra Greed con Eden"},
+    {i:202,c:"items",n:"Zodiac",u:"Derrota a Ultra Greed con The Lost"},
+    {i:203,c:"items",n:"Box of Friends",u:"Derrota a Ultra Greed con Lilith"},
+    {i:204,c:"trinkets",n:"Rib of Greed",u:"Derrota a Ultra Greed con Keeper"},
+    {i:205,c:"marcas",n:"Cry Baby",u:"Derrota a Mega Satan con Isaac"},
+    {i:206,c:"marcas",n:"Red Baby",u:"Derrota a Mega Satan con Magdalene"},
+    {i:207,c:"marcas",n:"Green Baby",u:"Derrota a Mega Satan con Cain"},
+    {i:208,c:"marcas",n:"Brown Baby",u:"Derrota a Mega Satan con Judas"},
+    {i:209,c:"marcas",n:"Blue Baby",u:"Derrota a Mega Satan con ???"},
+    {i:210,c:"marcas",n:"Lil' Baby",u:"Derrota a Mega Satan con Eve"},
+    {i:211,c:"marcas",n:"Rage Baby",u:"Derrota a Mega Satan con Samson"},
+    {i:212,c:"marcas",n:"Black Baby",u:"Derrota a Mega Satan con Azazel"},
+    {i:213,c:"marcas",n:"Long Baby",u:"Derrota a Mega Satan con Lazarus"},
+    {i:214,c:"marcas",n:"Yellow Baby",u:"Derrota a Mega Satan con Eden"},
+    {i:215,c:"marcas",n:"White Baby",u:"Derrota a Mega Satan con The Lost"},
+    {i:216,c:"marcas",n:"Big Baby",u:"Derrota a Mega Satan con Lilith"},
+    {i:217,c:"marcas",n:"Noose Baby",u:"Derrota a Mega Satan con Keeper"},
+    {i:218,c:"items",n:"Rune Bag",u:"Derrota a Isaac con Lilith"},
+    {i:219,c:"items",n:"Cambion Conception",u:"Derrota a ??? con Lilith"},
+    {i:220,c:"items",n:"Serpent's Kiss",u:"Derrota a Satan con Lilith"},
+    {i:221,c:"items",n:"Succubus",u:"Derrota a The Lamb con Lilith"},
+    {i:222,c:"items",n:"Immaculate Conception",u:"Completa Boss Rush con Lilith"},
+    {i:223,c:"marcas",n:"Goat Head Baby",u:"Derrota a Mom's Heart en modo Difícil con Lilith"},
+    {i:224,c:"trinkets",n:"Gold Heart",u:"Completa XXXXXXXXL (reto #21)"},
+    {i:225,c:"trinkets",n:"Get out of Jail Free Card",u:"Completa SPEED! (reto #22)"},
+    {i:226,c:"trinkets",n:"Gold Bomb",u:"Completa Blue Bomber (reto #23)"},
+    {i:227,c:"trinkets",n:"2 new pills",u:"Completa PAY TO PLAY (reto #24)"},
+    {i:228,c:"trinkets",n:"2 new pills",u:"Completa Have a Heart (reto #25)"},
+    {i:229,c:"trinkets",n:"Poker Chip",u:"Completa I RULE! (reto #26)"},
+    {i:230,c:"trinkets",n:"Stud Finder",u:"Completa BRAINS! (reto #27)"},
+    {i:231,c:"items",n:"D8",u:"Completa PRIDE DAY! (reto #28)"},
+    {i:232,c:"items",n:"Kidney Stone",u:"Completa Onan's Streak (reto #29)"},
+    {i:233,c:"trinkets",n:"Blank Rune",u:"Completa The Guardian (reto #30)"},
+    {i:234,c:"hitos",n:"Blue Womb",u:"Derrota a Mom's Heart 10 veces"},
+    {i:235,c:"hitos",n:"1001%",u:"Desbloquea todos los secretos y endings y recoge todos los items del juego"},
+    {i:236,c:"personajes",n:"Keeper holds Wooden Nickel",u:"Derrota a Isaac con Keeper"},
+    {i:237,c:"personajes",n:"Keeper holds Store Key",u:"Derrota a Satan con Keeper"},
+    {i:238,c:"items",n:"Deep Pockets",u:"Derrota a ??? con Keeper"},
+    {i:239,c:"trinkets",n:"Karma",u:"Derrota a The Lamb con Keeper"},
+    {i:240,c:"trinkets",n:"Sticky Nickels",u:"Completa Boss Rush con Keeper"},
+    {i:241,c:"marcas",n:"Super Greed Baby",u:"Derrota a Mom's Heart en modo Difícil con Keeper"},
+    {i:242,c:"trinkets",n:"Lucky Pennies",u:"Dona 1 moneda a la Greed Donation Machine"},
+    {i:243,c:"hitos",n:"Special Hanging Shopkeepers",u:"Dona 10 monedas a la Greed Donation Machine"},
+    {i:244,c:"items",n:"Wooden Nickel",u:"Dona 30 monedas a la Greed Donation Machine"},
+    {i:245,c:"personajes",n:"Cain holds Paperclip",u:"Dona 68 monedas a la Greed Donation Machine"},
+    {i:246,c:"hitos",n:"Everything is Terrible 2!!!",u:"Dona 111 monedas a la Greed Donation Machine"},
+    {i:247,c:"hitos",n:"Special Shopkeepers",u:"Dona 234 monedas a la Greed Donation Machine"},
+    {i:248,c:"personajes",n:"Eve now holds Razor Blade",u:"Dona 439 monedas a la Greed Donation Machine"},
+    {i:249,c:"trinkets",n:"Store Key",u:"Dona 666 monedas a la Greed Donation Machine"},
+    {i:250,c:"personajes",n:"Lost holds Holy Mantle",u:"Dona 879 monedas a la Greed Donation Machine"},
+    {i:251,c:"personajes",n:"Keeper",u:"Dona 1000 monedas a la Greed Donation Machine"},
+    {i:252,c:"marcas",n:"Hive Baby",u:"Consigue todas las marcas de modo Difícil con ???"},
+    {i:253,c:"marcas",n:"Buddy Baby",u:"Consigue todas las marcas de modo Difícil con Isaac"},
+    {i:254,c:"marcas",n:"Colorful Baby",u:"Consigue todas las marcas de modo Difícil con Magdalene"},
+    {i:255,c:"marcas",n:"Whore Baby",u:"Consigue todas las marcas de modo Difícil con Eve"},
+    {i:256,c:"marcas",n:"Cracked Baby",u:"Consigue todas las marcas de modo Difícil con Eden"},
+    {i:257,c:"marcas",n:"Dripping Baby",u:"Consigue todas las marcas de modo Difícil con Lazarus"},
+    {i:258,c:"marcas",n:"Blinding Baby",u:"Usa Blank Card sosteniendo XIX - The Sun"},
+    {i:259,c:"marcas",n:"Sucky Baby",u:"Consigue todas las marcas de modo Difícil con Azazel"},
+    {i:260,c:"marcas",n:"Dark Baby",u:"Consigue todas las marcas de modo Difícil con Lilith"},
+    {i:261,c:"marcas",n:"Picky Baby",u:"Consigue todas las marcas de modo Difícil con Cain"},
+    {i:262,c:"marcas",n:"Revenge Baby",u:"Consigue todas las marcas de modo Difícil con Samson"},
+    {i:263,c:"marcas",n:"Belial Baby",u:"Consigue todas las marcas de modo Difícil con Judas"},
+    {i:264,c:"marcas",n:"Sale Baby",u:"Consigue todas las marcas de modo Difícil con Keeper"},
+    {i:265,c:"retos",n:"XXXXXXXXL",u:"Derrota a Mom"},
+    {i:266,c:"retos",n:"SPEED!",u:"Derrota a Mom"},
+    {i:267,c:"retos",n:"Blue Bomber",u:"Destruye 10 Tinted Rocks y derrota a Mom's Heart 11 veces"},
+    {i:268,c:"retos",n:"PAY TO PLAY",u:"Derrota a Isaac con Cain"},
+    {i:269,c:"retos",n:"Have a Heart",u:"Derrota a Mom"},
+    {i:270,c:"retos",n:"I RULE!",u:"Derrota a ??? or The Lamb, and defeat Satan con Isaac"},
+    {i:271,c:"retos",n:"BRAINS!",u:"Derrota a Isaac 5 veces"},
+    {i:272,c:"retos",n:"PRIDE DAY!",u:"Derrota a Mom"},
+    {i:273,c:"retos",n:"Onan's Streak",u:"Derrota a Mom"},
+    {i:274,c:"retos",n:"The Guardian",u:"Derrota a Mom"},
+    {i:275,c:"hitos",n:"Generosity",u:"Dona 999 monedas a la Greed Donation Machine"},
+    {i:276,c:"items",n:"Mega",u:"Derrota a Mega Satan con every character"},
+    {i:277,c:"retos",n:"Backasswards",u:"Derrota a ??? o The Lamb"},
+    {i:278,c:"retos",n:"Aprils fool",u:"Derrota a Mom"},
+    {i:279,c:"retos",n:"Pokey Mans",u:"Derrota a Mom's Heart 11 veces"},
+    {i:280,c:"retos",n:"Ultra Hard",u:"Derrota a ??? o The Lamb. Necesitas The Polaroid o The Negative (excepto llegando a Dark Room por una Sacrifice Room)."},
+    {i:281,c:"retos",n:"PONG",u:"Derrota a Isaac 5 veces"},
+    {i:282,c:"items",n:"D Infinity",u:"Derrota a Delirium con Isaac"},
+    {i:283,c:"items",n:"Eucharist",u:"Derrota a Delirium con Magdalene"},
+    {i:284,c:"trinkets",n:"Silver Dollar",u:"Derrota a Delirium con Cain"},
+    {i:285,c:"items",n:"Shade",u:"Derrota a Delirium con Judas"},
+    {i:286,c:"marcas",n:"King Baby",u:"Derrota a Delirium con ???"},
+    {i:287,c:"trinkets",n:"Bloody Crown",u:"Derrota a Delirium con Samson"},
+    {i:288,c:"items",n:"Dull Razor",u:"Derrota a Delirium con Eve"},
+    {i:289,c:"items",n:"Eden's Soul",u:"Derrota a Delirium con Eden"},
+    {i:290,c:"items",n:"Dark Prince's Crown",u:"Derrota a Delirium con Azazel"},
+    {i:291,c:"items",n:"Compound Fracture",u:"Derrota a Delirium con Lazarus"},
+    {i:292,c:"items",n:"Euthanasia",u:"Derrota a Delirium con Lilith"},
+    {i:293,c:"trinkets",n:"Holy Card",u:"Derrota a Delirium con The Lost"},
+    {i:294,c:"items",n:"Crooked Penny",u:"Derrota a Delirium con Keeper"},
+    {i:295,c:"items",n:"Void",u:"Derrota a Delirium con Apollyon"},
+    {i:296,c:"items",n:"D1",u:"Derrota a Ultra Greedier con Isaac"},
+    {i:297,c:"items",n:"Glyph of Balance",u:"Derrota a Ultra Greedier con Magdalene"},
+    {i:298,c:"items",n:"Sack of Sacks",u:"Derrota a Ultra Greedier con Cain"},
+    {i:299,c:"items",n:"Eye of Belial",u:"Derrota a Ultra Greedier con Judas"},
+    {i:300,c:"trinkets",n:"Meconium",u:"Derrota a Ultra Greedier con ???"},
+    {i:301,c:"trinkets",n:"Stem Cell",u:"Derrota a Ultra Greedier con Samson"},
+    {i:302,c:"trinkets",n:"Crow Heart",u:"Derrota a Ultra Greedier con Eve"},
+    {i:303,c:"items",n:"Metronome",u:"Derrota a Ultra Greedier con Eden"},
+    {i:304,c:"trinkets",n:"Bat Wing",u:"Derrota a Ultra Greedier con Azazel"},
+    {i:305,c:"items",n:"Plan C",u:"Derrota a Ultra Greedier con Lazarus"},
+    {i:306,c:"items",n:"Duality",u:"Derrota a Ultra Greedier con Lilith"},
+    {i:307,c:"items",n:"Dad's Lost Coin",u:"Derrota a Ultra Greedier con The Lost"},
+    {i:308,c:"items",n:"Eye of Greed",u:"Derrota a Ultra Greedier con Keeper"},
+    {i:309,c:"trinkets",n:"Black Rune",u:"Derrota a Ultra Greedier con Apollyon"},
+    {i:310,c:"trinkets",n:"Locust of Wrath",u:"Derrota a Isaac con Apollyon"},
+    {i:311,c:"trinkets",n:"Locust of Pestilence",u:"Derrota a Satan con Apollyon"},
+    {i:312,c:"trinkets",n:"Locust of Famine",u:"Derrota a ??? con Apollyon"},
+    {i:313,c:"trinkets",n:"Locust of Death",u:"Derrota a The Lamb con Apollyon"},
+    {i:314,c:"trinkets",n:"Locust of Conquest",u:"Completa Boss Rush con Apollyon"},
+    {i:315,c:"items",n:"Hushy",u:"Derrota a Hush con Apollyon"},
+    {i:316,c:"items",n:"Brown Nugget",u:"Derrota a Ultra Greed con Apollyon"},
+    {i:317,c:"marcas",n:"Mort Baby",u:"Derrota a Mega Satan con Apollyon"},
+    {i:318,c:"items",n:"Smelter",u:"Derrota a Mom's Heart or It Lives! en modo Difícil con Apollyon"},
+    {i:319,c:"marcas",n:"Apollyon Baby",u:"Consigue todas las marcas de modo Difícil con Apollyon"},
+    {i:320,c:"hitos",n:"New Area",u:"Derrota a Hush"},
+    {i:321,c:"trinkets",n:"Once More with Feeling!",u:"Completa una Victory Lap derrotando a The Lamb"},
+    {i:322,c:"trinkets",n:"Hat trick!",u:"Consigue una racha de 3 victorias"},
+    {i:323,c:"hitos",n:"5 Nights at Mom's",u:"Consigue una racha de 5 victorias, usando un personaje distinto en cada una"},
+    {i:324,c:"trinkets",n:"Sin collector",u:"Completa todas las entradas del Bestiario"},
+    {i:325,c:"trinkets",n:"Dedication",u:"Participa en 31 retos diarios (no tienen que ser consecutivos; cuenta aunque mueras en la primera sala)"},
+    {i:326,c:"trinkets",n:"ZIP!",u:"Derrota a The Lamb en menos de 20 minutos"},
+    {i:327,c:"trinkets",n:"It's the Key",u:"Derrota a The Lamb sin recoger corazones, monedas ni bombas en toda la run"},
+    {i:328,c:"trinkets",n:"Mr. Resetter!",u:"Reinicia 7 veces seguidas"},
+    {i:329,c:"trinkets",n:"Living on the edge",u:"Completa un capítulo (pisos I y II) después de The Basement, de principio a fin, con solo medio corazón de vida (puedes usar The Lost)"},
+    {i:330,c:"trinkets",n:"U Broke It!",u:"Consigue 50 items en una run (p. ej. con dos Steam Sale y Restock — los duplicados de pasivos/familiars cuentan, p. ej. varios Breakfast)"},
+    {i:331,c:"personajes",n:"Laz Bleeds More!",u:"Completa Backasswards (reto #31)"},
+    {i:332,c:"personajes",n:"Maggy Now Holds a Pill!",u:"Completa Aprils Fool (reto #32)"},
+    {i:333,c:"trinkets",n:"Charged Key",u:"Completa Pokey Mans (reto #33)"},
+    {i:334,c:"personajes",n:"Samson Feels Healthy!",u:"Completa Ultra Hard (reto #34)"},
+    {i:335,c:"items",n:"Greed's Gullet",u:"Completa Pong (reto #35)"},
+    {i:336,c:"trinkets",n:"The Marathon",u:"Consigue una racha de 5 victorias en los retos diarios (con score mayor a 0)"},
+    {i:337,c:"hitos",n:"RERUN",u:"Completa 3 Victory Laps y empieza una 4.ª"},
+    {i:338,c:"items",n:"Delirious",u:"Derrota a Delirium"},
+    {i:339,c:"hitos",n:"1000000%",u:"Recoge todos los items del juego, desbloquea todos los secretos y endings, y completa el bestiario"},
+    {i:340,c:"personajes",n:"Apollyon",u:"Derrota a Mega Satan"},
+    {i:341,c:"hitos",n:"Greedier!",u:"Dona 500 monedas a la Greed Donation Machine"},
+    {i:342,c:"hitos",n:"Burning Basement",u:"Derrota a Mom's Heart 11 veces"},
+    {i:343,c:"hitos",n:"Flooded Caves",u:"Derrota a It Lives 16 veces"},
+    {i:344,c:"hitos",n:"Dank Depths",u:"Derrota a It Lives 21 veces"},
+    {i:345,c:"hitos",n:"Scarred Womb",u:"Derrota a It Lives 30 veces"},
+    {i:346,c:"items",n:"Something wicked this way comes!",u:"Derrota a ??? con 3 different characters"},
+    {i:347,c:"items",n:"Something wicked this way comes+!",u:"Derrota a ??? con 6 different characters"},
+    {i:348,c:"hitos",n:"The gate is open!",u:"Derrota a The Lamb"},
+    {i:349,c:"items",n:"Black Hole",u:"Derrota a 20 portales"},
+    {i:350,c:"items",n:"Mystery Gift",u:"Destruye 500 rocas"},
+    {i:351,c:"items",n:"Sprinkler",u:"Pasa el capítulo 1 sin recibir daño"},
+    {i:352,c:"items",n:"Angry Fly",u:"Conviértete en Beelzebub"},
+    {i:353,c:"items",n:"Bozo",u:"Destruye 5 popós de arcoíris"},
+    {i:354,c:"items",n:"Broken Modem",u:"Completa 7 retos diarios (tocando el trofeo al final)"},
+    {i:355,c:"items",n:"Buddy in a Box",u:"Recoge 5 familiars en una sola run"},
+    {i:356,c:"items",n:"Fast Bombs",u:"Derrota a Little Horn 20 veces"},
+    {i:357,c:"items",n:"Lil Delirium",u:"Derrota a Delirium por primera vez"},
+    {i:358,c:"trinkets",n:"Hairpin",u:"Recarga usando Lil' Batteries 20 veces"},
+    {i:359,c:"trinkets",n:"Wooden Cross",u:"Duerme en una cama"},
+    {i:360,c:"trinkets",n:"Butter!",u:"Completa 2 Victory Laps y empieza una 3.ª"},
+    {i:361,c:"trinkets",n:"Huge Growth",u:"Aumenta de tamaño 5 veces en una sola run. Fuentes: pastillas \"One Makes you Larger\", XI - Strength y Magic Mushroom"},
+    {i:362,c:"trinkets",n:"Ancient Recall",u:"Usa cards and runes 20 times"},
+    {i:363,c:"trinkets",n:"Era Walk",u:"Ten both the Broken Watch and the Stop Watch en tu colección"},
+    {i:364,c:"items",n:"Coupon",u:"Compra en Tiendas, Devil Deals o Black Markets 50 veces"},
+    {i:365,c:"items",n:"Telekinesis",u:"Pasa el capítulo 2 sin recibir daño"},
+    {i:366,c:"items",n:"Moving Box",u:"Usa Pandora's Box in Dark Room"},
+    {i:367,c:"items",n:"Jumper Cables",u:"Recoge cualquier 3 de estos items/trinkets en una sola run: 9 Volt, The Battery, Car Battery, AAA Battery, Watch Battery"},
+    {i:368,c:"items",n:"Leprosy",u:"Pasa el capítulo 3 sin recibir daño"},
+    {i:369,c:"items",n:"Technology Zero",u:"Recoge dos items de tecnología en una run"},
+    {i:370,c:"trinkets",n:"Filigree Feather",u:"Consigue las dos Key Pieces"},
+    {i:371,c:"items",n:"Mr. ME!",u:"Abre 20 Cofres Cerrados"},
+    {i:372,c:"items",n:"7 Seals",u:"Derrota a los 5 Harbingers"},
+    {i:373,c:"items",n:"Angelic Prism",u:"Derrota a an Angel 10 veces"},
+    {i:374,c:"items",n:"Pop!",u:"Pasa el capítulo 4 sin recibir daño"},
+    {i:375,c:"trinkets",n:"Door Stop",u:"Vuela puertas y paredes de Secret Room 50 veces"},
+    {i:376,c:"items",n:"Death's List",u:"Acepta 25 Devil deals"},
+    {i:377,c:"items",n:"Haemolacria",u:"Consigue Blood Clot 10 veces"},
+    {i:378,c:"items",n:"Lachryphagy",u:"Recoge 10 items o pastillas de \"tears up\" en una run"},
+    {i:379,c:"items",n:"Schoolbag",u:"Entra a todas las tiendas desde el capítulo 1 al 3 en una run"},
+    {i:380,c:"items",n:"Trisagion",u:"Toma 25 items de Angel Rooms"},
+    {i:381,c:"trinkets",n:"Extension Cord",u:"Ten The Battery, 9 Volt, and Car Battery en tu colección"},
+    {i:382,c:"items",n:"Flat Stone",u:"Consigue Rubber Cement 5 veces"},
+    {i:383,c:"items",n:"Sacrificial Altar",u:"Acepta 50 Devil deals"},
+    {i:384,c:"items",n:"Lil Spewer",u:"Muere por tu propia explosión de Ipecac, Bob's Rotten Head, or Horf! pill"},
+    {i:385,c:"items",n:"Blanket",u:"Duerme en 10 camas"},
+    {i:386,c:"items",n:"Marbles",u:"Usa 5 Gulp! pills in one run"},
+    {i:387,c:"items",n:"Mystery Egg",u:"Genera tres enemigos charmed en la misma sala"},
+    {i:388,c:"trinkets",n:"Rotten Penny",u:"Ten 20 Blue Flies a la vez"},
+    {i:389,c:"trinkets",n:"Baby-Bender",u:"Usa I - The Magician or Telepathy for Dummies while already having homing tears"},
+    {i:390,c:"personajes",n:"The Forgotten",u:"Es complicado"},
+    {i:391,c:"trinkets",n:"Bone Heart",u:"Es complicado"},
+    {i:392,c:"items",n:"Marrow",u:"Derrota a Mom's Heart or It Lives! en modo Difícil con The Forgotten"},
+    {i:393,c:"items",n:"Slipped Rib",u:"Derrota a Isaac con The Forgotten"},
+    {i:394,c:"items",n:"Pointy Rib",u:"Derrota a Satan con The Forgotten"},
+    {i:395,c:"items",n:"Jaw Bone",u:"Derrota a ??? con The Forgotten"},
+    {i:396,c:"items",n:"Brittle Bones",u:"Derrota a The Lamb con The Forgotten"},
+    {i:397,c:"items",n:"Divorce Papers",u:"Completa Boss Rush con The Forgotten"},
+    {i:398,c:"items",n:"Hallowed Ground",u:"Derrota a Hush con The Forgotten"},
+    {i:399,c:"trinkets",n:"Finger Bone",u:"Derrota a Ultra Greed con The Forgotten"},
+    {i:400,c:"items",n:"Dad's Ring",u:"Derrota a Ultra Greedier con The Forgotten"},
+    {i:401,c:"items",n:"Book of the Dead",u:"Derrota a Delirium con The Forgotten"},
+    {i:402,c:"marcas",n:"Bone Baby",u:"Consigue todas las marcas de modo Difícil con The Forgotten"},
+    {i:403,c:"marcas",n:"Bound Baby",u:"Derrota a Mega Satan con The Forgotten"},
+    {i:404,c:"personajes",n:"Bethany",u:"Derrota a Mom's Heart/It Lives on hard mode con Lazarus, without dying"},
+    {i:405,c:"personajes",n:"Jacob and Esau",u:"Derrota a Mother"},
+    {i:406,c:"hitos",n:"The Planetarium",u:"Recoge tres de los siguientes en una sola run: Signs of the Zodiac, Magic 8 Ball, Tiny Planet, and Crystal Ball"},
+    {i:407,c:"hitos",n:"A Secret Exit",u:"Derrota a Hush 3 veces"},
+    {i:408,c:"trinkets",n:"Forgotten Lullaby",u:"Vuela el cráneo de The Siren tras derrotarla"},
+    {i:409,c:"items",n:"Fruity Plum",u:"Derrota a Baby Plum 10 veces"},
+    {i:410,c:"items",n:"Plum Flute",u:"Permite a Baby Plum escapar en vez de derrotarla"},
+    {i:411,c:"trinkets",n:"Rotten Heart",u:"Entra a Corpse por primera vez"},
+    {i:412,c:"hitos",n:"Dross",u:"Derrota a todos los jefes de Downpour"},
+    {i:413,c:"hitos",n:"Ashpit",u:"Derrota a todos los jefes de Mines"},
+    {i:414,c:"hitos",n:"Gehenna",u:"Derrota a todos los jefes del Mausoleum"},
+    {i:415,c:"trinkets",n:"Red Key",u:"Abre la versión grande de Mom's Box en Home"},
+    {i:416,c:"marcas",n:"Wisp Baby",u:"Derrota a Mom's Heart or It Lives! en modo Difícil con Bethany"},
+    {i:417,c:"items",n:"Book of Virtues",u:"Derrota a Isaac con Bethany"},
+    {i:418,c:"items",n:"Urn of Souls",u:"Derrota a Satan con Bethany"},
+    {i:419,c:"trinkets",n:"Blessed Penny",u:"Derrota a ??? con Bethany"},
+    {i:420,c:"items",n:"Alabaster Box",u:"Derrota a The Lamb con Bethany"},
+    {i:421,c:"trinkets",n:"Beth's Faith",u:"Completa Boss Rush con Bethany"},
+    {i:422,c:"items",n:"Soul Locket",u:"Derrota a Ultra Greed con Bethany"},
+    {i:423,c:"items",n:"Divine Intervention",u:"Derrota a Hush con Bethany"},
+    {i:424,c:"items",n:"Vade Retro",u:"Derrota a Ultra Greedier con Bethany"},
+    {i:425,c:"items",n:"Star of Bethlehem",u:"Derrota a Delirium con Bethany"},
+    {i:426,c:"marcas",n:"Hope Baby",u:"Consigue todas las marcas de modo Difícil con Bethany"},
+    {i:427,c:"marcas",n:"Glowing Baby",u:"Derrota a Mega Satan con Bethany"},
+    {i:428,c:"marcas",n:"Double Baby",u:"Derrota a Mom's Heart or It Lives! en modo Difícil con Jacob and Esau"},
+    {i:429,c:"items",n:"The Stairway",u:"Derrota a Isaac con Jacob and Esau"},
+    {i:430,c:"items",n:"Red Stew",u:"Derrota a Satan con Jacob and Esau"},
+    {i:431,c:"items",n:"Birthright",u:"Derrota a ??? con Jacob and Esau"},
+    {i:432,c:"items",n:"Damocles",u:"Derrota a The Lamb con Jacob and Esau"},
+    {i:433,c:"items",n:"Rock Bottom",u:"Completa Boss Rush con Jacob and Esau"},
+    {i:434,c:"items",n:"Inner Child",u:"Derrota a Ultra Greed con Jacob and Esau"},
+    {i:435,c:"items",n:"Vanishing Twin",u:"Derrota a Hush con Jacob and Esau"},
+    {i:436,c:"items",n:"Genesis",u:"Derrota a Ultra Greedier con Jacob and Esau"},
+    {i:437,c:"items",n:"Suplex!",u:"Derrota a Delirium con Jacob and Esau"},
+    {i:438,c:"marcas",n:"Solomon's Baby",u:"Consigue todas las marcas de modo Difícil con Jacob and Esau"},
+    {i:439,c:"marcas",n:"Illusion Baby",u:"Derrota a Mega Satan con Jacob and Esau"},
+    {i:440,c:"items",n:"Meat Cleaver",u:"Derrota a Mother con Isaac"},
+    {i:441,c:"items",n:"Options?",u:"Derrota a The Beast con Isaac"},
+    {i:442,c:"items",n:"Yuck Heart",u:"Derrota a Mother con Magdalene"},
+    {i:443,c:"items",n:"Candy Heart",u:"Derrota a The Beast con Magdalene"},
+    {i:444,c:"items",n:"Guppy's Eye",u:"Derrota a Mother con Cain"},
+    {i:445,c:"items",n:"A Pound of Flesh",u:"Derrota a The Beast con Cain"},
+    {i:446,c:"items",n:"Akeldama",u:"Derrota a Mother con Judas"},
+    {i:447,c:"items",n:"Redemption",u:"Derrota a The Beast con Judas"},
+    {i:448,c:"items",n:"Eternal D6",u:"Derrota a Mother con ???"},
+    {i:449,c:"items",n:"Montezuma's Revenge",u:"Derrota a The Beast con ???"},
+    {i:450,c:"items",n:"Bird Cage",u:"Derrota a Mother con Eve"},
+    {i:451,c:"items",n:"Cracked Orb",u:"Derrota a The Beast con Eve"},
+    {i:452,c:"items",n:"Bloody Gust",u:"Derrota a Mother con Samson"},
+    {i:453,c:"items",n:"Empty Heart",u:"Derrota a The Beast con Samson"},
+    {i:454,c:"trinkets",n:"Devil's Crown",u:"Derrota a Mother con Azazel"},
+    {i:455,c:"items",n:"Lil Abaddon",u:"Derrota a The Beast con Azazel"},
+    {i:456,c:"items",n:"Tinytoma",u:"Derrota a Mother con Lazarus"},
+    {i:457,c:"items",n:"Astral Projection",u:"Derrota a The Beast con Lazarus"},
+    {i:458,c:"trinkets",n:"M",u:"Derrota a Mother con Eden"},
+    {i:459,c:"items",n:"Everything Jar",u:"Derrota a The Beast con Eden"},
+    {i:460,c:"items",n:"Lost Soul",u:"Derrota a Mother con The Lost"},
+    {i:461,c:"items",n:"Hungry Soul",u:"Derrota a The Beast con The Lost"},
+    {i:462,c:"items",n:"Blood Puppy",u:"Derrota a Mother con Lilith"},
+    {i:463,c:"items",n:"C Section",u:"Derrota a The Beast con Lilith"},
+    {i:464,c:"items",n:"Keeper's Sack",u:"Derrota a Mother con Keeper"},
+    {i:465,c:"items",n:"Keeper's Box",u:"Derrota a The Beast con Keeper"},
+    {i:466,c:"items",n:"Lil Portal",u:"Derrota a Mother con Apollyon"},
+    {i:467,c:"items",n:"Worm Friend",u:"Derrota a The Beast con Apollyon"},
+    {i:468,c:"items",n:"Bone Spurs",u:"Derrota a Mother con The Forgotten"},
+    {i:469,c:"items",n:"Spirit Shackles",u:"Derrota a The Beast con The Forgotten"},
+    {i:470,c:"items",n:"Revelation",u:"Derrota a Mother con Bethany"},
+    {i:471,c:"items",n:"Jar of Wisps",u:"Derrota a The Beast con Bethany"},
+    {i:472,c:"items",n:"Magic Skin",u:"Derrota a Mother con Jacob and Esau"},
+    {i:473,c:"items",n:"Friend Finder",u:"Derrota a The Beast con Jacob and Esau"},
+    {i:474,c:"personajes",n:"The Broken",u:"Usa la Red Key o Cracked Key in Home as Isaac"},
+    {i:475,c:"personajes",n:"The Dauntless",u:"Usa la Red Key o Cracked Key in Home as Magdalene"},
+    {i:476,c:"personajes",n:"The Hoarder",u:"Usa la Red Key o Cracked Key in Home as Cain"},
+    {i:477,c:"personajes",n:"The Deceiver",u:"Usa la Red Key o Cracked Key in Home as Judas"},
+    {i:478,c:"personajes",n:"The Soiled",u:"Usa la Red Key o Cracked Key in Home as ???"},
+    {i:479,c:"personajes",n:"The Curdled",u:"Usa la Red Key o Cracked Key in Home as Eve"},
+    {i:480,c:"personajes",n:"The Savage",u:"Usa la Red Key o Cracked Key in Home as Samson"},
+    {i:481,c:"personajes",n:"The Benighted",u:"Usa la Red Key o Cracked Key in Home as Azazel"},
+    {i:482,c:"personajes",n:"The Enigma",u:"Usa la Red Key o Cracked Key in Home as Lazarus"},
+    {i:483,c:"personajes",n:"The Capricious",u:"Usa la Red Key o Cracked Key in Home as Eden"},
+    {i:484,c:"personajes",n:"The Baleful",u:"Usa la Red Key o Cracked Key in Home as The Lost"},
+    {i:485,c:"personajes",n:"The Harlot",u:"Usa la Red Key o Cracked Key in Home as Lilith"},
+    {i:486,c:"personajes",n:"The Miser",u:"Usa la Red Key o Cracked Key in Home as Keeper"},
+    {i:487,c:"personajes",n:"The Empty",u:"Usa la Red Key o Cracked Key in Home as Apollyon"},
+    {i:488,c:"personajes",n:"The Fettered",u:"Usa la Red Key o Cracked Key in Home as The Forgotten"},
+    {i:489,c:"personajes",n:"The Zealot",u:"Usa la Red Key o Cracked Key in Home as Bethany"},
+    {i:490,c:"personajes",n:"The Deserter",u:"Usa la Red Key o Cracked Key in Home as Jacob and Esau"},
+    {i:491,c:"items",n:"Glitched Crown",u:"Derrota a The Beast con Tainted Isaac"},
+    {i:492,c:"items",n:"Belly Jelly",u:"Derrota a The Beast con Tainted Magdalene"},
+    {i:493,c:"trinkets",n:"Blue Key",u:"Derrota a The Beast con Tainted Cain"},
+    {i:494,c:"items",n:"Sanguine Bond",u:"Derrota a The Beast con Tainted Judas"},
+    {i:495,c:"items",n:"The Swarm",u:"Derrota a The Beast con Tainted ???"},
+    {i:496,c:"items",n:"Heartbreak",u:"Derrota a The Beast con Tainted Eve"},
+    {i:497,c:"items",n:"Larynx",u:"Derrota a The Beast con Tainted Samson"},
+    {i:498,c:"items",n:"Azazel's Rage",u:"Derrota a The Beast con Tainted Azazel"},
+    {i:499,c:"items",n:"Salvation",u:"Derrota a The Beast con Tainted Lazarus"},
+    {i:500,c:"items",n:"TMTRAINER",u:"Derrota a The Beast con Tainted Eden"},
+    {i:501,c:"items",n:"Sacred Orb",u:"Derrota a The Beast con Tainted Lost"},
+    {i:502,c:"items",n:"Twisted Pair",u:"Derrota a The Beast con Tainted Lilith"},
+    {i:503,c:"items",n:"Strawman",u:"Derrota a The Beast con Tainted Keeper"},
+    {i:504,c:"items",n:"Echo Chamber",u:"Derrota a The Beast con Tainted Apollyon"},
+    {i:505,c:"items",n:"Isaac's Tomb",u:"Derrota a The Beast con Tainted Forgotten"},
+    {i:506,c:"items",n:"Vengeful Spirit",u:"Derrota a The Beast con Tainted Bethany"},
+    {i:507,c:"items",n:"Esau Jr.",u:"Derrota a The Beast con Tainted Jacob"},
+    {i:508,c:"retos",n:"Bloody Mary",u:"Derrota a Mom's Heart/It Lives on hard mode con Lazarus, without dying, defeat Mom's Heart 11 times and unlock Blood Bag"},
+    {i:509,c:"retos",n:"Baptism by Fire",u:"Derrota a Satan con Bethany, defeat Mom's Heart 11 times and unlock Maggy's Faith"},
+    {i:510,c:"retos",n:"Isaac's Awakening",u:"Derrota a Mother"},
+    {i:511,c:"retos",n:"Seeing Double",u:"Derrota a Mother"},
+    {i:512,c:"retos",n:"Pica Run",u:"Derrota a Mom's Heart 11 times and Unlock Marbles"},
+    {i:513,c:"retos",n:"Hot Potato",u:"Usa la Red Key o Cracked Key in Home as The Forgotten"},
+    {i:514,c:"retos",n:"Cantripped!",u:"Usa la Red Key o Cracked Key in Home as Cain"},
+    {i:515,c:"retos",n:"Red Redemption",u:"Usa la Red Key o Cracked Key in Home as Jacob and Esau"},
+    {i:516,c:"retos",n:"DELETE THIS",u:"Usa la Red Key o Cracked Key in Home as Eden"},
+    {i:517,c:"items",n:"Dirty Mind",u:"Completa Scat Man (reto #36)"},
+    {i:518,c:"trinkets",n:"Sigil of Baphomet",u:"Completa Bloody Mary (reto #37)"},
+    {i:519,c:"items",n:"Purgatory",u:"Completa Baptism by Fire (reto #38)"},
+    {i:520,c:"items",n:"Spirit Sword",u:"Completa Isaac's Awakening (reto #39)"},
+    {i:521,c:"trinkets",n:"Broken Glasses",u:"Completa Seeing Double (reto #40)"},
+    {i:522,c:"trinkets",n:"Ice Cube",u:"Completa Pica Run (reto #41)"},
+    {i:523,c:"trinkets",n:"Charged Penny",u:"Dona a varios Battery Bums hasta que suelten un item"},
+    {i:524,c:"trinkets",n:"The Fool",u:"Derrota a Ultra Greedier con Tainted Lost"},
+    {i:525,c:"trinkets",n:"The Magician",u:"Derrota a Ultra Greedier con Tainted Judas"},
+    {i:526,c:"trinkets",n:"The High Priestess",u:"Derrota a Ultra Greedier con Tainted Lilith"},
+    {i:527,c:"trinkets",n:"The Empress",u:"Derrota a Ultra Greedier con Tainted Eve"},
+    {i:528,c:"trinkets",n:"The Emperor",u:"Derrota a Ultra Greedier con Tainted ???"},
+    {i:529,c:"trinkets",n:"The Hierophant",u:"Derrota a Ultra Greedier con Tainted Bethany"},
+    {i:530,c:"trinkets",n:"The Lovers",u:"Derrota a Ultra Greedier con Tainted Magdalene"},
+    {i:531,c:"trinkets",n:"The Chariot",u:"Completa Hot Potato (reto #42)"},
+    {i:532,c:"trinkets",n:"Justice",u:"Completa Cantripped (reto #43)"},
+    {i:533,c:"trinkets",n:"The Hermit",u:"Completa Red Redemption (reto #44)"},
+    {i:534,c:"trinkets",n:"Wheel of Fortune",u:"Derrota a Ultra Greedier con Tainted Cain"},
+    {i:535,c:"trinkets",n:"Strength",u:"Derrota a Ultra Greedier con Tainted Samson"},
+    {i:536,c:"trinkets",n:"The Hanged Man",u:"Derrota a Ultra Greedier con Tainted Keeper"},
+    {i:537,c:"trinkets",n:"Death",u:"Derrota a Ultra Greedier con Tainted Forgotten"},
+    {i:538,c:"trinkets",n:"Temperance",u:"Completa DELETE THIS (reto #45)"},
+    {i:539,c:"trinkets",n:"The Devil",u:"Derrota a Ultra Greedier con Tainted Azazel"},
+    {i:540,c:"trinkets",n:"The Tower",u:"Derrota a Ultra Greedier con Tainted Apollyon"},
+    {i:541,c:"trinkets",n:"The Stars",u:"Derrota a Ultra Greedier con Tainted Isaac"},
+    {i:542,c:"trinkets",n:"The Sun and the Moon",u:"Derrota a Ultra Greedier con Tainted Jacob"},
+    {i:543,c:"trinkets",n:"Judgement",u:"Derrota a Ultra Greedier con Tainted Lazarus"},
+    {i:544,c:"trinkets",n:"The World",u:"Derrota a Ultra Greedier con Tainted Eden"},
+    {i:545,c:"trinkets",n:"Old Capacitor",u:"Mata a 10 Battery Bums"},
+    {i:546,c:"items",n:"Brimstone Bombs",u:"Mata a Hornfel antes de que escape tras romper su minecart"},
+    {i:547,c:"items",n:"Mega Mush",u:"Consigue todas las marcas de modo Difícil con todos los personajes no-tainted"},
+    {i:548,c:"trinkets",n:"Mom's Lock",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Isaac"},
+    {i:549,c:"trinkets",n:"Dice Bag",u:"Derrota a Mother con Tainted Isaac"},
+    {i:550,c:"trinkets",n:"Holy Crown",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Magdalene"},
+    {i:551,c:"trinkets",n:"Mother's Kiss",u:"Derrota a Mother con Tainted Magdalene"},
+    {i:552,c:"trinkets",n:"Gilded Key",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Cain"},
+    {i:553,c:"trinkets",n:"Lucky Sack",u:"Derrota a Mother con Tainted Cain"},
+    {i:554,c:"trinkets",n:"Your Soul",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Judas"},
+    {i:555,c:"trinkets",n:"Number Magnet",u:"Derrota a Mother con Tainted Judas"},
+    {i:556,c:"trinkets",n:"Dingle Berry",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted ???"},
+    {i:557,c:"trinkets",n:"Ring Cap",u:"Derrota a Mother con Tainted ???"},
+    {i:558,c:"trinkets",n:"Strange Key",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Eve"},
+    {i:559,c:"trinkets",n:"Lil Clot",u:"Derrota a Mother con Tainted Eve"},
+    {i:560,c:"trinkets",n:"Temporary Tattoo",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Samson"},
+    {i:561,c:"trinkets",n:"Swallowed M80",u:"Derrota a Mother con Tainted Samson"},
+    {i:562,c:"trinkets",n:"Wicked Crown",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Azazel"},
+    {i:563,c:"trinkets",n:"Azazel's Stump",u:"Derrota a Mother con Tainted Azazel"},
+    {i:564,c:"trinkets",n:"Torn Pocket",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Lazarus"},
+    {i:565,c:"trinkets",n:"Torn Card",u:"Derrota a Mother con Tainted Lazarus"},
+    {i:566,c:"trinkets",n:"Nuh Uh!",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Eden"},
+    {i:567,c:"trinkets",n:"Modeling Clay",u:"Derrota a Mother con Tainted Eden"},
+    {i:568,c:"trinkets",n:"Kid's Drawing",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Lost"},
+    {i:569,c:"trinkets",n:"Crystal Key",u:"Derrota a Mother con Tainted Lost"},
+    {i:570,c:"trinkets",n:"The Twins",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Lilith"},
+    {i:571,c:"trinkets",n:"Adoption Papers",u:"Derrota a Mother con Tainted Lilith"},
+    {i:572,c:"trinkets",n:"Keeper's Bargain",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Keeper"},
+    {i:573,c:"trinkets",n:"Cursed Penny",u:"Derrota a Mother con Tainted Keeper"},
+    {i:574,c:"trinkets",n:"Cricket Leg",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Apollyon"},
+    {i:575,c:"trinkets",n:"Apollyon's Best Friend",u:"Derrota a Mother con Tainted Apollyon"},
+    {i:576,c:"trinkets",n:"Polished Bone",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Forgotten"},
+    {i:577,c:"trinkets",n:"Hollow Heart",u:"Derrota a Mother con Tainted Forgotten"},
+    {i:578,c:"trinkets",n:"Expansion Pack",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Bethany"},
+    {i:579,c:"trinkets",n:"Beth's Essence",u:"Derrota a Mother con Tainted Bethany"},
+    {i:580,c:"trinkets",n:"RC Remote",u:"Derrota a Isaac, ???, Satan y The Lamb con Tainted Jacob"},
+    {i:581,c:"trinkets",n:"Found Soul",u:"Derrota a Mother con Tainted Jacob"},
+    {i:582,c:"items",n:"Member Card",u:"Gasta más de 40 monedas en una sola tienda"},
+    {i:583,c:"items",n:"Golden Razor",u:"Consigue 99 monedas y gástalas todas en una sola run"},
+    {i:584,c:"items",n:"Spindown Dice",u:"Derrota a Delirium con Tainted Isaac"},
+    {i:585,c:"items",n:"Hypercoagulation",u:"Derrota a Delirium con Tainted Magdalene"},
+    {i:586,c:"items",n:"Bag of Crafting",u:"Derrota a Delirium con Tainted Cain"},
+    {i:587,c:"items",n:"Dark Arts",u:"Derrota a Delirium con Tainted Judas"},
+    {i:588,c:"items",n:"IBS",u:"Derrota a Delirium con Tainted ???"},
+    {i:589,c:"items",n:"Sumptorium",u:"Derrota a Delirium con Tainted Eve"},
+    {i:590,c:"items",n:"Berserk!",u:"Derrota a Delirium con Tainted Samson"},
+    {i:591,c:"items",n:"Hemoptysis",u:"Derrota a Delirium con Tainted Azazel"},
+    {i:592,c:"items",n:"Flip",u:"Derrota a Delirium con Tainted Lazarus"},
+    {i:593,c:"hitos",n:"Corrupted Data",u:"Derrota a Delirium con Tainted Eden"},
+    {i:594,c:"items",n:"Ghost Bombs",u:"Derrota a Delirium con Tainted Lost"},
+    {i:595,c:"items",n:"Gello",u:"Derrota a Delirium con Tainted Lilith"},
+    {i:596,c:"items",n:"Keeper's Kin",u:"Derrota a Delirium con Tainted Keeper"},
+    {i:597,c:"items",n:"Abyss",u:"Derrota a Delirium con Tainted Apollyon"},
+    {i:598,c:"items",n:"Decap Attack",u:"Derrota a Delirium con Tainted Forgotten"},
+    {i:599,c:"items",n:"Lemegeton",u:"Derrota a Delirium con Tainted Bethany"},
+    {i:600,c:"items",n:"Anima Sola",u:"Derrota a Delirium con Tainted Jacob"},
+    {i:601,c:"trinkets",n:"Mega Chest",u:"Derrota a Mega Satan con Tainted Isaac"},
+    {i:602,c:"trinkets",n:"Queen of Hearts",u:"Derrota a Mega Satan con Tainted Magdalene"},
+    {i:603,c:"trinkets",n:"Gold Pill",u:"Derrota a Mega Satan con Tainted Cain"},
+    {i:604,c:"trinkets",n:"Black Sack",u:"Derrota a Mega Satan con Tainted Judas"},
+    {i:605,c:"hitos",n:"Charming Poop",u:"Derrota a Mega Satan con Tainted ???"},
+    {i:606,c:"trinkets",n:"Horse Pill",u:"Derrota a Mega Satan con Tainted Eve"},
+    {i:607,c:"hitos",n:"Crane Game",u:"Derrota a Mega Satan con Tainted Samson"},
+    {i:608,c:"hitos",n:"Hell Game",u:"Derrota a Mega Satan con Tainted Azazel"},
+    {i:609,c:"trinkets",n:"Wooden Chest",u:"Derrota a Mega Satan con Tainted Lazarus"},
+    {i:610,c:"trinkets",n:"Wild Card",u:"Derrota a Mega Satan con Tainted Eden"},
+    {i:611,c:"trinkets",n:"Haunted Chest",u:"Derrota a Mega Satan con Tainted Lost"},
+    {i:612,c:"hitos",n:"Fool's Gold",u:"Derrota a Mega Satan con Tainted Lilith"},
+    {i:613,c:"trinkets",n:"Golden Penny",u:"Derrota a Mega Satan con Tainted Keeper"},
+    {i:614,c:"hitos",n:"Rotten Beggar",u:"Derrota a Mega Satan con Tainted Apollyon"},
+    {i:615,c:"trinkets",n:"Golden Battery",u:"Derrota a Mega Satan con Tainted Forgotten"},
+    {i:616,c:"hitos",n:"Confessional",u:"Derrota a Mega Satan con Tainted Bethany"},
+    {i:617,c:"hitos",n:"Golden Trinket",u:"Derrota a Mega Satan con Tainted Jacob"},
+    {i:618,c:"trinkets",n:"Soul of Isaac",u:"Derrota a Hush y Boss Rush con Tainted Isaac"},
+    {i:619,c:"trinkets",n:"Soul of Magdalene",u:"Derrota a Hush y Boss Rush con Tainted Magdalene"},
+    {i:620,c:"trinkets",n:"Soul of Cain",u:"Derrota a Hush y Boss Rush con Tainted Cain"},
+    {i:621,c:"trinkets",n:"Soul of Judas",u:"Derrota a Hush y Boss Rush con Tainted Judas"},
+    {i:622,c:"trinkets",n:"Soul of ???",u:"Derrota a Hush y Boss Rush con Tainted ???"},
+    {i:623,c:"trinkets",n:"Soul of Eve",u:"Derrota a Hush y Boss Rush con Tainted Eve"},
+    {i:624,c:"trinkets",n:"Soul of Samson",u:"Derrota a Hush y Boss Rush con Tainted Samson"},
+    {i:625,c:"trinkets",n:"Soul of Azazel",u:"Derrota a Hush y Boss Rush con Tainted Azazel"},
+    {i:626,c:"trinkets",n:"Soul of Lazarus",u:"Derrota a Hush y Boss Rush con Tainted Lazarus"},
+    {i:627,c:"trinkets",n:"Soul of Eden",u:"Derrota a Hush y Boss Rush con Tainted Eden"},
+    {i:628,c:"trinkets",n:"Soul of the Lost",u:"Derrota a Hush y Boss Rush con Tainted Lost"},
+    {i:629,c:"trinkets",n:"Soul of Lilith",u:"Derrota a Hush y Boss Rush con Tainted Lilith"},
+    {i:630,c:"trinkets",n:"Soul of the Keeper",u:"Derrota a Hush y Boss Rush con Tainted Keeper"},
+    {i:631,c:"trinkets",n:"Soul of Apollyon",u:"Derrota a Hush y Boss Rush con Tainted Apollyon"},
+    {i:632,c:"trinkets",n:"Soul of the Forgotten",u:"Derrota a Hush y Boss Rush con Tainted Forgotten"},
+    {i:633,c:"trinkets",n:"Soul of Bethany",u:"Derrota a Hush y Boss Rush con Tainted Bethany"},
+    {i:634,c:"trinkets",n:"Soul of Jacob and Esau",u:"Derrota a Hush y Boss Rush con Tainted Jacob"},
+    {i:635,c:"hitos",n:"A Strange Door",u:"Derrota a Mother"},
+    {i:636,c:"items",n:"Death Certificate",u:"Consigue todas las marcas de modo Difícil con todos los personajes (incluidos los tainted)"},
+    {i:637,c:"hitos",n:"Dead God",u:"Desbloquea el resto de logros y recoge todos los items del juego"},
   ];
 
   // Adapter: convert compact entries (i/c/n/u) into the renderer format (id/category/name/unlock).
@@ -4902,6 +5263,17 @@
       e.category = "hitos";  // challenge-unlock → hitos
     }
     if (RETOS_COMPLETION_IDS.has(e.id)) e.category = "retos";  // completion → retos
+  }
+
+  // Map cada nº de reto (1..45) → ID del achievement cuyo reward es el item de ese reto.
+  // El sprite del achievement (ach_icons/${id}.png) sirve como imagen del reto.
+  const CHALLENGE_REWARD_ACH_ID = {};
+  for (const e of ACHIEVEMENTS_DATA) {
+    const m = /reto #(\d+)/.exec(e.unlock || '');
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (!CHALLENGE_REWARD_ACH_ID[n]) CHALLENGE_REWARD_ACH_ID[n] = e.id;
+    }
   }
   // Recalcular totales esperados por categoría desde los datos reales.
   for (const cat of ACHIEVEMENT_CATEGORIES) {
@@ -4954,7 +5326,7 @@
     // Iconos oficiales empaquetados: IDs 1..637 desde Zamiell's isaac-save-viewer
     // (extraídos del juego), IDs 638..641 desde la wiki (Repentance+ exclusivos).
     if (ach.id >= 1 && ach.id <= 641) {
-      return { type: "img", src: `ach_icons/${ach.id}.png` };
+      return { type: "img", src: `ach_icons/${ach.id}.webp` };
     }
     return { type: "emoji", char: "·" };
   }
@@ -5072,7 +5444,73 @@
       section.appendChild(body);
       container.appendChild(section);
     }
+    // Re-aplicar el filtro de búsqueda si hay algo escrito (sobrevive a re-renders).
+    if (typeof window.applyAchSearchFilter === 'function') {
+      window.applyAchSearchFilter();
+    }
   }
+
+  // ===== Buscador de logros =====
+  (function setupAchSearch() {
+    const input = document.getElementById('achSearchInput');
+    const clearBtn = document.getElementById('achSearchClear');
+    const emptyMsg = document.getElementById('achSearchEmpty');
+    const wrap = input ? input.parentElement : null;
+    if (!input || !wrap) return;
+
+    function applyFilter() {
+      const q = input.value.trim().toLowerCase();
+      wrap.classList.toggle('has-value', q.length > 0);
+
+      const categories = document.querySelectorAll('.ach-category');
+      let totalVisible = 0;
+      categories.forEach(cat => {
+        let visibleCount = 0;
+        const items = cat.querySelectorAll('.ach-item');
+        items.forEach(item => {
+          if (!q) {
+            item.classList.remove('filtered-out');
+            visibleCount++;
+            return;
+          }
+          const name = (item.querySelector('.ach-item-name')?.textContent || '').toLowerCase();
+          const unlock = (item.querySelector('.ach-item-unlock')?.textContent || '').toLowerCase();
+          const id = (item.querySelector('.ach-item-id')?.textContent || '').toLowerCase();
+          const match = name.includes(q) || unlock.includes(q) || id.includes(q);
+          item.classList.toggle('filtered-out', !match);
+          if (match) visibleCount++;
+        });
+        cat.classList.toggle('filtered-empty', q.length > 0 && visibleCount === 0);
+        // Si hay búsqueda activa, expande la categoría para mostrar los resultados.
+        if (q.length > 0 && visibleCount > 0) {
+          cat.classList.remove('collapsed');
+        }
+        totalVisible += visibleCount;
+      });
+      // Mensaje "sin resultados" si hay búsqueda y no encontró nada.
+      if (emptyMsg) {
+        emptyMsg.classList.toggle('visible', q.length > 0 && totalVisible === 0);
+      }
+    }
+    // Exponer global para que el render la pueda re-llamar tras cada re-render.
+    window.applyAchSearchFilter = applyFilter;
+
+    input.addEventListener('input', applyFilter);
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        input.value = '';
+        applyFilter();
+        input.focus();
+      });
+    }
+    // Atajo: Escape limpia la búsqueda mientras el input tiene foco.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && input.value) {
+        input.value = '';
+        applyFilter();
+      }
+    });
+  })();
 
   // Cache of the last unlocked set so we can re-render on tab focus.
   let _lastAchUnlocked = new Set();
@@ -5083,6 +5521,111 @@
   renderAchievementsView(_lastAchUnlocked);
   const savedTab = localStorage.getItem(ACTIVE_TAB_KEY);
   if (savedTab) switchTab(savedTab);
+
+  // ===== Items tab — renderer + tooltip =====
+  // ITEMS_DATA is loaded from items_inline.js as `window.ITEMS_DATA`:
+  //   [{id, name, sprite}, ...] sorted by id, removed items excluded.
+  // window._itemsState is the {str(id): bool} map pushed by python.
+  // Normalize an item name to compare against ITEM_INFO keys, which often have
+  // apostrophes / different spacing (e.g. "Mom's Knife" vs "Moms Knife").
+  function _normalizeItemKey(s) {
+    return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+  let _ITEM_INFO_BY_NORMALIZED = null;
+  function _itemInfoFor(name) {
+    if (typeof ITEM_INFO === 'undefined') return null;
+    if (_ITEM_INFO_BY_NORMALIZED === null) {
+      _ITEM_INFO_BY_NORMALIZED = {};
+      for (const k of Object.keys(ITEM_INFO)) {
+        _ITEM_INFO_BY_NORMALIZED[_normalizeItemKey(k)] = ITEM_INFO[k];
+      }
+    }
+    return ITEM_INFO[name] || _ITEM_INFO_BY_NORMALIZED[_normalizeItemKey(name)] || null;
+  }
+
+  function renderItemsGrid() {
+    const grid = document.getElementById('items-grid');
+    if (!grid || !window.ITEMS_DATA) return;
+    const seen = window._itemsState || {};
+    const frag = document.createDocumentFragment();
+    for (const it of window.ITEMS_DATA) {
+      const cell = document.createElement('div');
+      cell.className = 'item-cell' + (seen[String(it.id)] ? ' seen' : '');
+      cell.dataset.itemId = it.id;
+      cell.dataset.itemName = it.name;
+      const img = document.createElement('img');
+      img.src = 'item_icons/' + it.sprite;
+      img.alt = it.name;
+      img.loading = 'lazy';
+      cell.appendChild(img);
+      frag.appendChild(cell);
+    }
+    grid.innerHTML = '';
+    grid.appendChild(frag);
+    updateItemsProgress();
+  }
+
+  function updateItemsProgress() {
+    const seen = window._itemsState || {};
+    const total = window.ITEMS_DATA ? window.ITEMS_DATA.length : 0;
+    let done = 0;
+    if (total) {
+      for (const it of window.ITEMS_DATA) {
+        if (seen[String(it.id)]) done++;
+      }
+    }
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const bar = document.getElementById('itemsProgressBar');
+    const lbl = document.getElementById('itemsProgressLabel');
+    if (bar) bar.style.width = pct + '%';
+    if (lbl) lbl.textContent = `Ítems: ${done} / ${total}  (${pct}%)`;
+  }
+
+  function showItemTooltip(cell) {
+    const name = cell.dataset.itemName || '';
+    const seen = cell.classList.contains('seen');
+    const info = _itemInfoFor(name) || {};
+    const type = info.type || '';
+    const desc = info.description || 'Sin descripción aún.';
+    const tierClass = seen ? 'tier-s' : 'tier-c';
+    const statusChip = seen
+      ? '<span class="tt-diff tier-s">✔ Tocado</span>'
+      : '<span class="tt-diff tier-c">✗ Te falta</span>';
+    const html = `
+      <div class="tt-card-header ${tierClass}">
+        <div class="tt-head-row">
+          <div class="tt-head-text">
+            <span class="tt-title">${escapeHtml(name)}</span>
+            <div class="tt-meta">${escapeHtml(type)} ${statusChip}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tt-body">
+        <div class="tt-block effect">
+          <div class="tt-block-label">💫 Efecto</div>
+          <div class="tt-block-body">${escapeHtml(desc)}</div>
+        </div>
+      </div>`;
+    const tt = document.getElementById('tooltip');
+    tt.innerHTML = html;
+    tt.classList.add('visible');
+    positionTooltip(cell);
+  }
+
+  (function wireItemsGridEvents() {
+    const grid = document.getElementById('items-grid');
+    if (!grid) return;
+    grid.addEventListener('mouseover', e => {
+      const cell = e.target.closest('.item-cell');
+      if (cell) showItemTooltip(cell);
+    });
+    grid.addEventListener('mouseout', e => {
+      if (e.target.closest('.item-cell')) hideTooltip();
+    });
+  })();
+
+  // Initial render (no state yet — everything renders as "te falta").
+  renderItemsGrid();
 
   // ===== PyWebView bridge (no-op when opened as plain file://) =====
   // applyIsaacState is invoked by IsaacTracker.exe to push save-derived state
@@ -5107,6 +5650,9 @@
     if (state && Array.isArray(state.achievements_unlocked)) {
       _lastAchUnlocked = new Set(state.achievements_unlocked);
     }
+    if (state && state.items_state && typeof state.items_state === 'object') {
+      window._itemsState = state.items_state;
+    }
     // render() appends to #list without clearing — clear it ourselves so a
     // second call doesn't produce a duplicate tier list. renderCharacterGrid
     // already clears its own container, so we don't need to touch it.
@@ -5115,6 +5661,7 @@
     render();
     renderCharacterGrid();
     renderAchievementsView(_lastAchUnlocked);
+    renderItemsGrid();
     _hideTrackerLoading();
   };
 
