@@ -717,19 +717,16 @@
       font-size: 0.8rem;
     }
 
-    /* ===== Tracker-locked mode (active only inside IsaacTracker.exe / PyWebView) ===== */
-    body.tracker-locked input[type="checkbox"],
+    /* ===== Tracker-locked mode (active only inside IsaacTracker.exe / PyWebView) =====
+       NOTE: we cannot use `pointer-events: none` here because it would also kill
+       hover/mouseenter events that drive the tooltips. Click suppression is done
+       in JS (capture-phase interceptor in applyIsaacState bootstrap below) so that
+       hover still works. The only purpose of this CSS rule is the visual cue. */
+    body.tracker-locked #list li,
+    body.tracker-locked #list input[type="checkbox"],
     body.tracker-locked .char-grid-cell,
-    body.tracker-locked .char-grid-col-header,
-    body.tracker-locked li {
-      pointer-events: none;
+    body.tracker-locked .char-grid-col-header {
       cursor: default;
-    }
-    body.tracker-locked .reset-btn,
-    body.tracker-locked .tainted-toggle,
-    body.tracker-locked .tab {
-      pointer-events: auto;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -3875,9 +3872,28 @@
     if (state && state.characters_state) {
       saveState(state.characters_state, CHAR_STORAGE_KEY);
     }
+    // render() appends to #list without clearing — clear it ourselves so a
+    // second call doesn't produce a duplicate tier list. renderCharacterGrid
+    // already clears its own container, so we don't need to touch it.
+    const listEl = document.getElementById('list');
+    if (listEl) listEl.innerHTML = '';
     render();
     renderCharacterGrid();
   };
+
+  // Capture-phase click interceptor: when tracker-locked, swallow clicks
+  // that would mutate user data, but leave hover/mouseenter events alone so
+  // tooltips keep working. Allow clicks on UI controls (tabs, tainted toggle,
+  // reset buttons) — those don't change save-derived state in a way that
+  // confuses the user (and reset gets overwritten by the next push anyway).
+  document.addEventListener('click', function(e) {
+    if (!document.body.classList.contains('tracker-locked')) return;
+    if (e.target.closest('.tab, .tainted-toggle, .reset-btn')) return;
+    if (e.target.closest('#list, #character-grid')) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
 
   // When PyWebView's JS API is ready, lock the UI (read-only mode) and pull
   // the initial state from python. This event NEVER fires in a regular browser,
