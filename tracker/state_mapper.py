@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from tracker.data.collectibles import COLLECTIBLES
 from tracker.save_parser import ParsedSave
 
 CHALLENGE_IDS = range(1, 46)  # Repentance/Repentance+: 45 challenges, IDs 1..45.
@@ -82,10 +83,23 @@ def build_localstorage_state(parsed: ParsedSave) -> dict:
     return {
         "challenges_state": _build_challenges(parsed),
         "characters_state": _build_characters(parsed),
+        "achievements_unlocked": sorted(parsed.achievements_unlocked),
+        "items_state": _build_items_state(parsed),
         "meta": {
             "slot": parsed.slot,
             "parsed_at": parsed.parsed_at.isoformat(),
         },
+    }
+
+
+def _build_items_state(parsed: ParsedSave) -> dict[str, bool]:
+    """Map every non-removed collectible id (as a string) to whether the
+    player has seen it. Keys are strings to survive JSON round-tripping
+    cleanly on the JS side (Object keys are always strings anyway)."""
+    return {
+        str(item_id): item_id in parsed.items_seen
+        for item_id, meta in COLLECTIBLES.items()
+        if not meta["removed"]
     }
 
 

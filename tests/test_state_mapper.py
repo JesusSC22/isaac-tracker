@@ -97,3 +97,42 @@ def test_character_count_is_34():
     state = build_localstorage_state(_empty_parsed())
     unlocked_keys = [k for k in state["characters_state"] if k.endswith("_unlocked")]
     assert len(unlocked_keys) == 34
+
+
+def test_empty_save_produces_all_false_items():
+    state = build_localstorage_state(_empty_parsed())
+    items = state["items_state"]
+    assert isinstance(items, dict)
+    assert len(items) > 500  # ~721 non-removed collectibles
+    assert all(v is False for v in items.values())
+    # Keys are string ids
+    assert all(isinstance(k, str) for k in items.keys())
+
+
+def test_seen_items_marked_true():
+    p = ParsedSave(
+        slot=1,
+        challenges_complete=set(),
+        characters_unlocked=set(),
+        character_marks={},
+        achievements_unlocked=set(),
+        items_seen={1, 33, 105},
+        parsed_at=datetime(2026, 5, 13, tzinfo=timezone.utc),
+    )
+    state = build_localstorage_state(p)
+    assert state["items_state"]["1"] is True
+    assert state["items_state"]["33"] is True
+    assert state["items_state"]["105"] is True
+    assert state["items_state"]["2"] is False
+
+
+def test_items_state_excludes_removed_placeholders():
+    """Removed/placeholder ids must NOT appear in items_state."""
+    from tracker.data.collectibles import COLLECTIBLES
+    state = build_localstorage_state(_empty_parsed())
+    items = state["items_state"]
+    for item_id, meta in COLLECTIBLES.items():
+        if meta["removed"]:
+            assert str(item_id) not in items, f"removed id {item_id} leaked into items_state"
+        else:
+            assert str(item_id) in items
