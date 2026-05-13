@@ -1,0 +1,20 @@
+{
+  "planPath": "docs/superpowers/plans/2026-05-13-character-grid-redesign.md",
+  "tasks": [
+    {"id": 0, "subject": "Task 0: Preparación y backup", "status": "pending"},
+    {"id": 1, "subject": "Task 1: Recolectar sprites de los 12 jefes (marks)", "status": "pending", "blockedBy": [0]},
+    {"id": 2, "subject": "Task 2: Recolectar unlocks de los 17 personajes Normal", "status": "pending", "blockedBy": [0]},
+    {"id": 3, "subject": "Task 3: Recolectar unlocks de los 17 personajes Tainted", "status": "pending", "blockedBy": [0]},
+    {"id": 4, "subject": "Task 4: Identificar ítems prioritarios desde la imagen", "status": "pending", "blockedBy": [2]},
+    {"id": 5, "subject": "Task 5: Inyectar CHARACTER_UNLOCKS y MARK_BOSS_SPRITES", "status": "pending", "blockedBy": [1, 2, 3, 4]},
+    {"id": 6, "subject": "Task 6: Añadir CSS para la rejilla", "status": "pending", "blockedBy": [0]},
+    {"id": 7, "subject": "Task 7: Reemplazar DOM de #view-characters", "status": "pending", "blockedBy": [6]},
+    {"id": 8, "subject": "Task 8: Implementar renderCharacterGrid()", "status": "pending", "blockedBy": [5, 7]},
+    {"id": 9, "subject": "Task 9: Actualizar toggle Tainted", "status": "pending", "blockedBy": [8]},
+    {"id": 10, "subject": "Task 10: Ajustar updateCharProgress()", "status": "pending", "blockedBy": [8]},
+    {"id": 11, "subject": "Task 11: Inicialización al cargar", "status": "pending", "blockedBy": [9, 10]},
+    {"id": 12, "subject": "Task 12: Limpieza de código y CSS obsoletos", "status": "pending", "blockedBy": [11]},
+    {"id": 13, "subject": "Task 13: QA visual final", "status": "pending", "blockedBy": [12]}
+  ],
+  "lastUpdated": "2026-05-13"
+}
