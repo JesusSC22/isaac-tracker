@@ -1,0 +1,29 @@
+{
+  "_source": "User-confirmed on 2026-05-13 via brainstorming AskUserQuestion. Use as ground truth for parser tests. Only includes items the user CONFIRMED — absence here does NOT imply 'not done'.",
+  "challenges_done": [1, 9, 30],
+  "challenges_known_not_done": [34],
+  "characters_unlocked": [
+    2,
+    3,
+    5,
+    10,
+    14,
+    15,
+    19,
+    20
+  ],
+  "_characters_unlocked_human": [
+    "cain (id=2)",
+    "judas (id=3)",
+    "eve (id=5)",
+    "the-lost (id=10)",
+    "keeper (id=14)",
+    "apollyon (id=15)",
+    "bethany (id=19)",
+    "jacob-and-esau (id=20)"
+  ],
+  "tainted_at_least_one_unlocked": true,
+  "_tainted_note": "User confirmed at least one tainted is unlocked but did not specify which. Parser test should assert that the set of unlocked tainted IDs (21..37) is non-empty, not specific IDs.",
+  "character_marks_done": {},
+  "_character_marks_note": "Not collected from user. Parser test for character marks can be a smoke test (parses without error and returns sane shapes) rather than a content assertion until the user provides specifics."
+}
