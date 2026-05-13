@@ -51,10 +51,14 @@ def _prepare_html_url() -> str:
     """
     src_dir = _bundled_assets_dir()
     tmp_dir = Path(tempfile.mkdtemp(prefix="isaactracker_"))
-    # Copy every bundled asset so relative refs (e.g. bossrush.png) resolve.
+    # Copy every bundled asset (and asset subdir like marks/) so relative
+    # refs like `bossrush.png` and `marks/mark_0.png` resolve from the HTML.
     for item in src_dir.iterdir():
+        dest = tmp_dir / item.name
         if item.is_file():
-            shutil.copy2(item, tmp_dir / item.name)
+            shutil.copy2(item, dest)
+        elif item.is_dir():
+            shutil.copytree(item, dest)
     atexit.register(lambda: shutil.rmtree(tmp_dir, ignore_errors=True))
     html_path = tmp_dir / "challenges.html"
     # Use Path.as_uri() for a proper file:// URL on Windows.

@@ -20,6 +20,15 @@ if src_png.exists():
     shutil.copyfile(src_png, dst_png)
     print(f"[build.spec] Synced bossrush.png -> {dst_png}")
 
+# Mirror marks directory (13 hard-mode completion sprites) from root → assets.
+src_marks = ROOT / "marks"
+dst_marks = ROOT / "tracker" / "assets" / "marks"
+if src_marks.is_dir():
+    if dst_marks.exists():
+        shutil.rmtree(dst_marks)
+    shutil.copytree(src_marks, dst_marks)
+    print(f"[build.spec] Synced marks/ -> {dst_marks}")
+
 a = Analysis(
     ['tracker/app.py'],
     pathex=[str(ROOT)],
@@ -27,6 +36,7 @@ a = Analysis(
     datas=[
         ('tracker/assets/challenges.html', 'assets'),
         ('tracker/assets/bossrush.png', 'assets'),
+        ('tracker/assets/marks', 'assets/marks'),
     ],
     hiddenimports=[
         'watchdog.observers.read_directory_changes',

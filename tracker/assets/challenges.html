@@ -593,9 +593,40 @@
       background: #4a5a7e;
     }
     .char-grid-cell.done img {
-      opacity: 0.28;
-      filter: grayscale(0.5);
+      /* Slight dim so the bright mark stamp pops, but keep the item readable. */
+      opacity: 0.55;
+      filter: grayscale(0.2) brightness(0.85);
     }
+    /* Hard-mode completion mark stamp shown on completed cells.
+       Position: bottom-right corner, large enough to be unmistakable. */
+    .char-grid-cell.done::after {
+      content: '';
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 56%;
+      height: 56%;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      pointer-events: none;
+      z-index: 3;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 2px rgba(0,0,0,0.9)) drop-shadow(0 0 1px rgba(0,0,0,0.9));
+    }
+    .char-grid-cell.done[data-mark="0"]::after  { background-image: url("marks/mark_0.png"); }
+    .char-grid-cell.done[data-mark="1"]::after  { background-image: url("marks/mark_1.png"); }
+    .char-grid-cell.done[data-mark="2"]::after  { background-image: url("marks/mark_2.png"); }
+    .char-grid-cell.done[data-mark="3"]::after  { background-image: url("marks/mark_3.png"); }
+    .char-grid-cell.done[data-mark="4"]::after  { background-image: url("marks/mark_4.png"); }
+    .char-grid-cell.done[data-mark="5"]::after  { background-image: url("marks/mark_5.png"); }
+    .char-grid-cell.done[data-mark="6"]::after  { background-image: url("marks/mark_6.png"); }
+    .char-grid-cell.done[data-mark="7"]::after  { background-image: url("marks/mark_7.png"); }
+    .char-grid-cell.done[data-mark="8"]::after  { background-image: url("marks/mark_8.png"); }
+    .char-grid-cell.done[data-mark="9"]::after  { background-image: url("marks/mark_9.png"); }
+    .char-grid-cell.done[data-mark="10"]::after { background-image: url("marks/mark_10.png"); }
+    .char-grid-cell.done[data-mark="11"]::after { background-image: url("marks/mark_11.png"); }
+    .char-grid-cell.done[data-mark="12"]::after { background-image: url("marks/mark_12.png"); }
     .char-grid-cell.empty {
       cursor: default;
       background: #2a3854;
