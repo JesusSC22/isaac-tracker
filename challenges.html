@@ -524,7 +524,14 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
       gap: 6px;
-      padding: 8px 0;
+      padding: 8px 12px;
+      /* Same width-breakout trick that #character-grid uses: escape the
+         1200px container and use the full viewport (minus a small margin). */
+      width: calc(100vw - 40px);
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
+      box-sizing: border-box;
     }
     .item-cell {
       position: relative;
