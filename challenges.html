@@ -716,6 +716,21 @@
       padding: 6px 20px;
       font-size: 0.8rem;
     }
+
+    /* ===== Tracker-locked mode (active only inside IsaacTracker.exe / PyWebView) ===== */
+    body.tracker-locked input[type="checkbox"],
+    body.tracker-locked .char-grid-cell,
+    body.tracker-locked .char-grid-col-header,
+    body.tracker-locked li {
+      pointer-events: none;
+      cursor: default;
+    }
+    body.tracker-locked .reset-btn,
+    body.tracker-locked .tainted-toggle,
+    body.tracker-locked .tab {
+      pointer-events: auto;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -3839,6 +3854,43 @@
   setTaintedVisible(localStorage.getItem(TAINTED_VISIBLE_KEY) === '1');
   const savedTab = localStorage.getItem(ACTIVE_TAB_KEY);
   if (savedTab) switchTab(savedTab);
+
+  // ===== PyWebView bridge (no-op when opened as plain file://) =====
+  // applyIsaacState is invoked by IsaacTracker.exe to push save-derived state
+  // into localStorage and trigger re-renders. The function is exposed globally
+  // so the python side can call it via window.evaluate_js.
+  window.applyIsaacState = function(state) {
+    // Backup once before the very first sync, so the user can recover their
+    // pre-tracker manual marks if they ever want to.
+    if (!localStorage.getItem('_pre_tracker_backup')) {
+      localStorage.setItem('_pre_tracker_backup', JSON.stringify({
+        challenges: localStorage.getItem(STORAGE_KEY),
+        characters: localStorage.getItem(CHAR_STORAGE_KEY),
+        timestamp: new Date().toISOString(),
+      }));
+    }
+    if (state && state.challenges_state) {
+      saveState(state.challenges_state, STORAGE_KEY);
+    }
+    if (state && state.characters_state) {
+      saveState(state.characters_state, CHAR_STORAGE_KEY);
+    }
+    render();
+    renderCharacterGrid();
+  };
+
+  // When PyWebView's JS API is ready, lock the UI (read-only mode) and pull
+  // the initial state from python. This event NEVER fires in a regular browser,
+  // so the standalone file:// experience is unchanged.
+  window.addEventListener('pywebviewready', async () => {
+    document.body.classList.add('tracker-locked');
+    try {
+      const initial = await window.pywebview.api.get_initial_state();
+      window.applyIsaacState(initial);
+    } catch (e) {
+      console.error('Failed to load initial Isaac state from python:', e);
+    }
+  });
 </script>
 </body>
 </html>
