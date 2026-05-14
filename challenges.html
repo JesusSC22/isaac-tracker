@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Challenges</title>
+  <title>Isaac Tracker</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -569,6 +569,105 @@
       box-shadow: inset 0 0 0 1px rgba(243,156,18,0.35);
     }
 
+    /* ==== Trinkets tab — Cuadrícula adaptativa (mismo layout que items) ==== */
+    #view-trinkets .progress-bar-container {
+      height: 18px;
+      max-width: 720px;
+      margin: 0 auto 10px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+    #view-trinkets #trinketsProgressBar {
+      background: linear-gradient(90deg, #27ae60 0%, #58d68d 100%);
+      box-shadow: 0 0 12px rgba(39,174,96,0.45);
+    }
+    #view-trinkets .progress-label {
+      text-align: center;
+      font-size: 1rem;
+      color: #cfd5e8;
+      margin-bottom: 24px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    #trinkets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+      gap: 6px;
+      padding: 8px 12px;
+      width: calc(100vw - 40px);
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
+      box-sizing: border-box;
+    }
+    .trinket-cell {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      background: #16213e;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: help;
+      transition: transform 0.1s, background 0.15s;
+      overflow: hidden;
+    }
+    .trinket-cell:hover {
+      transform: scale(1.12);
+      z-index: 2;
+      background: #1f2c4a;
+    }
+    .trinket-cell img {
+      width: 92%;
+      height: 92%;
+      object-fit: contain;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      filter: grayscale(1) brightness(0.42);
+      opacity: 0.65;
+      transition: filter 0.2s, opacity 0.2s;
+    }
+    .trinket-cell.seen img {
+      filter: none;
+      opacity: 1;
+    }
+    .trinket-cell.seen {
+      background: linear-gradient(135deg, #1f2c4a 0%, #284a37 100%);
+      box-shadow: inset 0 0 0 1px rgba(39,174,96,0.45);
+    }
+
+    /* ==== Cartas y Píldoras tab ==== */
+    #view-cards #cards-grouped .section-title { margin-top: 16px; }
+
+    #view-cards .cards-grid,
+    #view-cards #pills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .card-cell, .pill-cell {
+      aspect-ratio: 1;
+      background: #16213e;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s;
+    }
+    .card-cell:hover, .pill-cell:hover { background: #1f2a4a; }
+
+    .card-cell img, .pill-cell img {
+      width: 80%;
+      height: 80%;
+      image-rendering: pixelated;
+      filter: grayscale(100%) brightness(0.4);
+      transition: filter 0.15s;
+    }
+    .card-cell.seen img, .pill-cell.seen img { filter: none; }
+
     /* ==== Achievements tab — Cuadrícula adaptativa ==== */
     #view-achievements .progress-bar-container {
       height: 18px;
@@ -888,10 +987,30 @@
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
     }
     #view-challenges #progressBar {
-      background: linear-gradient(90deg, #e94560 0%, #ff6b85 100%);
-      box-shadow: 0 0 12px rgba(233,69,96,0.5);
+      background: linear-gradient(90deg, #9b59b6 0%, #bb71d8 100%);
+      box-shadow: 0 0 12px rgba(155,89,182,0.5);
     }
     #view-challenges .progress-label {
+      text-align: center;
+      font-size: 1rem;
+      color: #cfd5e8;
+      margin-bottom: 24px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    /* ==== Personajes — barra grande igual que el resto, color azul ==== */
+    #view-characters .progress-bar-container {
+      height: 18px;
+      max-width: 720px;
+      margin: 0 auto 10px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+    #view-characters #charProgressBar {
+      background: linear-gradient(90deg, #3498db 0%, #5dade2 100%);
+      box-shadow: 0 0 12px rgba(52,152,219,0.5);
+    }
+    #view-characters .progress-label {
       text-align: center;
       font-size: 1rem;
       color: #cfd5e8;
@@ -1447,6 +1566,8 @@
     <button class="tab" data-view="characters">Personajes</button>
     <button class="tab" data-view="achievements">Logros</button>
     <button class="tab" data-view="items">Ítems</button>
+    <button class="tab" data-view="trinkets">Trinkets</button>
+    <button class="tab" data-view="cards">Cartas y Píldoras</button>
   </div>
 
   <div class="view active" id="view-challenges">
@@ -1496,11 +1617,42 @@
     <div class="progress-label" id="itemsProgressLabel">Ítems: 0 / 0</div>
     <div id="items-grid"></div>
   </div>
+
+  <div class="view" id="view-trinkets">
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="trinketsProgressBar"></div>
+    </div>
+    <div class="progress-label" id="trinketsProgressLabel">Trinkets: 0 / 0</div>
+    <div id="trinkets-grid"></div>
+  </div>
+
+  <div class="view" id="view-cards">
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="cardsProgressBar"></div>
+    </div>
+    <div class="progress-label" id="cardsProgressLabel">Cartas: 0 / 0</div>
+
+    <div id="cards-grouped"></div>
+
+    <div class="progress-bar-container" style="margin-top:24px;">
+      <div class="progress-bar" id="pillsProgressBar"></div>
+    </div>
+    <div class="progress-label" id="pillsProgressLabel">Píldoras: 0 / 0</div>
+
+    <div class="section-title">Efectos de píldora</div>
+    <div id="pills-grid"></div>
+    <div id="pills-pending-note" hidden style="color:#aaa; font-size:0.85rem; margin-top:12px;">
+      Pendiente de verificación con un save con píldoras identificadas.
+    </div>
+  </div>
 </div>
 
 <div class="challenge-tooltip" id="tooltip"></div>
 
 <script src="items_inline.js"></script>
+<script src="trinkets_inline.js"></script>
+<script src="cards_inline.js"></script>
+<script src="pills_inline.js"></script>
 <script>
   const CHARACTERS = [
     {
@@ -1636,7 +1788,7 @@
       tier: "C",
       unlock: "Derrotar a Mother (boss del Corpse II en la ruta de Repentance).",
       priority: "Dos personajes simultáneos — curiosidad mecánica. Sus completions desbloquean DAMOCLES (item top tier que pone 2 items en cada pedestal a cambio de muerte instantánea si te cae la espada), Rock Bottom (las stats nunca bajan de su pico máximo), Magic Skin y Birthright. Damocles justifica completarlo.",
-      sprite: "data:image/png;base64,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",
+      sprite: "data:image/png;base64,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",
     },
     {
       slug: "the-lost",
@@ -3652,272 +3804,272 @@
     1: {
       dificultad: "Fácil",
       resumen: "Es una partida con Isaac donde vas a por Mom, sin D6, con las maldiciones permanentes de Curse of the Darkness y Curse of the Unknown.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Rune of Hagalaz.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Rune of Hagalaz.",
     },
     2: {
       dificultad: "Fácil",
       resumen: "Es una partida con Isaac, sin D6 en la que vamos a por Mom, empiezas con los items Number One, E.Coli, Butt Bombs, Flush! (que te darán la transformación de Oh Crap) y el trinket Petrified Poop.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Rune of Jera.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Rune of Jera.",
     },
     3: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac, sin D6 en la que vamos a por Mom, Empiezas con los ítems Tiny Planet, Soy Milk, The Small Rock e Iron Bar.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Rune of Ehwaz.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Rune of Ehwaz.",
     },
     4: {
       dificultad: "Medio",
       resumen: "Es una partida con Eve a por Satan, con los ítems integrados con Eve, Dark Matter, Pentagram y Sacrificial Dagger.",
-      desbloqueo: "Este challenge se desbloquea teniendo a Eve y matando a Mom’s Heart o It Lives 11 veces con cualquier personaje.",
-      recompensa: "La recompensa por completar este challenge es Rune of Dagaz.",
+      desbloqueo: "Este reto se desbloquea teniendo a Eve y matando a Mom’s Heart o It Lives 11 veces con cualquier personaje.",
+      recompensa: "La recompensa por completar este reto es Rune of Dagaz.",
     },
     5: {
       dificultad: "Fácil",
       resumen: "Es una partida con Magdalene a por Mom, con los ítems integrados con Yum Heart, Infamy, Bucket of Lard y Thunder Thighs.",
-      desbloqueo: "Este challenge se desbloquea teniendo a Magdalene.",
-      recompensa: "La recompensa por completar este challenge es Rune of Ansuz.",
+      desbloqueo: "Este reto se desbloquea teniendo a Magdalene.",
+      recompensa: "La recompensa por completar este reto es Rune of Ansuz.",
     },
     6: {
       dificultad: "Difícil",
       resumen: "Es una partida con Isaac sin D6, donde vamos a por Mom’s Heart, tiene los ojos vendados y no podrá disparar lágrimas como Lilith, aparte empieza con los ítems Distant Admiration, Forever Alone, Halo of Flies (que te darán la transformación de Beelzebub) y Transcendence.",
-      desbloqueo: "Este challenge se desbloquea matando 3 veces a Mom’s Heart y recibirás el ítem Transcendence y te darán el desafío.",
-      recompensa: "La recompensa por completar este challenge es Rune of Perthro.",
+      desbloqueo: "Este reto se desbloquea matando 3 veces a Mom’s Heart y recibirás el ítem Transcendence y te darán el desafío.",
+      recompensa: "La recompensa por completar este reto es Rune of Perthro.",
     },
     7: {
       dificultad: "Medio",
       resumen: "Es una partida con Lazarus a por Isaac, empieza con la pastilla de Lazarus y los ítems Ipecac, Mr.Mega y My Reflection.",
-      desbloqueo: "Este challenge se desbloquea teniendo a Lazarus y matando a Mom’s Heart o It Lives 11 veces.",
-      recompensa: "La recompensa por completar este challenge es Suicide King.",
+      desbloqueo: "Este reto se desbloquea teniendo a Lazarus y matando a Mom’s Heart o It Lives 11 veces.",
+      recompensa: "La recompensa por completar este reto es Suicide King.",
     },
     8: {
       dificultad: "Difícil",
       resumen: "Es una partida con Isaac sin D6 a por Mom, tiene los ojos vendados y no podrá disparar lágrimas como Lilith, aparte empieza con los ítems Guppy’s Hair Ball, Guppy’s Head y Guppy’s Tail dándote la transformación de Guppy.",
-      desbloqueo: "Este challenge se desbloquea consiguiendo por primera vez la transformación de Guppy.",
-      recompensa: "La recompensa por completar este challenge es Algiz.",
+      desbloqueo: "Este reto se desbloquea consiguiendo por primera vez la transformación de Guppy.",
+      recompensa: "La recompensa por completar este reto es Algiz.",
     },
     9: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza con los ítems Dr Fetus, Remote Detonator y el trinket Match Stick.",
-      desbloqueo: "Este challenge se desbloquea matando 9 veces a Mom’s Heart para conseguir el item Dr Fetus y te darán el desafío.",
-      recompensa: "La recompensa por completar este challenge es Chaos Card.",
+      desbloqueo: "Este reto se desbloquea matando 9 veces a Mom’s Heart para conseguir el item Dr Fetus y te darán el desafío.",
+      recompensa: "La recompensa por completar este reto es Chaos Card.",
     },
     10: {
       dificultad: "Fácil",
       resumen: "Es una partida con Magdalene a por Mom, empieza con Yum Heart, Raw Liver, The Compass, Treasure Map, Blue Map y el trinket Child’s Heart. Empiezas con la maldicion Cursed of the Cursed.",
-      desbloqueo: "Este challenge se desbloquea teniendo a Magdalene.",
-      recompensa: "La recompensa por completar este challenge es Credit Card.",
+      desbloqueo: "Este reto se desbloquea teniendo a Magdalene.",
+      recompensa: "La recompensa por completar este reto es Credit Card.",
     },
     11: {
       dificultad: "Medio",
       resumen: "Es una partida con Judas a por Satán, empieza con los ítems The Book of Belial, Epic Fetus y Loki’s Horns.",
-      desbloqueo: "Este challenge se desbloquea completando el desafío 19 (The Family Man) y matando a Lokii por primera vez.",
-      recompensa: "La recompensa por completar este challenge es Rules Card.",
+      desbloqueo: "Este reto se desbloquea completando el desafío 19 (The Family Man) y matando a Lokii por primera vez.",
+      recompensa: "La recompensa por completar este reto es Rules Card.",
     },
     12: {
       dificultad: "Fácil",
       resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con los ítems Habit, 9 Volt , Lemon Mishap y la pastilla Lemon Party.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Card Againts Humanity.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Card Againts Humanity.",
     },
     13: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Mom, tiene los ojos vendados y no podrá disparar lágrimas como Lilith, aparte empieza con los ítems Pyro, 9 volt, Butt Beans, The Black Bean y The Bean.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Burnt Penny.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Burnt Penny.",
     },
     14: {
       dificultad: "Fácil",
       resumen: "Es una partida con Isaac, sin D6 a por Mom, empieza con el ítem 9 volt, The Battery, Starter Deck y Deck of Cards.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es SMB Super Fan.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es SMB Super Fan.",
     },
     15: {
       dificultad: "Fácil",
       resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con el ítem Polyfemuns, Cupid’s Arrow y My Reflection.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Swallowed Penny.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Swallowed Penny.",
     },
     16: {
       dificultad: "Fácil",
       resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con el ítem Technology, Technology 2 y Spoon Bender.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Robo-Baby 2.0.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Robo-Baby 2.0.",
     },
     17: {
       dificultad: "Fácil",
       resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con el ítem Anti-Gravity y Strange Atractor.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Death’s Touch.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Death’s Touch.",
     },
     18: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Mom. Empieza con el The Mulligan y Spiderbaby y el trinket Tick.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Tech 5.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Tech 5.",
     },
     19: {
       dificultad: "Difícil",
       resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Brother Bobby, Sister Maggy, Rotten Baby (los cuales te dan la transformación de Conjoined) y BFFS! pero tienes los ojos vendados y no podrás disparar lagrimas como Lilith.",
-      desbloqueo: "Este challenge se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Dad’s Key (se desbloquea teniendo las dos partes de la llave de ángel) y te darán el desafío.",
-      recompensa: "La recompensa por completar este challenge es Epic Fetus.",
+      desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Dad’s Key (se desbloquea teniendo las dos partes de la llave de ángel) y te darán el desafío.",
+      recompensa: "La recompensa por completar este reto es Epic Fetus.",
     },
     20: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Mom, empieza sin ningún ítem.",
-      desbloqueo: "Este challenge se desbloquea matando a Mom por primera vez.",
-      recompensa: "La recompensa por completar este challenge es Rune of Berkano.",
+      desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
+      recompensa: "La recompensa por completar este reto es Rune of Berkano.",
     },
     21: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza sin ningún ítem.",
-      desbloqueo: "Este challenge se desbloquea matando a Mom por primera vez.",
-      recompensa: "La recompensa por completar este challenge es Corazón Dorado.",
+      desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
+      recompensa: "La recompensa por completar este reto es Corazón Dorado.",
     },
     22: {
       dificultad: "Difícil",
       resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza sin ningún ítem pero la partida está acelerada.",
-      desbloqueo: "Este challenge se desbloquea matando a Mom por primera vez.",
-      recompensa: "La recompensa por completar este challenge es Get out of Jail Free Card.",
+      desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
+      recompensa: "La recompensa por completar este reto es Get out of Jail Free Card.",
     },
     23: {
       dificultad: "Difícil",
       resumen: "Es una partida con Blue Baby a por Satan, empieza con el Brother Bobby, Mr Mega, Pyromaniac y Kamikaze pero tienes los ojos vendados y no podrás disparar como el personaje Lilith.",
-      desbloqueo: "Este challenge se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Mr Mega (se desbloquea rompiendo 10 rocas marcadas).",
-      recompensa: "La recompensa por completar este challenge es Golden Bomb.",
+      desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Mr Mega (se desbloquea rompiendo 10 rocas marcadas).",
+      recompensa: "La recompensa por completar este reto es Golden Bomb.",
     },
     24: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Money=Power, Sack of Pennies y 50 monedas.",
-      desbloqueo: "Este challenge se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Sack of Pennies (se desbloquea matando a Isaac con Cain).",
-      recompensa: "La recompensa por completar este challenge son dos pastillas (Addicted y Percs).",
+      desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Sack of Pennies (se desbloquea matando a Isaac con Cain).",
+      recompensa: "La recompensa por completar este reto son dos pastillas (Addicted y Percs).",
     },
     25: {
       dificultad: "Fácil",
       resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con 12 contenedores de vida roja, (solo uno de ellos relleno) y el ítem Charm of the Vampire.",
-      desbloqueo: "Este challenge se desbloquea matando a Mom por primera vez.",
-      recompensa: "La recompensa por completar este challenge son dos pastillas (Re-lax y ???).",
+      desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
+      recompensa: "La recompensa por completar este reto son dos pastillas (Re-lax y ???).",
     },
     26: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Mega Satan, empieza con el ítem Boomerang, Mom’s Knife, The Ladder, Trinity Shield y las dos partes de la llave de ángel.",
-      desbloqueo: "Este challenge se desbloquea matando a ??? (Blue Baby) o The Lamb por primera vez y desbloqueando Mom’s Knife (matando a Satan con Isaac).",
-      recompensa: "La recompensa por completar este challenge es Poker Chip.",
+      desbloqueo: "Este reto se desbloquea matando a ??? (Blue Baby) o The Lamb por primera vez y desbloqueando Mom’s Knife (matando a Satan con Isaac).",
+      recompensa: "La recompensa por completar este reto es Poker Chip.",
     },
     27: {
       dificultad: "Difícil",
       resumen: "Es una partida con Blue Baby a por ??? (Blue Baby), empieza con el ítem The Poop, Thunder Thighs y 3 Bob’s Brain que le dan la transformación de Bob.",
-      desbloqueo: "Este challenge se desbloquea matando 5 veces a Isaac, consiguiendo la Polaroid y permitiendo ir a The Chest.",
-      recompensa: "La recompensa por completar este challenge es Stud Finder.",
+      desbloqueo: "Este reto se desbloquea matando 5 veces a Isaac, consiguiendo la Polaroid y permitiendo ir a The Chest.",
+      recompensa: "La recompensa por completar este reto es Stud Finder.",
     },
     28: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza con el ítem 3 Dollar Baby, Rainbow Baby y el trinket Rainbow Worm (que no te puedes quitar a no ser que lo absorbas).",
-      desbloqueo: "Este challenge se desbloquea matando a Mom por primera vez.",
-      recompensa: "La recompensa por completar este challenge es D8.",
+      desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
+      recompensa: "La recompensa por completar este reto es D8.",
     },
     29: {
       dificultad: "Medio",
       resumen: "Es una partida con Judas a por Isaac, empieza con el ítem The Book of Belial y Chocolate Milk.",
-      desbloqueo: "Este challenge se desbloquea matando a Mom por primera vez.",
-      recompensa: "La recompensa por completar este challenge es Kidney Stone.",
+      desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
+      recompensa: "La recompensa por completar este reto es Kidney Stone.",
     },
     30: {
       dificultad: "Difícil",
       resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza con el ítem Holy Grail, Spear of Destiny, Punching Bag y Isaac’s Heart pero tienes los ojos vendados y no podrás disparar como Lilith.",
-      desbloqueo: "Este challenge se desbloquea matando a Mom por primera vez.",
-      recompensa: "La recompensa por completar este challenge es Black Rune.",
+      desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
+      recompensa: "La recompensa por completar este reto es Black Rune.",
     },
     31: {
       dificultad: "Muy difícil",
       resumen: "Es una partida con Isaac sin D6 a por Mega Satan (más o menos), empieza con 10 ítems aleatorios y las dos partes de la llave de ángeles.",
-      desbloqueo: "Este challenge se desbloquea consiguiendo The Negative para poder ir a la Dark Room sin pincharte y ya allí tienes que derrotar a The Lamb y Mega Satan. Si lo haces pinchándote no te contara ya que necesitas desbloquear si o si antes The Negative.",
-      recompensa: "La recompensa por completar este challenge es Laz Bleeds More! (Lazarus empieza siempre con el ítem Anemic sin importar si revive o no).",
+      desbloqueo: "Este reto se desbloquea consiguiendo The Negative para poder ir a la Dark Room sin pincharte y ya allí tienes que derrotar a The Lamb y Mega Satan. Si lo haces pinchándote no te contara ya que necesitas desbloquear si o si antes The Negative.",
+      recompensa: "La recompensa por completar este reto es Laz Bleeds More! (Lazarus empieza siempre con el ítem Anemic sin importar si revive o no).",
     },
     32: {
       dificultad: "Difícil",
       resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza sin ningún ítem.",
-      desbloqueo: "Este challenge se desbloquea matando a Mom por primera vez.",
-      recompensa: "La recompensa por completar este challenge es que Magdalene empieza con la pastilla Full Health en todas las partidas.",
+      desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
+      recompensa: "La recompensa por completar este reto es que Magdalene empieza con la pastilla Full Health en todas las partidas.",
     },
     33: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Mom’s Eyeshadow y Friendly Ball.",
-      desbloqueo: "Este challenge se desbloquea matando 11 veces a Mom’s Heart.",
-      recompensa: "La recompensa por completar este challenge es Charged Key.",
+      desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart.",
+      recompensa: "La recompensa por completar este reto es Charged Key.",
     },
     34: {
       dificultad: "Muy difícil",
       resumen: "Es una partida con Isaac sin D6 a por Mega Satan (tendrás que ir por ruta de abajo), empieza con las dos partes de la llave de ángeles.",
-      desbloqueo: "Este challenge se desbloquea matando 5 veces a Satán para desbloquear la Negative y matando a Mega Satan.",
-      recompensa: "La recompensa por completar este challenge es Samson Feels Healthy! (Samson empieza siempre con el trinket Child’s Heart).",
+      desbloqueo: "Este reto se desbloquea matando 5 veces a Satán para desbloquear la Negative y matando a Mega Satan.",
+      recompensa: "La recompensa por completar este reto es Samson Feels Healthy! (Samson empieza siempre con el trinket Child’s Heart).",
     },
     35: {
       dificultad: "Fácil",
       resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Cupid’s Arrow y Rubber Cement.",
-      desbloqueo: "Este challenge se desbloquea matando 5 veces a Isaac, para desbloquear el ítem Polaroid.",
-      recompensa: "La recompensa por completar este challenge es Greed’s Gullet.",
+      desbloqueo: "Este reto se desbloquea matando 5 veces a Isaac, para desbloquear el ítem Polaroid.",
+      recompensa: "La recompensa por completar este reto es Greed’s Gullet.",
     },
     36: {
       dificultad: "Medio",
       resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con el ítem The Poop, 9 Volt, Skatole, E.Coli, 3 Butt Bombs, BFFS!, Thunder Thighs y Dirty Mind, gracias a estos ítems tendrás la transformación de Oh Crap, también empieza con el trinket Mysterious Candy, pero tienes los ojos vendados y no podrás disparar como el personaje Lilith.",
-      desbloqueo: "Este challenge está desbloqueado desde el principio.",
-      recompensa: "La recompensa por completar este challenge es Dirty Mind.",
+      desbloqueo: "Este reto está desbloqueado desde el principio.",
+      recompensa: "La recompensa por completar este reto es Dirty Mind.",
     },
     37: {
       dificultad: "Medio",
       resumen: "Es una partida con Bethany sin Book of Virtues a por Satan, empieza con el ítem The Book of Belial, Blood Bag, Anemic y Blood Oath y el trinket Child’s Heart.",
-      desbloqueo: "Este challenge se desbloquea matando 11 veces a Mom’s Heart y matarlo una vez con Lazarus para desbloquear a Bethany.",
-      recompensa: "La recompensa por completar este challenge es Sigil of Baphomet.",
+      desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart y matarlo una vez con Lazarus para desbloquear a Bethany.",
+      recompensa: "La recompensa por completar este reto es Sigil of Baphomet.",
     },
     38: {
       dificultad: "Difícil",
       resumen: "Es una partida con Bethany sin Book of Virtues a por Isaac, empieza con el ítem School Bag, Urn of Souls, Guppy’s Paw y el trinket Maggy’s Faith pero tienes los ojos vendados y no podrás disparar como el personaje Lilith.",
-      desbloqueo: "Este challenge se desbloquea matando 11 veces a Mom’s Heart, matando a Satán con Bethany para desbloquear Urn of Souls y matando a The Lamb con Magdalene para desbloquear Maggy’s Faith.",
-      recompensa: "La recompensa por completar este challenge es Purgatory.",
+      desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart, matando a Satán con Bethany para desbloquear Urn of Souls y matando a The Lamb con Magdalene para desbloquear Maggy’s Faith.",
+      recompensa: "La recompensa por completar este reto es Purgatory.",
     },
     39: {
       dificultad: "Muy difícil",
       resumen: "Es una partida con Isaac sin D6 a por Mother, empieza con el ítem Spirit Sword, Trinity Shield y Mom’s Bracelet.",
-      desbloqueo: "Este challenge se desbloquea matando a Mother por primera vez.",
-      recompensa: "La recompensa por completar este challenge es Spirit Sword.",
+      desbloqueo: "Este reto se desbloquea matando a Mother por primera vez.",
+      recompensa: "La recompensa por completar este reto es Spirit Sword.",
     },
     40: {
       dificultad: "Difícil",
       resumen: "Es una partida con Jacob y Esau a por Mom’s Heart, Jacob empieza con el ítem 20/20 y Esau con el ítem 20/20 y X-Ray Vision.",
-      desbloqueo: "Este challenge se desbloquea matando a Mother por primera vez. Se pueden encontrar todas las habitaciones.",
-      recompensa: "La recompensa por completar este challenge es Broken Glasses.",
+      desbloqueo: "Este reto se desbloquea matando a Mother por primera vez. Se pueden encontrar todas las habitaciones.",
+      recompensa: "La recompensa por completar este reto es Broken Glasses.",
     },
     41: {
       dificultad: "Difícil",
       resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Mom’s Purse, Marbles y Mom’s Box.",
-      desbloqueo: "Este challenge se desbloquea matando a Mom’s Heart 11 veces y usando la pastilla Gulp! 5 veces en una partida para desbloquear el ítem Marbles. (Si entras en Marbles explico como desbloquearlo fácil)",
-      recompensa: "La recompensa por completar este challenge es Ice Cube.",
+      desbloqueo: "Este reto se desbloquea matando a Mom’s Heart 11 veces y usando la pastilla Gulp! 5 veces en una partida para desbloquear el ítem Marbles. (Si entras en Marbles explico como desbloquearlo fácil)",
+      recompensa: "La recompensa por completar este reto es Ice Cube.",
     },
     42: {
       dificultad: "Muy difícil",
       resumen: "Es una partida con Tainted Forgotten a por Satán, empieza sin ningún ítem.",
-      desbloqueo: "Este challenge se desbloquea consiguiendo a Tainted Forgotten.",
-      recompensa: "La recompensa por completar este challenge es The Chariot?.",
+      desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Forgotten.",
+      recompensa: "La recompensa por completar este reto es The Chariot?.",
     },
     43: {
       dificultad: "Muy difícil",
       resumen: "Es una partida con Tainted Cain a por Mom, empieza con el ítem Bag of Crafting.",
-      desbloqueo: "Este challenge se desbloquea consiguiendo a Tainted Cain.",
-      recompensa: "La recompensa por completar este challenge es Justice?.",
+      desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Cain.",
+      recompensa: "La recompensa por completar este reto es Justice?.",
     },
     44: {
       dificultad: "Muy difícil",
       resumen: "Es una partida con Tainted Jacob a por Mother, empieza con el ítem Dad’s Key y Red Key.",
-      desbloqueo: "Este challenge se desbloquea consiguiendo a Tainted Jacob.",
-      recompensa: "La recompensa por completar este challenge es The Hermit?.",
+      desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Jacob.",
+      recompensa: "La recompensa por completar este reto es The Hermit?.",
     },
     45: {
       dificultad: "Muy difícil",
       resumen: "Es una partida con Isaac sin D6 a por Blue Baby, empieza con el ítem TMTRAINER. En esta partida tienes el ítem TMTRAINER y todo es un caos, intenta buscar algún ítem que te haga inmortal y luego no cojas ningún ítem más para no perder la partida (es la manera mas segura de hacerlo, pero puedes ser valiente y darle con todo).",
-      desbloqueo: "Este challenge se desbloquea consiguiendo a Tainted Eden.",
-      recompensa: "La recompensa por completar este challenge es Temperance?.",
+      desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Eden.",
+      recompensa: "La recompensa por completar este reto es Temperance?.",
     },
   };
 
@@ -4017,7 +4169,7 @@
         <div class="tt-head-row">
           <div class="tt-head-text">
             <span class="tt-title">${c.num}. ${escapeHtml(c.name)}</span>
-            <div class="tt-meta">Challenge #${c.num}</div>
+            <div class="tt-meta">Reto #${c.num}</div>
             <div class="tt-chips">
               <span class="tt-diff ${diffClass}">${escapeHtml(info.dificultad)}</span>
             </div>
@@ -4390,7 +4542,7 @@
     const headRow = document.createElement('tr');
     const corner = document.createElement('th');
     corner.className = 'char-grid-corner';
-    corner.textContent = taintedMode ? 'TAINTED CHARACTERS' : 'NORMAL CHARACTERS';
+    corner.textContent = taintedMode ? 'PERSONAJES TAINTED' : 'PERSONAJES NORMALES';
     headRow.appendChild(corner);
 
     let prevTier = null;
@@ -4634,7 +4786,7 @@
     {i:24,c:"items",n:"Little Steven",u:"Derrota a Steven"},
     {i:25,c:"items",n:"Little C.H.A.D.",u:"Derrota a C.H.A.D."},
     {i:26,c:"items",n:"A Gamekid",u:"Visita 10 Arcades"},
-    {i:27,c:"items",n:"A Halo",u:"Derrota a Mom, Mom's Heart or It Lives usando The Bible"},
+    {i:27,c:"items",n:"A Halo",u:"Derrota a Mom, Mom's Heart o It Lives usando The Bible"},
     {i:28,c:"items",n:"Mr. Mega",u:"Destruye 10 Tinted Rocks"},
     {i:29,c:"personajes",n:"The D6",u:"Derrota a Isaac con ???"},
     {i:30,c:"items",n:"The Scissors",u:"Muere 100 veces"},
@@ -4643,7 +4795,7 @@
     {i:33,c:"hitos",n:"Everything Is Terrible!!!",u:"Derrota a Mom's Heart 5 veces"},
     {i:34,c:"items",n:"It Lives!",u:"Derrota a Mom's Heart 11 veces"},
     {i:35,c:"items",n:"Mom's Contact",u:"Consigue tres items Yes Mother? en una run"},
-    {i:36,c:"items",n:"The Necronomicon",u:"Usa XIII - Death 4 times"},
+    {i:36,c:"items",n:"The Necronomicon",u:"Usa XIII - Death 4 veces"},
     {i:37,c:"hitos",n:"Basement Boy",u:"Pasa el capítulo 1 sin recibir daño"},
     {i:38,c:"hitos",n:"Spelunker Boy",u:"Pasa el capítulo 2 sin recibir daño"},
     {i:39,c:"hitos",n:"Dark Boy",u:"Pasa el capítulo 3 sin recibir daño"},
@@ -4684,7 +4836,7 @@
     {i:74,c:"trinkets",n:"Samson's Lock",u:"Derrota a The Lamb con Samson"},
     {i:75,c:"trinkets",n:"Cain's Eye",u:"Derrota a ??? con Cain"},
     {i:76,c:"trinkets",n:"Eve's Bird Foot",u:"Derrota a Isaac con Eve"},
-    {i:77,c:"trinkets",n:"The Left Hand",u:"Derrota a Ultra Pride con any character, or ??? as Judas"},
+    {i:77,c:"trinkets",n:"The Left Hand",u:"Derrota a Ultra Pride con cualquier personaje, o a ??? con Judas"},
     {i:78,c:"items",n:"The Negative",u:"Derrota a Satan 5 veces"},
     {i:79,c:"personajes",n:"Azazel",u:"Haz 3 tratos con el Diablo en una run"},
     {i:80,c:"personajes",n:"Lazarus",u:"Ten 4 o más Soul Hearts a la vez"},
@@ -4753,8 +4905,8 @@
     {i:143,c:"items",n:"Head of Krampus",u:"Derrota a Krampus"},
     {i:144,c:"hitos",n:"Super Meat Boy",u:"Crea un Super Meat Boy recogiendo Cube of Meat 4 veces en una run"},
     {i:145,c:"items",n:"Butter Bean",u:"Destruye 100 popós"},
-    {i:146,c:"items",n:"Little Baggy",u:"Recoge 2 de: Roid Rage, The Virus, Growth Hormones, Experimental Treatment or Speed Ball"},
-    {i:147,c:"items",n:"Blood Bag",u:"Usa the Blood Donation Machine 30 times"},
+    {i:146,c:"items",n:"Little Baggy",u:"Recoge 2 de: Roid Rage, The Virus, Growth Hormones, Experimental Treatment o Speed Ball"},
+    {i:147,c:"items",n:"Blood Bag",u:"Usa la Blood Donation Machine 30 veces"},
     {i:148,c:"items",n:"The D4",u:"Vuela 30 máquinas de Arcade"},
     {i:149,c:"trinkets",n:"Missing Poster",u:"Derrota a The Lamb con Isaac"},
     {i:150,c:"items",n:"Rubber Cement",u:"Derrota a Mom's Heart 2 veces"},
@@ -4771,7 +4923,7 @@
     {i:161,c:"retos",n:"Cat Got Your Tongue",u:"Conviértete en Guppy"},
     {i:162,c:"retos",n:"Demo Man",u:"Derrota a Mom's Heart 9 veces"},
     {i:163,c:"retos",n:"Cursed!",u:"Ten 7 o más Red Heart Containers a la vez"},
-    {i:164,c:"retos",n:"Glass Cannon",u:"Pasa The Family Man (challenge #19) and defeat Lokii"},
+    {i:164,c:"retos",n:"Glass Cannon",u:"Pasa The Family Man (reto #19) y derrota a Lokii"},
     {i:165,c:"retos",n:"The Family Man",u:"Recoge las dos Key Pieces de los Ángeles en una run"},
     {i:166,c:"retos",n:"Purist",u:"Derrota a Mom"},
     {i:167,c:"marcas",n:"Lost Baby",u:"Derrota a Mom's Heart en modo Difícil con Isaac"},
@@ -4877,7 +5029,7 @@
     {i:267,c:"retos",n:"Blue Bomber",u:"Destruye 10 Tinted Rocks y derrota a Mom's Heart 11 veces"},
     {i:268,c:"retos",n:"PAY TO PLAY",u:"Derrota a Isaac con Cain"},
     {i:269,c:"retos",n:"Have a Heart",u:"Derrota a Mom"},
-    {i:270,c:"retos",n:"I RULE!",u:"Derrota a ??? or The Lamb, and defeat Satan con Isaac"},
+    {i:270,c:"retos",n:"I RULE!",u:"Derrota a ??? o The Lamb, y derrota a Satan con Isaac"},
     {i:271,c:"retos",n:"BRAINS!",u:"Derrota a Isaac 5 veces"},
     {i:272,c:"retos",n:"PRIDE DAY!",u:"Derrota a Mom"},
     {i:273,c:"retos",n:"Onan's Streak",u:"Derrota a Mom"},
@@ -4925,7 +5077,7 @@
     {i:315,c:"items",n:"Hushy",u:"Derrota a Hush con Apollyon"},
     {i:316,c:"items",n:"Brown Nugget",u:"Derrota a Ultra Greed con Apollyon"},
     {i:317,c:"marcas",n:"Mort Baby",u:"Derrota a Mega Satan con Apollyon"},
-    {i:318,c:"items",n:"Smelter",u:"Derrota a Mom's Heart or It Lives! en modo Difícil con Apollyon"},
+    {i:318,c:"items",n:"Smelter",u:"Derrota a Mom's Heart o It Lives! en modo Difícil con Apollyon"},
     {i:319,c:"marcas",n:"Apollyon Baby",u:"Consigue todas las marcas de modo Difícil con Apollyon"},
     {i:320,c:"hitos",n:"New Area",u:"Derrota a Hush"},
     {i:321,c:"trinkets",n:"Once More with Feeling!",u:"Completa una Victory Lap derrotando a The Lamb"},
@@ -4953,8 +5105,8 @@
     {i:343,c:"hitos",n:"Flooded Caves",u:"Derrota a It Lives 16 veces"},
     {i:344,c:"hitos",n:"Dank Depths",u:"Derrota a It Lives 21 veces"},
     {i:345,c:"hitos",n:"Scarred Womb",u:"Derrota a It Lives 30 veces"},
-    {i:346,c:"items",n:"Something wicked this way comes!",u:"Derrota a ??? con 3 different characters"},
-    {i:347,c:"items",n:"Something wicked this way comes+!",u:"Derrota a ??? con 6 different characters"},
+    {i:346,c:"items",n:"Something wicked this way comes!",u:"Derrota a ??? con 3 personajes distintos"},
+    {i:347,c:"items",n:"Something wicked this way comes+!",u:"Derrota a ??? con 6 personajes distintos"},
     {i:348,c:"hitos",n:"The gate is open!",u:"Derrota a The Lamb"},
     {i:349,c:"items",n:"Black Hole",u:"Derrota a 20 portales"},
     {i:350,c:"items",n:"Mystery Gift",u:"Destruye 500 rocas"},
@@ -4969,11 +5121,11 @@
     {i:359,c:"trinkets",n:"Wooden Cross",u:"Duerme en una cama"},
     {i:360,c:"trinkets",n:"Butter!",u:"Completa 2 Victory Laps y empieza una 3.ª"},
     {i:361,c:"trinkets",n:"Huge Growth",u:"Aumenta de tamaño 5 veces en una sola run. Fuentes: pastillas \"One Makes you Larger\", XI - Strength y Magic Mushroom"},
-    {i:362,c:"trinkets",n:"Ancient Recall",u:"Usa cards and runes 20 times"},
-    {i:363,c:"trinkets",n:"Era Walk",u:"Ten both the Broken Watch and the Stop Watch en tu colección"},
+    {i:362,c:"trinkets",n:"Ancient Recall",u:"Usa cartas y runas 20 veces"},
+    {i:363,c:"trinkets",n:"Era Walk",u:"Ten a la vez Broken Watch y Stop Watch en tu colección"},
     {i:364,c:"items",n:"Coupon",u:"Compra en Tiendas, Devil Deals o Black Markets 50 veces"},
     {i:365,c:"items",n:"Telekinesis",u:"Pasa el capítulo 2 sin recibir daño"},
-    {i:366,c:"items",n:"Moving Box",u:"Usa Pandora's Box in Dark Room"},
+    {i:366,c:"items",n:"Moving Box",u:"Usa Pandora's Box en Dark Room"},
     {i:367,c:"items",n:"Jumper Cables",u:"Recoge cualquier 3 de estos items/trinkets en una sola run: 9 Volt, The Battery, Car Battery, AAA Battery, Watch Battery"},
     {i:368,c:"items",n:"Leprosy",u:"Pasa el capítulo 3 sin recibir daño"},
     {i:369,c:"items",n:"Technology Zero",u:"Recoge dos items de tecnología en una run"},
@@ -4988,18 +5140,18 @@
     {i:378,c:"items",n:"Lachryphagy",u:"Recoge 10 items o pastillas de \"tears up\" en una run"},
     {i:379,c:"items",n:"Schoolbag",u:"Entra a todas las tiendas desde el capítulo 1 al 3 en una run"},
     {i:380,c:"items",n:"Trisagion",u:"Toma 25 items de Angel Rooms"},
-    {i:381,c:"trinkets",n:"Extension Cord",u:"Ten The Battery, 9 Volt, and Car Battery en tu colección"},
+    {i:381,c:"trinkets",n:"Extension Cord",u:"Ten The Battery, 9 Volt y Car Battery en tu colección"},
     {i:382,c:"items",n:"Flat Stone",u:"Consigue Rubber Cement 5 veces"},
     {i:383,c:"items",n:"Sacrificial Altar",u:"Acepta 50 Devil deals"},
-    {i:384,c:"items",n:"Lil Spewer",u:"Muere por tu propia explosión de Ipecac, Bob's Rotten Head, or Horf! pill"},
+    {i:384,c:"items",n:"Lil Spewer",u:"Muere por tu propia explosión de Ipecac, Bob's Rotten Head o la pastilla Horf!"},
     {i:385,c:"items",n:"Blanket",u:"Duerme en 10 camas"},
-    {i:386,c:"items",n:"Marbles",u:"Usa 5 Gulp! pills in one run"},
+    {i:386,c:"items",n:"Marbles",u:"Usa 5 pastillas Gulp! en una sola run"},
     {i:387,c:"items",n:"Mystery Egg",u:"Genera tres enemigos charmed en la misma sala"},
     {i:388,c:"trinkets",n:"Rotten Penny",u:"Ten 20 Blue Flies a la vez"},
-    {i:389,c:"trinkets",n:"Baby-Bender",u:"Usa I - The Magician or Telepathy for Dummies while already having homing tears"},
+    {i:389,c:"trinkets",n:"Baby-Bender",u:"Usa I - The Magician o Telepathy for Dummies teniendo ya lágrimas homing"},
     {i:390,c:"personajes",n:"The Forgotten",u:"Es complicado"},
     {i:391,c:"trinkets",n:"Bone Heart",u:"Es complicado"},
-    {i:392,c:"items",n:"Marrow",u:"Derrota a Mom's Heart or It Lives! en modo Difícil con The Forgotten"},
+    {i:392,c:"items",n:"Marrow",u:"Derrota a Mom's Heart o It Lives! en modo Difícil con The Forgotten"},
     {i:393,c:"items",n:"Slipped Rib",u:"Derrota a Isaac con The Forgotten"},
     {i:394,c:"items",n:"Pointy Rib",u:"Derrota a Satan con The Forgotten"},
     {i:395,c:"items",n:"Jaw Bone",u:"Derrota a ??? con The Forgotten"},
@@ -5011,9 +5163,9 @@
     {i:401,c:"items",n:"Book of the Dead",u:"Derrota a Delirium con The Forgotten"},
     {i:402,c:"marcas",n:"Bone Baby",u:"Consigue todas las marcas de modo Difícil con The Forgotten"},
     {i:403,c:"marcas",n:"Bound Baby",u:"Derrota a Mega Satan con The Forgotten"},
-    {i:404,c:"personajes",n:"Bethany",u:"Derrota a Mom's Heart/It Lives on hard mode con Lazarus, without dying"},
+    {i:404,c:"personajes",n:"Bethany",u:"Derrota a Mom's Heart/It Lives en modo Difícil con Lazarus, sin morir"},
     {i:405,c:"personajes",n:"Jacob and Esau",u:"Derrota a Mother"},
-    {i:406,c:"hitos",n:"The Planetarium",u:"Recoge tres de los siguientes en una sola run: Signs of the Zodiac, Magic 8 Ball, Tiny Planet, and Crystal Ball"},
+    {i:406,c:"hitos",n:"The Planetarium",u:"Recoge tres de los siguientes en una sola run: Signs of the Zodiac, Magic 8 Ball, Tiny Planet y Crystal Ball"},
     {i:407,c:"hitos",n:"A Secret Exit",u:"Derrota a Hush 3 veces"},
     {i:408,c:"trinkets",n:"Forgotten Lullaby",u:"Vuela el cráneo de The Siren tras derrotarla"},
     {i:409,c:"items",n:"Fruity Plum",u:"Derrota a Baby Plum 10 veces"},
@@ -5023,7 +5175,7 @@
     {i:413,c:"hitos",n:"Ashpit",u:"Derrota a todos los jefes de Mines"},
     {i:414,c:"hitos",n:"Gehenna",u:"Derrota a todos los jefes del Mausoleum"},
     {i:415,c:"trinkets",n:"Red Key",u:"Abre la versión grande de Mom's Box en Home"},
-    {i:416,c:"marcas",n:"Wisp Baby",u:"Derrota a Mom's Heart or It Lives! en modo Difícil con Bethany"},
+    {i:416,c:"marcas",n:"Wisp Baby",u:"Derrota a Mom's Heart o It Lives! en modo Difícil con Bethany"},
     {i:417,c:"items",n:"Book of Virtues",u:"Derrota a Isaac con Bethany"},
     {i:418,c:"items",n:"Urn of Souls",u:"Derrota a Satan con Bethany"},
     {i:419,c:"trinkets",n:"Blessed Penny",u:"Derrota a ??? con Bethany"},
@@ -5035,18 +5187,18 @@
     {i:425,c:"items",n:"Star of Bethlehem",u:"Derrota a Delirium con Bethany"},
     {i:426,c:"marcas",n:"Hope Baby",u:"Consigue todas las marcas de modo Difícil con Bethany"},
     {i:427,c:"marcas",n:"Glowing Baby",u:"Derrota a Mega Satan con Bethany"},
-    {i:428,c:"marcas",n:"Double Baby",u:"Derrota a Mom's Heart or It Lives! en modo Difícil con Jacob and Esau"},
-    {i:429,c:"items",n:"The Stairway",u:"Derrota a Isaac con Jacob and Esau"},
-    {i:430,c:"items",n:"Red Stew",u:"Derrota a Satan con Jacob and Esau"},
-    {i:431,c:"items",n:"Birthright",u:"Derrota a ??? con Jacob and Esau"},
-    {i:432,c:"items",n:"Damocles",u:"Derrota a The Lamb con Jacob and Esau"},
-    {i:433,c:"items",n:"Rock Bottom",u:"Completa Boss Rush con Jacob and Esau"},
-    {i:434,c:"items",n:"Inner Child",u:"Derrota a Ultra Greed con Jacob and Esau"},
-    {i:435,c:"items",n:"Vanishing Twin",u:"Derrota a Hush con Jacob and Esau"},
-    {i:436,c:"items",n:"Genesis",u:"Derrota a Ultra Greedier con Jacob and Esau"},
-    {i:437,c:"items",n:"Suplex!",u:"Derrota a Delirium con Jacob and Esau"},
-    {i:438,c:"marcas",n:"Solomon's Baby",u:"Consigue todas las marcas de modo Difícil con Jacob and Esau"},
-    {i:439,c:"marcas",n:"Illusion Baby",u:"Derrota a Mega Satan con Jacob and Esau"},
+    {i:428,c:"marcas",n:"Double Baby",u:"Derrota a Mom's Heart o It Lives! en modo Difícil con Jacob y Esau"},
+    {i:429,c:"items",n:"The Stairway",u:"Derrota a Isaac con Jacob y Esau"},
+    {i:430,c:"items",n:"Red Stew",u:"Derrota a Satan con Jacob y Esau"},
+    {i:431,c:"items",n:"Birthright",u:"Derrota a ??? con Jacob y Esau"},
+    {i:432,c:"items",n:"Damocles",u:"Derrota a The Lamb con Jacob y Esau"},
+    {i:433,c:"items",n:"Rock Bottom",u:"Completa Boss Rush con Jacob y Esau"},
+    {i:434,c:"items",n:"Inner Child",u:"Derrota a Ultra Greed con Jacob y Esau"},
+    {i:435,c:"items",n:"Vanishing Twin",u:"Derrota a Hush con Jacob y Esau"},
+    {i:436,c:"items",n:"Genesis",u:"Derrota a Ultra Greedier con Jacob y Esau"},
+    {i:437,c:"items",n:"Suplex!",u:"Derrota a Delirium con Jacob y Esau"},
+    {i:438,c:"marcas",n:"Solomon's Baby",u:"Consigue todas las marcas de modo Difícil con Jacob y Esau"},
+    {i:439,c:"marcas",n:"Illusion Baby",u:"Derrota a Mega Satan con Jacob y Esau"},
     {i:440,c:"items",n:"Meat Cleaver",u:"Derrota a Mother con Isaac"},
     {i:441,c:"items",n:"Options?",u:"Derrota a The Beast con Isaac"},
     {i:442,c:"items",n:"Yuck Heart",u:"Derrota a Mother con Magdalene"},
@@ -5079,25 +5231,25 @@
     {i:469,c:"items",n:"Spirit Shackles",u:"Derrota a The Beast con The Forgotten"},
     {i:470,c:"items",n:"Revelation",u:"Derrota a Mother con Bethany"},
     {i:471,c:"items",n:"Jar of Wisps",u:"Derrota a The Beast con Bethany"},
-    {i:472,c:"items",n:"Magic Skin",u:"Derrota a Mother con Jacob and Esau"},
-    {i:473,c:"items",n:"Friend Finder",u:"Derrota a The Beast con Jacob and Esau"},
-    {i:474,c:"personajes",n:"The Broken",u:"Usa la Red Key o Cracked Key in Home as Isaac"},
-    {i:475,c:"personajes",n:"The Dauntless",u:"Usa la Red Key o Cracked Key in Home as Magdalene"},
-    {i:476,c:"personajes",n:"The Hoarder",u:"Usa la Red Key o Cracked Key in Home as Cain"},
-    {i:477,c:"personajes",n:"The Deceiver",u:"Usa la Red Key o Cracked Key in Home as Judas"},
-    {i:478,c:"personajes",n:"The Soiled",u:"Usa la Red Key o Cracked Key in Home as ???"},
-    {i:479,c:"personajes",n:"The Curdled",u:"Usa la Red Key o Cracked Key in Home as Eve"},
-    {i:480,c:"personajes",n:"The Savage",u:"Usa la Red Key o Cracked Key in Home as Samson"},
-    {i:481,c:"personajes",n:"The Benighted",u:"Usa la Red Key o Cracked Key in Home as Azazel"},
-    {i:482,c:"personajes",n:"The Enigma",u:"Usa la Red Key o Cracked Key in Home as Lazarus"},
-    {i:483,c:"personajes",n:"The Capricious",u:"Usa la Red Key o Cracked Key in Home as Eden"},
-    {i:484,c:"personajes",n:"The Baleful",u:"Usa la Red Key o Cracked Key in Home as The Lost"},
-    {i:485,c:"personajes",n:"The Harlot",u:"Usa la Red Key o Cracked Key in Home as Lilith"},
-    {i:486,c:"personajes",n:"The Miser",u:"Usa la Red Key o Cracked Key in Home as Keeper"},
-    {i:487,c:"personajes",n:"The Empty",u:"Usa la Red Key o Cracked Key in Home as Apollyon"},
-    {i:488,c:"personajes",n:"The Fettered",u:"Usa la Red Key o Cracked Key in Home as The Forgotten"},
-    {i:489,c:"personajes",n:"The Zealot",u:"Usa la Red Key o Cracked Key in Home as Bethany"},
-    {i:490,c:"personajes",n:"The Deserter",u:"Usa la Red Key o Cracked Key in Home as Jacob and Esau"},
+    {i:472,c:"items",n:"Magic Skin",u:"Derrota a Mother con Jacob y Esau"},
+    {i:473,c:"items",n:"Friend Finder",u:"Derrota a The Beast con Jacob y Esau"},
+    {i:474,c:"personajes",n:"The Broken",u:"Usa la Red Key o Cracked Key en Home con Isaac"},
+    {i:475,c:"personajes",n:"The Dauntless",u:"Usa la Red Key o Cracked Key en Home con Magdalene"},
+    {i:476,c:"personajes",n:"The Hoarder",u:"Usa la Red Key o Cracked Key en Home con Cain"},
+    {i:477,c:"personajes",n:"The Deceiver",u:"Usa la Red Key o Cracked Key en Home con Judas"},
+    {i:478,c:"personajes",n:"The Soiled",u:"Usa la Red Key o Cracked Key en Home con ???"},
+    {i:479,c:"personajes",n:"The Curdled",u:"Usa la Red Key o Cracked Key en Home con Eve"},
+    {i:480,c:"personajes",n:"The Savage",u:"Usa la Red Key o Cracked Key en Home con Samson"},
+    {i:481,c:"personajes",n:"The Benighted",u:"Usa la Red Key o Cracked Key en Home con Azazel"},
+    {i:482,c:"personajes",n:"The Enigma",u:"Usa la Red Key o Cracked Key en Home con Lazarus"},
+    {i:483,c:"personajes",n:"The Capricious",u:"Usa la Red Key o Cracked Key en Home con Eden"},
+    {i:484,c:"personajes",n:"The Baleful",u:"Usa la Red Key o Cracked Key en Home con The Lost"},
+    {i:485,c:"personajes",n:"The Harlot",u:"Usa la Red Key o Cracked Key en Home con Lilith"},
+    {i:486,c:"personajes",n:"The Miser",u:"Usa la Red Key o Cracked Key en Home con Keeper"},
+    {i:487,c:"personajes",n:"The Empty",u:"Usa la Red Key o Cracked Key en Home con Apollyon"},
+    {i:488,c:"personajes",n:"The Fettered",u:"Usa la Red Key o Cracked Key en Home con The Forgotten"},
+    {i:489,c:"personajes",n:"The Zealot",u:"Usa la Red Key o Cracked Key en Home con Bethany"},
+    {i:490,c:"personajes",n:"The Deserter",u:"Usa la Red Key o Cracked Key en Home con Jacob y Esau"},
     {i:491,c:"items",n:"Glitched Crown",u:"Derrota a The Beast con Tainted Isaac"},
     {i:492,c:"items",n:"Belly Jelly",u:"Derrota a The Beast con Tainted Magdalene"},
     {i:493,c:"trinkets",n:"Blue Key",u:"Derrota a The Beast con Tainted Cain"},
@@ -5115,15 +5267,15 @@
     {i:505,c:"items",n:"Isaac's Tomb",u:"Derrota a The Beast con Tainted Forgotten"},
     {i:506,c:"items",n:"Vengeful Spirit",u:"Derrota a The Beast con Tainted Bethany"},
     {i:507,c:"items",n:"Esau Jr.",u:"Derrota a The Beast con Tainted Jacob"},
-    {i:508,c:"retos",n:"Bloody Mary",u:"Derrota a Mom's Heart/It Lives on hard mode con Lazarus, without dying, defeat Mom's Heart 11 times and unlock Blood Bag"},
-    {i:509,c:"retos",n:"Baptism by Fire",u:"Derrota a Satan con Bethany, defeat Mom's Heart 11 times and unlock Maggy's Faith"},
+    {i:508,c:"retos",n:"Bloody Mary",u:"Derrota a Mom's Heart/It Lives en modo Difícil con Lazarus sin morir, derrota a Mom's Heart 11 veces y desbloquea Blood Bag"},
+    {i:509,c:"retos",n:"Baptism by Fire",u:"Derrota a Satan con Bethany, derrota a Mom's Heart 11 veces y desbloquea Maggy's Faith"},
     {i:510,c:"retos",n:"Isaac's Awakening",u:"Derrota a Mother"},
     {i:511,c:"retos",n:"Seeing Double",u:"Derrota a Mother"},
-    {i:512,c:"retos",n:"Pica Run",u:"Derrota a Mom's Heart 11 times and Unlock Marbles"},
-    {i:513,c:"retos",n:"Hot Potato",u:"Usa la Red Key o Cracked Key in Home as The Forgotten"},
-    {i:514,c:"retos",n:"Cantripped!",u:"Usa la Red Key o Cracked Key in Home as Cain"},
-    {i:515,c:"retos",n:"Red Redemption",u:"Usa la Red Key o Cracked Key in Home as Jacob and Esau"},
-    {i:516,c:"retos",n:"DELETE THIS",u:"Usa la Red Key o Cracked Key in Home as Eden"},
+    {i:512,c:"retos",n:"Pica Run",u:"Derrota a Mom's Heart 11 veces y desbloquea Marbles"},
+    {i:513,c:"retos",n:"Hot Potato",u:"Usa la Red Key o Cracked Key en Home con The Forgotten"},
+    {i:514,c:"retos",n:"Cantripped!",u:"Usa la Red Key o Cracked Key en Home con Cain"},
+    {i:515,c:"retos",n:"Red Redemption",u:"Usa la Red Key o Cracked Key en Home con Jacob y Esau"},
+    {i:516,c:"retos",n:"DELETE THIS",u:"Usa la Red Key o Cracked Key en Home con Eden"},
     {i:517,c:"items",n:"Dirty Mind",u:"Completa Scat Man (reto #36)"},
     {i:518,c:"trinkets",n:"Sigil of Baphomet",u:"Completa Bloody Mary (reto #37)"},
     {i:519,c:"items",n:"Purgatory",u:"Completa Baptism by Fire (reto #38)"},
@@ -5669,8 +5821,272 @@
     positionTooltip(cell);
   }
 
+  // ===== Trinkets tab — renderer + tooltip =====
+  // TRINKETS_DATA is loaded from trinkets_inline.js as window.TRINKETS_DATA:
+  //   [{achId, name, unlock}, ...] one entry per unlockable trinket.
+  // Unlock state piggybacks on _lastAchUnlocked (Set of achievement IDs from
+  // the save). The sprite is the achievement icon (ach_icons/{achId}.webp),
+  // which for trinkets is the trinket sprite itself.
+  function renderTrinketsGrid() {
+    const grid = document.getElementById('trinkets-grid');
+    if (!grid || !window.TRINKETS_DATA) return;
+    const unlocked = _lastAchUnlocked || new Set();
+    const frag = document.createDocumentFragment();
+    for (const tr of window.TRINKETS_DATA) {
+      const cell = document.createElement('div');
+      const isSeen = unlocked.has(tr.achId);
+      cell.className = 'trinket-cell' + (isSeen ? ' seen' : '');
+      cell.dataset.trinketAch = tr.achId;
+      cell.dataset.trinketName = tr.name;
+      cell.dataset.trinketUnlock = tr.unlock || '';
+      cell.dataset.trinketDesc = tr.desc || '';
+      const img = document.createElement('img');
+      img.src = `ach_icons/${tr.achId}.webp`;
+      img.alt = tr.name;
+      img.loading = 'lazy';
+      img.style.pointerEvents = 'none';
+      cell.appendChild(img);
+      cell.addEventListener('mouseenter', () => showTrinketTooltip(cell));
+      cell.addEventListener('mouseleave', hideTooltip);
+      frag.appendChild(cell);
+    }
+    grid.innerHTML = '';
+    grid.appendChild(frag);
+    updateTrinketsProgress();
+  }
+
+  function updateTrinketsProgress() {
+    const unlocked = _lastAchUnlocked || new Set();
+    const total = window.TRINKETS_DATA ? window.TRINKETS_DATA.length : 0;
+    let done = 0;
+    if (total) {
+      for (const tr of window.TRINKETS_DATA) {
+        if (unlocked.has(tr.achId)) done++;
+      }
+    }
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const bar = document.getElementById('trinketsProgressBar');
+    const lbl = document.getElementById('trinketsProgressLabel');
+    if (bar) bar.style.width = pct + '%';
+    if (lbl) lbl.textContent = `Trinkets: ${done} / ${total}  (${pct}%)`;
+  }
+
+  function showTrinketTooltip(cell) {
+    if (_ctrlLocked) return;
+    const name = cell.dataset.trinketName || '';
+    const unlock = cell.dataset.trinketUnlock || '';
+    const seen = cell.classList.contains('seen');
+    // Description priority: hand-written in trinkets_inline.js (`desc` field)
+    // wins; fallback to ITEM_INFO rich entry for trinkets that were already
+    // curated under the items tab (e.g. Missing Poster, Silver Dollar).
+    const info = _itemInfoFor(name) || {};
+    const desc = cell.dataset.trinketDesc || info.description || '';
+    const priorityNote = info.priorityNote || '';
+    const tierClass = seen ? 'tier-s' : 'tier-c';
+    const statusChip = seen
+      ? '<span class="tt-diff tier-s">✔ Desbloqueada</span>'
+      : '<span class="tt-diff tier-c">🔒 Bloqueada</span>';
+
+    let html = `
+      <div class="tt-card-header ${tierClass}">
+        <div class="tt-head-row">
+          <div class="tt-head-text">
+            <span class="tt-title">${escapeHtml(name)}</span>
+            <div class="tt-meta">Trinket ${statusChip}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tt-body">`;
+    if (desc) {
+      html += `
+        <div class="tt-block effect">
+          <div class="tt-block-label">💫 Efecto</div>
+          <div class="tt-block-body">${_descToHtml(desc)}</div>
+        </div>`;
+    }
+    if (priorityNote) {
+      html += `
+        <div class="tt-block howto">
+          <div class="tt-block-label">⭐ Por qué importa</div>
+          <div class="tt-block-body">${escapeHtml(priorityNote)}</div>
+        </div>`;
+    }
+    if (unlock) {
+      html += `
+        <div class="tt-block howto">
+          <div class="tt-block-label">🔑 Cómo conseguirla</div>
+          <div class="tt-block-body">${escapeHtml(unlock)}</div>
+        </div>`;
+    }
+    html += `</div>`;
+    tooltipEl.innerHTML = html;
+    cancelHideTooltip();
+    tooltipEl.classList.add('visible');
+    positionTooltip(cell);
+  }
+
+  // ===== Cartas y Píldoras tab — renderers + tooltips =====
+
+  const CARD_GROUPS = [
+    { key: "tarot_mayor", label: "Tarot Mayor" },
+    { key: "tarot_inverso", label: "Tarot Inverso" },
+    { key: "runas", label: "Runas" },
+    { key: "especiales", label: "Cartas Especiales" },
+    { key: "objetos_alma", label: "Objetos del Alma" },
+  ];
+
+  function renderCardsGrouped() {
+    const root = document.getElementById('cards-grouped');
+    if (!root || !window.CARDS_DATA) return;
+    const seen = window._cardsState || {};
+    root.innerHTML = '';
+    for (const grp of CARD_GROUPS) {
+      const inGroup = window.CARDS_DATA.filter(c => c.group === grp.key);
+      if (inGroup.length === 0) continue;
+      const title = document.createElement('div');
+      title.className = 'section-title';
+      title.textContent = grp.label;
+      root.appendChild(title);
+      const grid = document.createElement('div');
+      grid.className = 'cards-grid';
+      for (const c of inGroup) {
+        const cell = document.createElement('div');
+        cell.className = 'card-cell' + (seen[String(c.id)] ? ' seen' : '');
+        cell.dataset.cardId = c.id;
+        cell.dataset.cardName = c.name;
+        cell.dataset.cardDesc = c.desc || '';
+        cell.dataset.cardGroup = c.group;
+        const img = document.createElement('img');
+        img.src = 'card_icons/' + c.sprite;
+        img.alt = c.name;
+        img.loading = 'lazy';
+        img.style.pointerEvents = 'none';
+        cell.appendChild(img);
+        cell.addEventListener('mouseenter', () => showCardTooltip(cell));
+        cell.addEventListener('mouseleave', hideTooltip);
+        grid.appendChild(cell);
+      }
+      root.appendChild(grid);
+    }
+    updateCardsProgress();
+  }
+
+  function updateCardsProgress() {
+    const seen = window._cardsState || {};
+    const total = window.CARDS_DATA ? window.CARDS_DATA.length : 0;
+    let done = 0;
+    if (total) for (const c of window.CARDS_DATA) if (seen[String(c.id)]) done++;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const bar = document.getElementById('cardsProgressBar');
+    const lbl = document.getElementById('cardsProgressLabel');
+    if (bar) bar.style.width = pct + '%';
+    if (lbl) lbl.textContent = `Cartas: ${done} / ${total}  (${pct}%)`;
+  }
+
+  function showCardTooltip(cell) {
+    if (_ctrlLocked) return;
+    const name = cell.dataset.cardName || '';
+    const desc = cell.dataset.cardDesc || 'Sin descripción.';
+    const seen = cell.classList.contains('seen');
+    const tierClass = seen ? 'tier-s' : 'tier-c';
+    const statusChip = seen
+      ? '<span class="tt-diff tier-s">✔ Vista</span>'
+      : '<span class="tt-diff tier-c">✗ Te falta</span>';
+    tooltipEl.innerHTML = `
+      <div class="tt-card-header ${tierClass}">
+        <div class="tt-head-row">
+          <div class="tt-head-text">
+            <span class="tt-title">${escapeHtml(name)}</span>
+            <div class="tt-meta">Carta ${statusChip}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tt-body">
+        <div class="tt-block effect">
+          <div class="tt-block-label">💫 Efecto</div>
+          <div class="tt-block-body">${_descToHtml(desc)}</div>
+        </div>
+      </div>`;
+    cancelHideTooltip();
+    tooltipEl.classList.add('visible');
+    positionTooltip(cell);
+  }
+
+  function renderPillsGrid() {
+    const grid = document.getElementById('pills-grid');
+    const note = document.getElementById('pills-pending-note');
+    if (!grid || !window.PILLS_DATA) return;
+    const verified = !!window._pillsVerified;
+    const seen = window._pillsState || {};
+    grid.innerHTML = '';
+    for (const p of window.PILLS_DATA) {
+      const cell = document.createElement('div');
+      const isSeen = verified && !!seen[String(p.id)];
+      cell.className = 'pill-cell' + (isSeen ? ' seen' : '');
+      cell.dataset.pillId = p.id;
+      cell.dataset.pillName = p.name;
+      cell.dataset.pillDesc = p.desc || '';
+      const img = document.createElement('img');
+      img.src = 'pill_icons/' + p.sprite;
+      img.alt = p.name;
+      img.loading = 'lazy';
+      img.style.pointerEvents = 'none';
+      cell.appendChild(img);
+      cell.addEventListener('mouseenter', () => showPillTooltip(cell));
+      cell.addEventListener('mouseleave', hideTooltip);
+      grid.appendChild(cell);
+    }
+    if (note) note.hidden = verified;
+    updatePillsProgress();
+  }
+
+  function updatePillsProgress() {
+    const verified = !!window._pillsVerified;
+    const seen = window._pillsState || {};
+    const total = window.PILLS_DATA ? window.PILLS_DATA.length : 0;
+    let done = 0;
+    if (verified && total) for (const p of window.PILLS_DATA) if (seen[String(p.id)]) done++;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const bar = document.getElementById('pillsProgressBar');
+    const lbl = document.getElementById('pillsProgressLabel');
+    if (bar) bar.style.width = pct + '%';
+    if (lbl) lbl.textContent = `Píldoras: ${done} / ${total}  (${pct}%)`;
+  }
+
+  function showPillTooltip(cell) {
+    if (_ctrlLocked) return;
+    const name = cell.dataset.pillName || '';
+    const desc = cell.dataset.pillDesc || 'Sin descripción.';
+    const seen = cell.classList.contains('seen');
+    const tierClass = seen ? 'tier-s' : 'tier-c';
+    const statusChip = seen
+      ? '<span class="tt-diff tier-s">✔ Identificada</span>'
+      : '<span class="tt-diff tier-c">✗ No identificada</span>';
+    tooltipEl.innerHTML = `
+      <div class="tt-card-header ${tierClass}">
+        <div class="tt-head-row">
+          <div class="tt-head-text">
+            <span class="tt-title">${escapeHtml(name)}</span>
+            <div class="tt-meta">Efecto de píldora ${statusChip}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tt-body">
+        <div class="tt-block effect">
+          <div class="tt-block-label">💊 Efecto</div>
+          <div class="tt-block-body">${_descToHtml(desc)}</div>
+        </div>
+      </div>`;
+    cancelHideTooltip();
+    tooltipEl.classList.add('visible');
+    positionTooltip(cell);
+  }
+
   // Initial render (no state yet — everything renders as "te falta").
   renderItemsGrid();
+  renderTrinketsGrid();
+  renderCardsGrouped();
+  renderPillsGrid();
 
   // ===== PyWebView bridge (no-op when opened as plain file://) =====
   // applyIsaacState is invoked by IsaacTracker.exe to push save-derived state
@@ -5698,6 +6114,13 @@
     if (state && state.items_state && typeof state.items_state === 'object') {
       window._itemsState = state.items_state;
     }
+    if (state && state.cards_state && typeof state.cards_state === 'object') {
+      window._cardsState = state.cards_state;
+    }
+    if (state && state.pills_state && typeof state.pills_state === 'object') {
+      window._pillsState = state.pills_state;
+    }
+    window._pillsVerified = !!(state && state.pills_verified);
     // render() appends to #list without clearing — clear it ourselves so a
     // second call doesn't produce a duplicate tier list. renderCharacterGrid
     // already clears its own container, so we don't need to touch it.
@@ -5707,6 +6130,9 @@
     renderCharacterGrid();
     renderAchievementsView(_lastAchUnlocked);
     renderItemsGrid();
+    renderTrinketsGrid();
+    renderCardsGrouped();
+    renderPillsGrid();
     _hideTrackerLoading();
   };
 
