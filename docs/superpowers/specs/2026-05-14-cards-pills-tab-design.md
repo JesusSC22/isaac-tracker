@@ -85,26 +85,31 @@ Inspección del fixture `tests/fixtures/sample_save_repentance_plus.dat` (jugado
 1. **Constantes nuevas** en `tracker/save_parser.py`:
    ```python
    _CHUNK_CARDS = 6
-   _CHUNK_PILLS = 10  # solo se usa si la verificación pasa; ver gate arriba
+   _CHUNK_PILLS = 10
    ```
-2. **`_extract_chunks` cambia firma a dict para evitar tuplas frágiles:**
+
+2. **Refactor previo de `_extract_chunks` a dict** (tarea independiente, antes de añadir chunks nuevos):
    ```python
    def _extract_chunks(data, path) -> dict[int, bytes]:
        """Return {chunk_type: body_bytes} for chunks we care about."""
    ```
-   Devuelve `{1: ach, 4: items, 6: cards, 7: challenges, 10: pills_or_None}`. Caller `parse_save` se actualiza en consecuencia.
+   Devuelve `{1: ach, 4: items, 7: challenges, ...}`. `parse_save` se adapta a consumir el dict. **Gate:** los tests existentes (`test_save_parser.py` actuales) deben pasar sin cambios funcionales antes de tocar nada nuevo. Si esto introduce regresiones, se revierte y se vuelve al patrón de tupla extendida.
 
-3. **Contrato de error** (consistencia explícita):
+3. **Una vez aprobado el refactor**, el dict pasa a incluir también `{6: cards, 10: pills_or_None}`.
+
+4. **Contrato de error** (consistencia explícita):
    - Chunks **1, 4, 6, 7**: si falta o está truncado → `SaveParseError` con mensaje en español (igual que los actuales).
-   - Chunk **10**: tratamiento tolerante. Si falta o llega vacío → `pills_seen = set()` y se loguea con `print` (no se rompe el parse). Razón: durante el periodo de verificación queremos que la app abra aunque el chunk no esté disponible.
+   - Chunk **10**: tratamiento tolerante. Si falta o llega vacío → `pills_seen = set()`, `pills_verified = False` y se loguea con `print` (no se rompe el parse). Razón: durante el periodo de verificación queremos que la app abra aunque el chunk no esté disponible.
 
-4. **`_extract_cards_seen` y `_extract_pills_seen`** con la misma lógica que `_extract_items_seen` (byte==1 → id en el set).
+5. **`_extract_cards_seen` y `_extract_pills_seen`** con la misma lógica que `_extract_items_seen` (byte==1 → id en el set). `_extract_pills_seen` se ejecuta siempre que el chunk 10 esté presente; el flag `pills_verified` lo controla `parse_save` según el resultado del gate de verificación (sección anterior).
 
-5. **`ParsedSave`** se extiende:
+6. **`ParsedSave`** se extiende:
    ```python
    cards_seen: set[int] = field(default_factory=set)
    pills_seen: set[int] = field(default_factory=set)
+   pills_verified: bool = False   # True solo si pasó el gate de verificación de chunk 10
    ```
+   `pills_verified` se serializa también en `window.SAVE_STATE` y la UI lo consulta para mostrar la nota "pendiente de verificación".
 
 6. **Tests en `tests/test_save_parser.py`:**
    - `test_cards_seen_from_fixture`: `len(parsed.cards_seen) == 97` con el fixture actual.
