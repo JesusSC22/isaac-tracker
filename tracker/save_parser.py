@@ -66,6 +66,9 @@ class ParsedSave:
         sets byte[id]=1 when an item is picked up for the first time; that
         flag persists across runs and is the source of truth for the
         Collection Page. Used by the "Ítems" view.
+    cards_seen: set of card IDs (byte indices in the CARDS chunk, chunk 6)
+        the player has touched at least once. Analogous to `items_seen` but
+        for cards/runes/objects.
     parsed_at: when this parse ran. Useful for logging / UI footer.
     """
     slot: int
@@ -74,6 +77,7 @@ class ParsedSave:
     character_marks: dict[int, set[int]] = field(default_factory=dict)
     achievements_unlocked: set[int] = field(default_factory=set)
     items_seen: set[int] = field(default_factory=set)
+    cards_seen: set[int] = field(default_factory=set)
     parsed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -95,6 +99,7 @@ _ENTRY_SIZES = (1, 4, 4, 1, 1, 1, 1, 4, 4, 1)
 # Chunk type IDs we actually care about (1-indexed).
 _CHUNK_ACHIEVEMENTS = 1
 _CHUNK_COLLECTIBLES = 4
+_CHUNK_CARDS = 6
 _CHUNK_CHALLENGE_COUNTERS = 7
 
 # Challenges chunk: 46 bytes; index 0 is unused, indices 1..45 are challenges.
@@ -132,11 +137,13 @@ def parse_save(path: Path) -> ParsedSave:
     achievements = chunks[_CHUNK_ACHIEVEMENTS]
     challenges   = chunks[_CHUNK_CHALLENGE_COUNTERS]
     collectibles = chunks[_CHUNK_COLLECTIBLES]
+    cards_body   = chunks[_CHUNK_CARDS]
 
     challenges_complete = _extract_challenges(challenges)
     characters_unlocked, character_marks = _extract_character_state(achievements)
     achievements_unlocked = _extract_achievements_set(achievements)
     items_seen = _extract_items_seen(collectibles)
+    cards_seen = _extract_cards_seen(cards_body)
 
     return ParsedSave(
         slot=slot,
@@ -145,12 +152,18 @@ def parse_save(path: Path) -> ParsedSave:
         character_marks=character_marks,
         achievements_unlocked=achievements_unlocked,
         items_seen=items_seen,
+        cards_seen=cards_seen,
     )
 
 
 def _extract_items_seen(collectibles_body: bytes) -> set[int]:
     """Return the set of collectible IDs whose byte is 1 (touched at least once)."""
     return {i for i, b in enumerate(collectibles_body) if b == 1}
+
+
+def _extract_cards_seen(cards_body: bytes) -> set[int]:
+    """Return the set of card IDs (byte indices) whose byte is 1."""
+    return {i for i, b in enumerate(cards_body) if b == 1}
 
 
 def _extract_achievements_set(achievements_body: bytes) -> set[int]:
@@ -186,6 +199,7 @@ def _extract_chunks(data: bytes, path: Path) -> dict[int, bytes]:
         (_CHUNK_ACHIEVEMENTS, "logros"),
         (_CHUNK_CHALLENGE_COUNTERS, "retos"),
         (_CHUNK_COLLECTIBLES, "ítems"),
+        (_CHUNK_CARDS, "cartas"),
     ):
         if required not in chunks:
             raise SaveParseError(f"No se encontró el bloque de {label} en la partida.", path=str(path))

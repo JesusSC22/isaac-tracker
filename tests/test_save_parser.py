@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from tracker.exceptions import SaveParseError
-from tracker.save_parser import ParsedSave, parse_save
+from tracker.save_parser import ParsedSave, parse_save, _extract_character_state
 
 
 def test_parsed_save_is_dataclass():
@@ -106,6 +106,47 @@ def test_parser_detects_at_least_one_tainted(sample_save_path, known_completions
     )
 
 
+def test_tainted_lost_unlocked_by_byte_with_zero_marks():
+    """Regression: T Lost (PlayerType 31) must show as unlocked even when the
+    player just unlocked the character in-game but has not earned any
+    completion marks yet. The unlock byte for T Lost is achievement 484
+    ("The Baleful")."""
+    body = bytearray(642)
+    body[484] = 1  # T Lost unlock byte set; no mark bytes set.
+    unlocked, marks = _extract_character_state(bytes(body))
+    assert 31 in unlocked, "Tainted Lost should be unlocked when byte 484 is set"
+    assert marks[31] == set(), "Tainted Lost should have no marks in this scenario"
+
+
+def test_normal_character_unlocked_by_byte_with_zero_marks():
+    """Same regression for a normal-roster character: The Lost (PlayerType 10)
+    unlocked via achievement 82 with no marks yet."""
+    body = bytearray(642)
+    body[82] = 1
+    unlocked, _marks = _extract_character_state(bytes(body))
+    assert 10 in unlocked, "The Lost should be unlocked when byte 82 is set"
+
+
+def test_isaac_always_unlocked_even_on_empty_save():
+    """Isaac is the starting character: always unlocked, no byte required."""
+    body = bytes(642)
+    unlocked, _marks = _extract_character_state(body)
+    assert 0 in unlocked
+    # And nobody else gets a free unlock on a blank save.
+    assert unlocked == {0}
+
+
+def test_every_unlock_achievement_id_within_chunk_range():
+    """Sanity: all unlock-byte IDs must be addressable inside the 642-byte
+    Repentance+ achievements chunk. Catches typos in the table."""
+    from tracker.data.characters import CHARACTER_UNLOCK_ACHIEVEMENTS
+    for pt_id, ach_id in CHARACTER_UNLOCK_ACHIEVEMENTS.items():
+        assert 0 <= ach_id < 642, (
+            f"Unlock achievement {ach_id} for PlayerType {pt_id} "
+            f"out of Repentance+ achievements range 0..641"
+        )
+
+
 def test_parser_character_marks_use_html_order(sample_save_path):
     parsed = parse_save(sample_save_path)
     # Sanity: Isaac (id=0) should have at least mark 0 done (everyone does Mom's Heart first)
@@ -116,3 +157,11 @@ def test_parser_character_marks_use_html_order(sample_save_path):
     for char_id, marks in parsed.character_marks.items():
         for m in marks:
             assert 0 <= m <= 12, f"Mark {m} for char {char_id} out of HTML range 0..12"
+
+
+def test_cards_seen_from_fixture():
+    fixture = Path(__file__).parent / "fixtures" / "sample_save_repentance_plus.dat"
+    parsed = parse_save(fixture)
+    # Fixture: chunk 6 tiene 97 bytes==1 sobre 104 entradas.
+    assert len(parsed.cards_seen) == 97
+    assert all(isinstance(i, int) and 0 <= i < 104 for i in parsed.cards_seen)
