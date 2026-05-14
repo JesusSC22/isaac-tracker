@@ -44,6 +44,91 @@ DEFAULT_RESOURCES = Path(
     "The Binding of Isaac Rebirth/extracted_resources/resources"
 )
 
+# Manual Spanish translations of unlock-condition strings. Keys MUST match the
+# English `Unlock` text in tracker/data/achievements.json byte-for-byte. Any
+# string not in this dict is emitted in English (logged as a warning).
+# Proper names (challenges, bosses, characters, items) are kept in English to
+# match the existing style of trinkets_inline.js ("Derrota a The Lamb con
+# Judas").
+UNLOCK_TRANSLATIONS_ES: dict[str, str] = {
+    # Runes — challenge completions (#1..#12, plus the late-game Repentance ones)
+    "Complete Pitch Black (challenge #1)": "Completa Pitch Black (reto #1)",
+    "Complete High Brow (challenge #2)": "Completa High Brow (reto #2)",
+    "Complete Head Trauma (challenge #3)": "Completa Head Trauma (reto #3)",
+    "Complete Darkness Falls (challenge #4)": "Completa Darkness Falls (reto #4)",
+    "Complete The Tank (challenge #5)": "Completa The Tank (reto #5)",
+    "Complete Solar System (challenge #6)": "Completa Solar System (reto #6)",
+    "Complete Suicide King (challenge #7)": "Completa Suicide King (reto #7)",
+    "Complete Cat Got Your Tongue (challenge #8)": "Completa Cat Got Your Tongue (reto #8)",
+    "Complete Demo Man (challenge #9)": "Completa Demo Man (reto #9)",
+    "Complete Cursed (challenge #10)": "Completa Cursed (reto #10)",
+    "Complete Glass Cannon (challenge #11)": "Completa Glass Cannon (reto #11)",
+    "Complete When Life Gives You Lemons (challenge #12)": "Completa When Life Gives You Lemons (reto #12)",
+    "Complete Purist (challenge #20)": "Completa Purist (reto #20)",
+    "Complete SPEED! (challenge #22)": "Completa SPEED! (reto #22)",
+    "Complete The Guardian (challenge #30)": "Completa The Guardian (reto #30)",
+    "Complete Hot Potato (challenge #42)": "Completa Hot Potato (reto #42)",
+    "Complete Cantripped (challenge #43)": "Completa Cantripped (reto #43)",
+    "Complete Red Redemption (challenge #44)": "Completa Red Redemption (reto #44)",
+    "Complete DELETE THIS (challenge #45)": "Completa DELETE THIS (reto #45)",
+    # Aces of clubs/diamonds/spades/hearts
+    "Get a 3-win streak": "Consigue una racha de 3 victorias",
+    "Defeat The Lamb in under 20 minutes": "Derrota a The Lamb en menos de 20 minutos",
+    "Defeat The Lamb without taking hearts, coins, and bombs through an entire run":
+        "Derrota a The Lamb sin recoger corazones, monedas ni bombas en toda la run",
+    "Complete a Chapter (floors I and II) after The Basement, start-to-finish, with only half a heart of health (can use The Lost)":
+        "Completa un Chapter (pisos I y II) después de The Basement, de principio a fin, con solo medio corazón de salud (puedes usar The Lost)",
+    # Special cards from Repentance era
+    "Have both the Broken Watch and the Stop Watch in your collection":
+        "Ten Broken Watch y Stop Watch a la vez en tu colección",
+    "Increase in size 5 times in a single run. Sources of increased size include \"One Makes you Larger\" pills, XI - Strength, and Magic Mushroom":
+        "Aumenta de tamaño 5 veces en una sola run. Fuentes: píldoras \"One Makes you Larger\", XI - Strength y Magic Mushroom",
+    "Open the large version of Mom's Box in Home": "Abre la versión grande de Mom's Box en Home",
+    "Use cards and runes 20 times": "Usa cartas y runas 20 veces en total",
+    "Defeat Delirium as The Lost": "Derrota a Delirium con The Lost",
+    # Ultra Greedier — Apollyon variant (non-tainted)
+    "Defeat Ultra Greedier as Apollyon": "Derrota a Ultra Greedier con Apollyon",
+    # Mega Satan tainted variants
+    "Defeat Mega Satan as Tainted Eden": "Derrota a Mega Satan con Tainted Eden",
+    "Defeat Mega Satan as Tainted Magdalene": "Derrota a Mega Satan con Tainted Magdalene",
+    # Soul cards — defeat Hush + Boss Rush with each tainted character
+    "Defeat Hush and Boss Rush as Tainted Isaac": "Derrota a Hush y al Boss Rush con Tainted Isaac",
+    "Defeat Hush and Boss Rush as Tainted Magdalene": "Derrota a Hush y al Boss Rush con Tainted Magdalene",
+    "Defeat Hush and Boss Rush as Tainted Cain": "Derrota a Hush y al Boss Rush con Tainted Cain",
+    "Defeat Hush and Boss Rush as Tainted Judas": "Derrota a Hush y al Boss Rush con Tainted Judas",
+    "Defeat Hush and Boss Rush as Tainted ???": "Derrota a Hush y al Boss Rush con Tainted ???",
+    "Defeat Hush and Boss Rush as Tainted Eve": "Derrota a Hush y al Boss Rush con Tainted Eve",
+    "Defeat Hush and Boss Rush as Tainted Samson": "Derrota a Hush y al Boss Rush con Tainted Samson",
+    "Defeat Hush and Boss Rush as Tainted Azazel": "Derrota a Hush y al Boss Rush con Tainted Azazel",
+    "Defeat Hush and Boss Rush as Tainted Lazarus": "Derrota a Hush y al Boss Rush con Tainted Lazarus",
+    "Defeat Hush and Boss Rush as Tainted Eden": "Derrota a Hush y al Boss Rush con Tainted Eden",
+    "Defeat Hush and Boss Rush as Tainted Lost": "Derrota a Hush y al Boss Rush con Tainted Lost",
+    "Defeat Hush and Boss Rush as Tainted Lilith": "Derrota a Hush y al Boss Rush con Tainted Lilith",
+    "Defeat Hush and Boss Rush as Tainted Keeper": "Derrota a Hush y al Boss Rush con Tainted Keeper",
+    "Defeat Hush and Boss Rush as Tainted Apollyon": "Derrota a Hush y al Boss Rush con Tainted Apollyon",
+    "Defeat Hush and Boss Rush as Tainted Forgotten": "Derrota a Hush y al Boss Rush con Tainted Forgotten",
+    "Defeat Hush and Boss Rush as Tainted Bethany": "Derrota a Hush y al Boss Rush con Tainted Bethany",
+    "Defeat Hush and Boss Rush as Tainted Jacob": "Derrota a Hush y al Boss Rush con Tainted Jacob",
+    # Reverse Tarot cards — defeat Ultra Greedier with each tainted character
+    "Defeat Ultra Greedier as Tainted Isaac": "Derrota a Ultra Greedier con Tainted Isaac",
+    "Defeat Ultra Greedier as Tainted Magdalene": "Derrota a Ultra Greedier con Tainted Magdalene",
+    "Defeat Ultra Greedier as Tainted Cain": "Derrota a Ultra Greedier con Tainted Cain",
+    "Defeat Ultra Greedier as Tainted Judas": "Derrota a Ultra Greedier con Tainted Judas",
+    "Defeat Ultra Greedier as Tainted ???": "Derrota a Ultra Greedier con Tainted ???",
+    "Defeat Ultra Greedier as Tainted Eve": "Derrota a Ultra Greedier con Tainted Eve",
+    "Defeat Ultra Greedier as Tainted Samson": "Derrota a Ultra Greedier con Tainted Samson",
+    "Defeat Ultra Greedier as Tainted Azazel": "Derrota a Ultra Greedier con Tainted Azazel",
+    "Defeat Ultra Greedier as Tainted Lazarus": "Derrota a Ultra Greedier con Tainted Lazarus",
+    "Defeat Ultra Greedier as Tainted Eden": "Derrota a Ultra Greedier con Tainted Eden",
+    "Defeat Ultra Greedier as Tainted Lost": "Derrota a Ultra Greedier con Tainted Lost",
+    "Defeat Ultra Greedier as Tainted Lilith": "Derrota a Ultra Greedier con Tainted Lilith",
+    "Defeat Ultra Greedier as Tainted Keeper": "Derrota a Ultra Greedier con Tainted Keeper",
+    "Defeat Ultra Greedier as Tainted Apollyon": "Derrota a Ultra Greedier con Tainted Apollyon",
+    "Defeat Ultra Greedier as Tainted Forgotten": "Derrota a Ultra Greedier con Tainted Forgotten",
+    "Defeat Ultra Greedier as Tainted Bethany": "Derrota a Ultra Greedier con Tainted Bethany",
+    "Defeat Ultra Greedier as Tainted Jacob": "Derrota a Ultra Greedier con Tainted Jacob",
+}
+
 # stringtable.sta: <key> has 8 <string> children, one per language, in this order
 # (confirmed against pocketitems.xml's <languages> block — Key lang at index 0
 # does not get its own <string> child, the first <string> is English).
@@ -181,7 +266,15 @@ def parse_pocketitems(
                 )
             else:
                 if ach_id in ach_unlock:
-                    unlock = ach_unlock[ach_id]
+                    english = ach_unlock[ach_id]
+                    if english in UNLOCK_TRANSLATIONS_ES:
+                        unlock = UNLOCK_TRANSLATIONS_ES[english]
+                    else:
+                        unlock = english
+                        warnings.append(
+                            f"id={card_id} unlock has no Spanish translation: "
+                            f"{english!r}"
+                        )
                 else:
                     warnings.append(
                         f"id={card_id} references unknown achievement id "
@@ -239,8 +332,9 @@ def write_cards_py(cards: list[dict], path: Path) -> None:
         "# id -> {name (English V1), sprite, removed, desc_es, group, unlock}",
         "# Sprite filenames live under tracker/assets/card_icons/ (generated separately).",
         '# Group ∈ {"tarot_mayor", "tarot_inverso", "runas", "especiales", "objetos_alma"}.',
-        "# `unlock` is the English unlock-condition text (from achievements.json)",
-        "# for cards gated by an achievement; empty string means unlocked by default.",
+        "# `unlock` is the Spanish unlock-condition text (translated from",
+        "# achievements.json) for cards gated by an achievement. Empty string",
+        "# means unlocked by default. Any missing translation falls back to English.",
         "CARDS: dict[int, dict] = {",
     ]
     for c in cards:
