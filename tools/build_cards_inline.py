@@ -22,6 +22,7 @@ def main() -> int:
             "sprite": meta["sprite"],
             "desc": meta.get("desc_es", ""),
             "group": meta.get("group", "especiales"),
+            "unlock": meta.get("unlock", ""),
         })
     out = ROOT / "tracker" / "assets" / "cards_inline.js"
     payload = json.dumps(cards, ensure_ascii=False, separators=(",", ":"))

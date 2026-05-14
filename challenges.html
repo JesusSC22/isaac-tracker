@@ -6133,6 +6133,7 @@
         cell.dataset.cardName = c.name;
         cell.dataset.cardDesc = c.desc || '';
         cell.dataset.cardGroup = c.group;
+        cell.dataset.cardUnlock = c.unlock || '';
         const img = document.createElement('img');
         img.src = 'card_icons/' + c.sprite;
         img.alt = c.name;
@@ -6164,11 +6165,18 @@
     if (_ctrlLocked) return;
     const name = cell.dataset.cardName || '';
     const desc = cell.dataset.cardDesc || 'Sin descripción.';
+    const unlock = cell.dataset.cardUnlock || '';
     const seen = cell.classList.contains('seen');
     const tierClass = seen ? 'tier-s' : 'tier-c';
     const statusChip = seen
       ? '<span class="tt-diff tier-s">✔ Vista</span>'
       : '<span class="tt-diff tier-c">✗ Te falta</span>';
+    const unlockHtml = unlock
+      ? `<div class="tt-block howto">
+           <div class="tt-block-label">🔓 Cómo se desbloquea</div>
+           <div class="tt-block-body">${escapeHtml(unlock)}</div>
+         </div>`
+      : '';
     tooltipEl.innerHTML = `
       <div class="tt-card-header ${tierClass}">
         <div class="tt-head-row">
@@ -6183,6 +6191,7 @@
           <div class="tt-block-label">💫 Efecto</div>
           <div class="tt-block-body">${_descToHtml(desc)}</div>
         </div>
+        ${unlockHtml}
       </div>`;
     cancelHideTooltip();
     tooltipEl.classList.add('visible');
