@@ -136,3 +136,62 @@ def test_items_state_excludes_removed_placeholders():
             assert str(item_id) not in items, f"removed id {item_id} leaked into items_state"
         else:
             assert str(item_id) in items
+
+
+def test_cards_state_marks_seen_true():
+    p = ParsedSave(
+        slot=1,
+        challenges_complete=set(),
+        characters_unlocked=set(),
+        character_marks={},
+        cards_seen={1, 3, 5},
+        parsed_at=datetime(2026, 5, 14, tzinfo=timezone.utc),
+    )
+    state = build_localstorage_state(p)
+    assert state["cards_state"]["1"] is True
+    assert state["cards_state"]["2"] is False
+    assert state["cards_state"]["3"] is True
+
+
+def test_cards_state_excludes_removed_entries():
+    p = ParsedSave(
+        slot=1,
+        challenges_complete=set(),
+        characters_unlocked=set(),
+        character_marks={},
+        cards_seen=set(),
+        parsed_at=datetime(2026, 5, 14, tzinfo=timezone.utc),
+    )
+    state = build_localstorage_state(p)
+    # id 0 is removed sentinel in CARDS, must not appear in the state dict.
+    assert "0" not in state["cards_state"]
+
+
+def test_pills_state_and_verified_flag_false_by_default():
+    p = ParsedSave(
+        slot=1,
+        challenges_complete=set(),
+        characters_unlocked=set(),
+        character_marks={},
+        pills_seen={2, 7},
+        pills_verified=False,
+        parsed_at=datetime(2026, 5, 14, tzinfo=timezone.utc),
+    )
+    state = build_localstorage_state(p)
+    assert state["pills_state"]["2"] is True
+    assert state["pills_state"]["7"] is True
+    assert state["pills_state"]["0"] is False
+    assert state["pills_verified"] is False
+
+
+def test_pills_verified_true_when_flag_set():
+    p = ParsedSave(
+        slot=1,
+        challenges_complete=set(),
+        characters_unlocked=set(),
+        character_marks={},
+        pills_verified=True,
+        parsed_at=datetime(2026, 5, 14, tzinfo=timezone.utc),
+    )
+    state = build_localstorage_state(p)
+    assert state["pills_verified"] is True

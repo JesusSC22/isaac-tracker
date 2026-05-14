@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from tracker.data.cards import CARDS
 from tracker.data.collectibles import COLLECTIBLES
+from tracker.data.pills import PILLS
 from tracker.save_parser import ParsedSave
 
 CHALLENGE_IDS = range(1, 46)  # Repentance/Repentance+: 45 challenges, IDs 1..45.
@@ -85,6 +87,9 @@ def build_localstorage_state(parsed: ParsedSave) -> dict:
         "characters_state": _build_characters(parsed),
         "achievements_unlocked": sorted(parsed.achievements_unlocked),
         "items_state": _build_items_state(parsed),
+        "cards_state": _build_cards_state(parsed),
+        "pills_state": _build_pills_state(parsed),
+        "pills_verified": parsed.pills_verified,
         "meta": {
             "slot": parsed.slot,
             "parsed_at": parsed.parsed_at.isoformat(),
@@ -100,6 +105,22 @@ def _build_items_state(parsed: ParsedSave) -> dict[str, bool]:
         str(item_id): item_id in parsed.items_seen
         for item_id, meta in COLLECTIBLES.items()
         if not meta["removed"]
+    }
+
+
+def _build_cards_state(parsed: ParsedSave) -> dict[str, bool]:
+    return {
+        str(cid): cid in parsed.cards_seen
+        for cid, meta in CARDS.items()
+        if not meta["removed"]
+    }
+
+
+def _build_pills_state(parsed: ParsedSave) -> dict[str, bool]:
+    return {
+        str(pid): pid in parsed.pills_seen
+        for pid, meta in PILLS.items()
+        if not meta.get("removed", False)
     }
 
 
