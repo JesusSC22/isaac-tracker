@@ -39,6 +39,7 @@ from pathlib import Path
 
 from tracker.data.characters import (
     AGUSAENZ_INDEX_TO_PLAYERTYPE,
+    CHARACTER_UNLOCK_ACHIEVEMENTS,
     CHARACTERS_ACHIEVEMENTS,
     SAVE_TO_HTML_MARK,
 )
@@ -112,22 +113,25 @@ def parse_save(path: Path) -> ParsedSave:
     try:
         data = path.read_bytes()
     except FileNotFoundError as e:
-        raise SaveParseError(f"Save file not found: {path}", path=str(path)) from e
+        raise SaveParseError(f"No se encontró la partida: {path}", path=str(path)) from e
     except OSError as e:
-        raise SaveParseError(f"Cannot read save file: {e}", path=str(path)) from e
+        raise SaveParseError(f"No se puede leer la partida: {e}", path=str(path)) from e
     if len(data) < _MIN_SAVE_SIZE_BYTES:
         raise SaveParseError(
-            f"Save file too small ({len(data)} bytes), looks truncated",
+            f"La partida es demasiado pequeña ({len(data)} bytes), parece estar truncada.",
             path=str(path),
         )
     if data[:16] != _MAGIC:
         raise SaveParseError(
-            f"Bad magic header: got {data[:16]!r}, expected {_MAGIC!r}",
+            f"Cabecera del archivo de partida incorrecta: se obtuvo {data[:16]!r}, se esperaba {_MAGIC!r}.",
             path=str(path),
         )
 
     slot = _infer_slot_from_name(path)
-    achievements, challenges, collectibles = _extract_chunks(data, path)
+    chunks = _extract_chunks(data, path)
+    achievements = chunks[_CHUNK_ACHIEVEMENTS]
+    challenges   = chunks[_CHUNK_CHALLENGE_COUNTERS]
+    collectibles = chunks[_CHUNK_COLLECTIBLES]
 
     challenges_complete = _extract_challenges(challenges)
     characters_unlocked, character_marks = _extract_character_state(achievements)
@@ -154,21 +158,15 @@ def _extract_achievements_set(achievements_body: bytes) -> set[int]:
     return {i for i, b in enumerate(achievements_body) if b == 1}
 
 
-def _extract_chunks(data: bytes, path: Path) -> tuple[bytes, bytes, bytes]:
-    """Walk the 10 fixed-size chunks and return (achievements, challenges, collectibles).
-
-    We only walk through chunk 10; chunk 11 (bestiary) is not needed.
-    """
-    achievements: bytes | None = None
-    challenges: bytes | None = None
-    collectibles: bytes | None = None
-
+def _extract_chunks(data: bytes, path: Path) -> dict[int, bytes]:
+    """Walk the 10 fixed-size chunks and return {chunk_type: body_bytes}."""
+    chunks: dict[int, bytes] = {}
     off = _HEADER_SIZE
     for i in range(10):
         if off + _CHUNK_HEADER_SIZE > len(data):
             raise SaveParseError(
-                f"Save truncated: ran out of bytes at chunk {i + 1} header"
-                f" (offset 0x{off:04X}, file size {len(data)})",
+                f"Partida truncada: se acabaron los bytes en la cabecera del bloque {i + 1}"
+                f" (offset 0x{off:04X}, tamaño del archivo {len(data)}).",
                 path=str(path),
             )
         chunk_type, _len_field, count = struct.unpack_from("<iii", data, off)
@@ -177,26 +175,21 @@ def _extract_chunks(data: bytes, path: Path) -> tuple[bytes, bytes, bytes]:
         body_end = body_start + body_len
         if body_end > len(data):
             raise SaveParseError(
-                f"Save truncated: chunk {i + 1} body overruns end of file"
-                f" (body 0x{body_start:04X}..0x{body_end:04X}, file size {len(data)})",
+                f"Partida truncada: el cuerpo del bloque {i + 1} se sale del archivo"
+                f" (cuerpo 0x{body_start:04X}..0x{body_end:04X}, tamaño del archivo {len(data)}).",
                 path=str(path),
             )
-        body = data[body_start:body_end]
-        if chunk_type == _CHUNK_ACHIEVEMENTS:
-            achievements = body
-        elif chunk_type == _CHUNK_COLLECTIBLES:
-            collectibles = body
-        elif chunk_type == _CHUNK_CHALLENGE_COUNTERS:
-            challenges = body
+        chunks[chunk_type] = data[body_start:body_end]
         off = body_end
 
-    if achievements is None:
-        raise SaveParseError("No achievements chunk found in save", path=str(path))
-    if challenges is None:
-        raise SaveParseError("No challenges chunk found in save", path=str(path))
-    if collectibles is None:
-        raise SaveParseError("No collectibles chunk found in save", path=str(path))
-    return achievements, challenges, collectibles
+    for required, label in (
+        (_CHUNK_ACHIEVEMENTS, "logros"),
+        (_CHUNK_CHALLENGE_COUNTERS, "retos"),
+        (_CHUNK_COLLECTIBLES, "ítems"),
+    ):
+        if required not in chunks:
+            raise SaveParseError(f"No se encontró el bloque de {label} en la partida.", path=str(path))
+    return chunks
 
 
 def _extract_challenges(challenges_body: bytes) -> set[int]:
@@ -214,15 +207,22 @@ def _extract_character_state(
 ) -> tuple[set[int], dict[int, set[int]]]:
     """Compute unlocked characters and per-character completion-mark sets.
 
-    A character is considered unlocked if any of its 13 mark achievements is
-    set. Isaac (PlayerType 0) is also explicitly added as always-unlocked.
-    This "any-mark" rule is more permissive than agusaenz's "first mark"
-    convention but correctly captures tainted characters: tainted unlock
-    state lives outside the achievements chunk, but if any tainted-only mark
-    is set, the player must have unlocked that tainted to earn it.
+    A character is considered unlocked if EITHER:
+    (a) its dedicated unlock-achievement byte is set in the achievements
+        chunk (see `CHARACTER_UNLOCK_ACHIEVEMENTS`), OR
+    (b) any of its 13 mark achievements is set (the "any-mark" heuristic).
 
-    Marks are translated from agusaenz save order to HTML display order using
-    `SAVE_TO_HTML_MARK`.
+    Isaac (PlayerType 0) is the starting character and is hard-coded as
+    always unlocked.
+
+    Rule (a) is the precise signal — the game flips that byte the first
+    time the character is unlocked, before any completion mark is earned.
+    Rule (b) is kept as a safety net so that an edited or pre-migration
+    save with marks but no unlock byte still reports the character as
+    unlocked.
+
+    Marks are translated from agusaenz save order to HTML display order
+    using `SAVE_TO_HTML_MARK`.
     """
     unlocked: set[int] = {0}  # Isaac always unlocked
     marks: dict[int, set[int]] = {}
@@ -242,6 +242,9 @@ def _extract_character_state(
                 char_marks.add(html_idx)
         marks[playertype_id] = char_marks
         if any_set:
+            unlocked.add(playertype_id)
+        unlock_ach = CHARACTER_UNLOCK_ACHIEVEMENTS.get(playertype_id)
+        if unlock_ach is not None and 0 <= unlock_ach < ach_len and achievements_body[unlock_ach] == 1:
             unlocked.add(playertype_id)
 
     return unlocked, marks
