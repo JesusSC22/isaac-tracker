@@ -1,33 +1,33 @@
-# PyInstaller spec for IsaacTracker.exe
-# Build: `.\.venv\Scripts\pyinstaller.exe build.spec`
+# PyInstaller spec for IsaacTracker (Linux build).
+# Run inside WSL/Ubuntu (or any Linux):
+#   pyinstaller build_linux.spec
+# Output: dist/IsaacTracker  (ELF binary, used to assemble the AppImage later).
 
 import shutil
 from pathlib import Path
 
 ROOT = Path.cwd()
 
-# Mirror the root HTML into the bundled assets dir at build time so we don't
-# ship a stale copy. (The runtime code reads from the bundled path.)
+# Mirror the root HTML into the bundled assets dir so we don't ship a stale copy.
 src_html = ROOT / "challenges.html"
 dst_html = ROOT / "tracker" / "assets" / "challenges.html"
 if src_html.exists():
     shutil.copyfile(src_html, dst_html)
-    print(f"[build.spec] Synced challenges.html -> {dst_html}")
+    print(f"[build_linux.spec] Synced challenges.html -> {dst_html}")
 
 src_png = ROOT / "bossrush.png"
 dst_png = ROOT / "tracker" / "assets" / "bossrush.png"
 if src_png.exists():
     shutil.copyfile(src_png, dst_png)
-    print(f"[build.spec] Synced bossrush.png -> {dst_png}")
+    print(f"[build_linux.spec] Synced bossrush.png -> {dst_png}")
 
-# Mirror marks directory (13 hard-mode completion sprites) from root → assets.
 src_marks = ROOT / "marks"
 dst_marks = ROOT / "tracker" / "assets" / "marks"
 if src_marks.is_dir():
     if dst_marks.exists():
         shutil.rmtree(dst_marks)
     shutil.copytree(src_marks, dst_marks)
-    print(f"[build.spec] Synced marks/ -> {dst_marks}")
+    print(f"[build_linux.spec] Synced marks/ -> {dst_marks}")
 
 a = Analysis(
     ['tracker/app.py'],
@@ -48,23 +48,34 @@ a = Analysis(
         ('tracker/assets/pills_inline.js', 'assets'),
     ],
     hiddenimports=[
-        'watchdog.observers.read_directory_changes',
+        # Linux uses inotify rather than ReadDirectoryChangesW.
+        'watchdog.observers.inotify',
+        'watchdog.observers.inotify_buffer',
+        # pywebview's Qt backend (bundled via PyQt5 + PyQtWebEngine).
+        'qtpy',
+        'qtpy.QtCore',
+        'qtpy.QtWidgets',
+        'qtpy.QtWebEngineWidgets',
+        'qtpy.QtWebChannel',
+        'PyQt5',
+        'PyQt5.QtCore',
+        'PyQt5.QtWidgets',
+        'PyQt5.QtWebEngineWidgets',
+        'PyQt5.QtWebChannel',
+        'webview.platforms.qt',
     ],
     hookspath=[],
     runtime_hooks=[],
     excludes=[
-        # Dev/build tooling pulled in transitively by PyInstaller hooks.
         'setuptools',
         'pkg_resources',
         '_distutils_hack',
         'pip',
         'wheel',
-        # Test frameworks (only used during development).
         'pytest',
         '_pytest',
         'unittest',
         'doctest',
-        # Stdlib pieces a windowed app never touches.
         '_pyrepl',
         'pdb',
         'pydoc',
@@ -73,7 +84,6 @@ a = Analysis(
         'turtle',
         'turtledemo',
         'tkinter',
-        # XML-RPC / SMTP / FTP — not used.
         'xmlrpc',
         'smtplib',
         'ftplib',
@@ -81,12 +91,9 @@ a = Analysis(
         'nntplib',
         'poplib',
         'imaplib',
-        # Image lib not used (pywebview renders HTML directly).
         'PIL',
         'pillow',
     ],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
     noarchive=False,
 )
 pyz = PYZ(a.pure, a.zipped_data)
@@ -102,6 +109,5 @@ exe = EXE(
     strip=False,
     upx=False,
     runtime_tmpdir=None,
-    console=False,                # --windowed: no console window pops up
-    icon=str(ROOT / "tracker" / "assets" / "icons" / "godhead.ico"),
+    console=False,
 )
