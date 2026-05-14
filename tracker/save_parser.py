@@ -69,6 +69,14 @@ class ParsedSave:
     cards_seen: set of card IDs (byte indices in the CARDS chunk, chunk 6)
         the player has touched at least once. Analogous to `items_seen` but
         for cards/runes/objects.
+    pills_seen: set of pill effect IDs (byte indices in the PILLS chunk,
+        chunk 10) the player has touched at least once. Extracted tolerantly:
+        if the chunk is missing or empty, this is an empty set. Treat as
+        provisional until `pills_verified` flips to True (gate driven by a
+        separate user-verification task).
+    pills_verified: True once chunk 10 has been confirmed to represent the
+        pills_effects array via a save with known identifications. Until then
+        any UI consuming `pills_seen` should warn or hide the section.
     parsed_at: when this parse ran. Useful for logging / UI footer.
     """
     slot: int
@@ -78,6 +86,8 @@ class ParsedSave:
     achievements_unlocked: set[int] = field(default_factory=set)
     items_seen: set[int] = field(default_factory=set)
     cards_seen: set[int] = field(default_factory=set)
+    pills_seen: set[int] = field(default_factory=set)
+    pills_verified: bool = False
     parsed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -101,9 +111,14 @@ _CHUNK_ACHIEVEMENTS = 1
 _CHUNK_COLLECTIBLES = 4
 _CHUNK_CARDS = 6
 _CHUNK_CHALLENGE_COUNTERS = 7
+_CHUNK_PILLS = 10
 
 # Challenges chunk: 46 bytes; index 0 is unused, indices 1..45 are challenges.
 _NUM_CHALLENGES = 45
+
+# Activa cuando el chunk 10 ha sido verificado como pills_effects vs un save
+# con identificaciones conocidas. Ver el spec/plan de Cartas y Píldoras.
+_PILLS_CHUNK_VERIFIED = False
 
 # Slot inference: filenames are either `rep+persistentgamedata{N}.dat` (Steam)
 # or `YYYYMMDD.rep+persistentgamedata{N}.dat` (local backup). We extract N.
@@ -144,6 +159,8 @@ def parse_save(path: Path) -> ParsedSave:
     achievements_unlocked = _extract_achievements_set(achievements)
     items_seen = _extract_items_seen(collectibles)
     cards_seen = _extract_cards_seen(cards_body)
+    pills_body = chunks.get(_CHUNK_PILLS)
+    pills_seen = _extract_pills_seen(pills_body)
 
     return ParsedSave(
         slot=slot,
@@ -153,6 +170,8 @@ def parse_save(path: Path) -> ParsedSave:
         achievements_unlocked=achievements_unlocked,
         items_seen=items_seen,
         cards_seen=cards_seen,
+        pills_seen=pills_seen,
+        pills_verified=_PILLS_CHUNK_VERIFIED,
     )
 
 
@@ -164,6 +183,13 @@ def _extract_items_seen(collectibles_body: bytes) -> set[int]:
 def _extract_cards_seen(cards_body: bytes) -> set[int]:
     """Return the set of card IDs (byte indices) whose byte is 1."""
     return {i for i, b in enumerate(cards_body) if b == 1}
+
+
+def _extract_pills_seen(pills_body: bytes | None) -> set[int]:
+    """Return the set of pill effect IDs whose byte is 1. Tolerant: None body → empty set."""
+    if pills_body is None:
+        return set()
+    return {i for i, b in enumerate(pills_body) if b == 1}
 
 
 def _extract_achievements_set(achievements_body: bytes) -> set[int]:
