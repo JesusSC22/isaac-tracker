@@ -574,6 +574,71 @@
       background: linear-gradient(135deg, #1f2c4a 0%, #283759 100%);
       box-shadow: inset 0 0 0 1px rgba(243,156,18,0.35);
     }
+    .item-id-badge {
+      position: absolute;
+      top: 1px;
+      right: 2px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      background: rgba(0,0,0,0.55);
+      padding: 0px 3px;
+      border-radius: 3px;
+      line-height: 1.2;
+      pointer-events: none;
+      letter-spacing: 0.5px;
+      font-family: monospace;
+    }
+    @keyframes itemJumpFlash {
+      0%   { box-shadow: 0 0 0 3px rgba(243,156,18,1.0), 0 0 18px 6px rgba(243,156,18,0.8); transform: scale(1.35); }
+      60%  { box-shadow: 0 0 0 3px rgba(243,156,18,0.7), 0 0 14px 5px rgba(243,156,18,0.5); transform: scale(1.2); }
+      100% { box-shadow: 0 0 0 0   rgba(243,156,18,0.0), 0 0 0 0 rgba(243,156,18,0.0);     transform: scale(1.0); }
+    }
+    .item-cell.jump-flash {
+      animation: itemJumpFlash 1.6s ease-out;
+      z-index: 3;
+    }
+    .items-jump-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+      margin: -12px 0 18px;
+      flex-wrap: wrap;
+      font-size: 0.92rem;
+      color: #cfd5e8;
+    }
+    .items-jump-row label { font-weight: 600; }
+    .items-jump-row input[type="number"] {
+      background: #16213e;
+      color: #fff;
+      border: 1px solid rgba(243,156,18,0.45);
+      border-radius: 6px;
+      padding: 5px 10px;
+      width: 110px;
+      font-size: 0.95rem;
+      font-family: monospace;
+    }
+    .items-jump-row input[type="number"]:focus {
+      outline: none;
+      border-color: #f39c12;
+      box-shadow: 0 0 0 2px rgba(243,156,18,0.25);
+    }
+    .items-jump-row button {
+      background: linear-gradient(135deg, #f39c12, #f5b041);
+      color: #1a1a2e;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .items-jump-row button:hover { filter: brightness(1.08); }
+    .items-jump-row .items-jump-hint {
+      color: #8893a8;
+      font-size: 0.82rem;
+    }
 
     /* ==== Trinkets tab — Cuadrícula adaptativa (mismo layout que items) ==== */
     #view-trinkets .progress-bar-container {
@@ -641,18 +706,17 @@
       box-shadow: inset 0 0 0 1px rgba(39,174,96,0.45);
     }
 
-    /* ==== Cartas y Píldoras tab ==== */
+    /* ==== Cartas tab ==== */
     #view-cards #cards-grouped .section-title { margin-top: 16px; }
 
-    #view-cards .cards-grid,
-    #view-cards #pills-grid {
+    #view-cards .cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
       gap: 6px;
       margin-bottom: 12px;
     }
 
-    .card-cell, .pill-cell {
+    .card-cell {
       aspect-ratio: 1;
       background: #16213e;
       border-radius: 6px;
@@ -663,16 +727,16 @@
       position: relative;
       transition: background 0.15s;
     }
-    .card-cell:hover, .pill-cell:hover { background: #1f2a4a; }
+    .card-cell:hover { background: #1f2a4a; }
 
-    .card-cell img, .pill-cell img {
+    .card-cell img {
       width: 80%;
       height: 80%;
       image-rendering: pixelated;
       filter: grayscale(100%) brightness(0.4);
       transition: filter 0.15s;
     }
-    .card-cell.seen img, .pill-cell.seen img { filter: none; }
+    .card-cell.seen img { filter: none; }
 
     /* ==== Achievements tab — Cuadrícula adaptativa ==== */
     #view-achievements .progress-bar-container {
@@ -1573,7 +1637,7 @@
     <button class="tab" data-view="achievements">Logros</button>
     <button class="tab" data-view="items">Ítems</button>
     <button class="tab" data-view="trinkets">Trinkets</button>
-    <button class="tab" data-view="cards">Cartas y Píldoras</button>
+    <button class="tab" data-view="cards">Cartas</button>
   </div>
 
   <div class="view active" id="view-challenges">
@@ -1621,6 +1685,12 @@
       <div class="progress-bar" id="itemsProgressBar"></div>
     </div>
     <div class="progress-label" id="itemsProgressLabel">Ítems: 0 / 0</div>
+    <div class="items-jump-row">
+      <label for="itemJumpInput">Ir al ID:</label>
+      <input type="number" id="itemJumpInput" min="1" placeholder="p.ej. 234" />
+      <button type="button" id="itemJumpBtn">Saltar</button>
+      <span class="items-jump-hint">o pulsa Enter</span>
+    </div>
     <div id="items-grid"></div>
   </div>
 
@@ -1639,17 +1709,6 @@
     <div class="progress-label" id="cardsProgressLabel">Cartas: 0 / 0</div>
 
     <div id="cards-grouped"></div>
-
-    <div class="progress-bar-container" style="margin-top:24px;">
-      <div class="progress-bar" id="pillsProgressBar"></div>
-    </div>
-    <div class="progress-label" id="pillsProgressLabel">Píldoras: 0 / 0</div>
-
-    <div class="section-title">Efectos de píldora</div>
-    <div id="pills-grid"></div>
-    <div id="pills-pending-note" hidden style="color:#aaa; font-size:0.85rem; margin-top:12px;">
-      Pendiente de verificación con un save con píldoras identificadas.
-    </div>
   </div>
 </div>
 
@@ -1658,7 +1717,6 @@
 <script src="items_inline.js"></script>
 <script src="trinkets_inline.js"></script>
 <script src="cards_inline.js"></script>
-<script src="pills_inline.js"></script>
 <script>
   const CHARACTERS = [
     {
@@ -5724,6 +5782,30 @@
     return ITEM_INFO[name] || _ITEM_INFO_BY_NORMALIZED[_normalizeItemKey(name)] || null;
   }
 
+  // Map from item id → ITEMS_DATA entry. Lazily built the first time it's needed.
+  // Used by the Spindown-preview line in the item tooltip and the jump-by-id box.
+  let _ITEMS_BY_ID = null;
+  function _ensureItemsById() {
+    if (_ITEMS_BY_ID !== null) return _ITEMS_BY_ID;
+    _ITEMS_BY_ID = new Map();
+    if (window.ITEMS_DATA) {
+      for (const it of window.ITEMS_DATA) _ITEMS_BY_ID.set(it.id, it);
+    }
+    return _ITEMS_BY_ID;
+  }
+  // Spindown Dice rolls the item DOWN by id, skipping removed/invalid ones.
+  // We approximate "valid" as "present in ITEMS_DATA" (build_items_inline.py
+  // already drops items flagged removed). Returns the previous item or null.
+  function _spindownTarget(currentId) {
+    const byId = _ensureItemsById();
+    let id = Number(currentId) - 1;
+    while (id > 0) {
+      if (byId.has(id)) return byId.get(id);
+      id--;
+    }
+    return null;
+  }
+
   function renderItemsGrid() {
     const grid = document.getElementById('items-grid');
     if (!grid || !window.ITEMS_DATA) return;
@@ -5743,6 +5825,11 @@
       // simplifies hover handling on the parent cell.
       img.style.pointerEvents = 'none';
       cell.appendChild(img);
+      // Always-visible id badge — handy for Spindown Dice (rolls to id-1).
+      const badge = document.createElement('span');
+      badge.className = 'item-id-badge';
+      badge.textContent = it.id;
+      cell.appendChild(badge);
       // Per-cell mouseenter/mouseleave matches the pattern used by challenges
       // and character cells, and avoids the spurious mouseout-on-child-element
       // firings that delegation suffers from.
@@ -5754,6 +5841,31 @@
     grid.appendChild(frag);
     updateItemsProgress();
   }
+
+  // Jump-by-id: locate the item-cell with matching data-item-id, scroll into
+  // view, and flash it briefly. Keeps the rest of the grid intact (no filter).
+  function jumpToItemId(rawId) {
+    const id = Number(rawId);
+    if (!id || id <= 0) return;
+    const cell = document.querySelector(`#items-grid .item-cell[data-item-id="${id}"]`);
+    if (!cell) return;
+    cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    cell.classList.remove('jump-flash');
+    void cell.offsetWidth;  // restart the CSS animation
+    cell.classList.add('jump-flash');
+  }
+  // Wire up the jump UI once. The input and button live in #view-items, so
+  // they're always present once the static HTML is rendered.
+  (function _wireItemJumpUI() {
+    const input = document.getElementById('itemJumpInput');
+    const btn = document.getElementById('itemJumpBtn');
+    if (!input || !btn) return;
+    const go = () => jumpToItemId(input.value);
+    btn.addEventListener('click', go);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); go(); }
+    });
+  })();
 
   function updateItemsProgress() {
     const seen = window._itemsState || {};
@@ -5783,6 +5895,7 @@
   function showItemTooltip(cell) {
     if (_ctrlLocked) return;
     const name = cell.dataset.itemName || '';
+    const itemId = Number(cell.dataset.itemId);
     const seen = cell.classList.contains('seen');
     const info = _itemInfoFor(name) || {};
     const type = info.type || '';
@@ -5798,12 +5911,16 @@
     const statusChip = seen
       ? '<span class="tt-diff tier-s">✔ Tocado</span>'
       : '<span class="tt-diff tier-c">✗ Te falta</span>';
+    const spindown = _spindownTarget(itemId);
+    const spindownLine = spindown
+      ? `🎲 Spindown → <strong>#${spindown.id} ${escapeHtml(spindown.name)}</strong>`
+      : `🎲 Spindown → (sin ítem anterior válido)`;
 
     let html = `
       <div class="tt-card-header ${tierClass}">
         <div class="tt-head-row">
           <div class="tt-head-text">
-            <span class="tt-title">${escapeHtml(name)}</span>
+            <span class="tt-title">#${itemId} ${escapeHtml(name)}</span>
             <div class="tt-meta">${escapeHtml(type)} ${statusChip}</div>
           </div>
         </div>
@@ -5812,6 +5929,9 @@
         <div class="tt-block effect">
           <div class="tt-block-label">💫 Efecto</div>
           <div class="tt-block-body">${_descToHtml(desc)}</div>
+        </div>
+        <div class="tt-block spindown">
+          <div class="tt-block-label">${spindownLine}</div>
         </div>`;
     if (priorityNote) {
       html += `
@@ -5931,7 +6051,7 @@
     positionTooltip(cell);
   }
 
-  // ===== Cartas y Píldoras tab — renderers + tooltips =====
+  // ===== Cartas tab — renderers + tooltips =====
 
   const CARD_GROUPS = [
     { key: "tarot_mayor", label: "Tarot Mayor" },
@@ -6018,81 +6138,10 @@
     positionTooltip(cell);
   }
 
-  function renderPillsGrid() {
-    const grid = document.getElementById('pills-grid');
-    const note = document.getElementById('pills-pending-note');
-    if (!grid || !window.PILLS_DATA) return;
-    const verified = !!window._pillsVerified;
-    const seen = window._pillsState || {};
-    grid.innerHTML = '';
-    for (const p of window.PILLS_DATA) {
-      const cell = document.createElement('div');
-      const isSeen = verified && !!seen[String(p.id)];
-      cell.className = 'pill-cell' + (isSeen ? ' seen' : '');
-      cell.dataset.pillId = p.id;
-      cell.dataset.pillName = p.name;
-      cell.dataset.pillDesc = p.desc || '';
-      const img = document.createElement('img');
-      img.src = 'pill_icons/' + p.sprite;
-      img.alt = p.name;
-      img.loading = 'lazy';
-      img.style.pointerEvents = 'none';
-      cell.appendChild(img);
-      cell.addEventListener('mouseenter', () => showPillTooltip(cell));
-      cell.addEventListener('mouseleave', hideTooltip);
-      grid.appendChild(cell);
-    }
-    if (note) note.hidden = verified;
-    updatePillsProgress();
-  }
-
-  function updatePillsProgress() {
-    const verified = !!window._pillsVerified;
-    const seen = window._pillsState || {};
-    const total = window.PILLS_DATA ? window.PILLS_DATA.length : 0;
-    let done = 0;
-    if (verified && total) for (const p of window.PILLS_DATA) if (seen[String(p.id)]) done++;
-    const pct = total ? Math.round((done / total) * 100) : 0;
-    const bar = document.getElementById('pillsProgressBar');
-    const lbl = document.getElementById('pillsProgressLabel');
-    if (bar) bar.style.width = pct + '%';
-    if (lbl) lbl.textContent = `Píldoras: ${done} / ${total}  (${pct}%)`;
-  }
-
-  function showPillTooltip(cell) {
-    if (_ctrlLocked) return;
-    const name = cell.dataset.pillName || '';
-    const desc = cell.dataset.pillDesc || 'Sin descripción.';
-    const seen = cell.classList.contains('seen');
-    const tierClass = seen ? 'tier-s' : 'tier-c';
-    const statusChip = seen
-      ? '<span class="tt-diff tier-s">✔ Identificada</span>'
-      : '<span class="tt-diff tier-c">✗ No identificada</span>';
-    tooltipEl.innerHTML = `
-      <div class="tt-card-header ${tierClass}">
-        <div class="tt-head-row">
-          <div class="tt-head-text">
-            <span class="tt-title">${escapeHtml(name)}</span>
-            <div class="tt-meta">Efecto de píldora ${statusChip}</div>
-          </div>
-        </div>
-      </div>
-      <div class="tt-body">
-        <div class="tt-block effect">
-          <div class="tt-block-label">💊 Efecto</div>
-          <div class="tt-block-body">${_descToHtml(desc)}</div>
-        </div>
-      </div>`;
-    cancelHideTooltip();
-    tooltipEl.classList.add('visible');
-    positionTooltip(cell);
-  }
-
   // Initial render (no state yet — everything renders as "te falta").
   renderItemsGrid();
   renderTrinketsGrid();
   renderCardsGrouped();
-  renderPillsGrid();
 
   // ===== PyWebView bridge (no-op when opened as plain file://) =====
   // applyIsaacState is invoked by IsaacTracker.exe to push save-derived state
@@ -6123,10 +6172,6 @@
     if (state && state.cards_state && typeof state.cards_state === 'object') {
       window._cardsState = state.cards_state;
     }
-    if (state && state.pills_state && typeof state.pills_state === 'object') {
-      window._pillsState = state.pills_state;
-    }
-    window._pillsVerified = !!(state && state.pills_verified);
     // render() appends to #list without clearing — clear it ourselves so a
     // second call doesn't produce a duplicate tier list. renderCharacterGrid
     // already clears its own container, so we don't need to touch it.
@@ -6138,7 +6183,6 @@
     renderItemsGrid();
     renderTrinketsGrid();
     renderCardsGrouped();
-    renderPillsGrid();
     _hideTrackerLoading();
   };
 
