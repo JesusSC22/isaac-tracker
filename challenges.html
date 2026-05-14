@@ -24,7 +24,7 @@
     /* Header y pestañas mantienen ancho cómodo centrado */
     .container > h1,
     .container > .tabs {
-      max-width: 520px;
+      max-width: 720px;
       margin-left: auto;
       margin-right: auto;
     }
@@ -478,17 +478,23 @@
 
     .tab {
       flex: 1;
-      padding: 10px 14px;
+      padding: 10px 8px;
       background: transparent;
       border: none;
       border-bottom: 3px solid transparent;
       color: #888;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       font-weight: bold;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
       cursor: pointer;
       transition: color 0.2s, border-color 0.2s;
+      text-align: center;
+      line-height: 1.2;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .tab:hover { color: #ccc; }
