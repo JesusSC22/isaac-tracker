@@ -41,11 +41,9 @@ a = Analysis(
         ('tracker/assets/icons', 'assets/icons'),
         ('tracker/assets/item_icons', 'assets/item_icons'),
         ('tracker/assets/card_icons', 'assets/card_icons'),
-        ('tracker/assets/pill_icons', 'assets/pill_icons'),
         ('tracker/assets/items_inline.js', 'assets'),
         ('tracker/assets/trinkets_inline.js', 'assets'),
         ('tracker/assets/cards_inline.js', 'assets'),
-        ('tracker/assets/pills_inline.js', 'assets'),
     ],
     hiddenimports=[
         # Linux uses inotify rather than ReadDirectoryChangesW.

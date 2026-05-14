@@ -641,18 +641,17 @@
       box-shadow: inset 0 0 0 1px rgba(39,174,96,0.45);
     }
 
-    /* ==== Cartas y Píldoras tab ==== */
+    /* ==== Cartas tab ==== */
     #view-cards #cards-grouped .section-title { margin-top: 16px; }
 
-    #view-cards .cards-grid,
-    #view-cards #pills-grid {
+    #view-cards .cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
       gap: 6px;
       margin-bottom: 12px;
     }
 
-    .card-cell, .pill-cell {
+    .card-cell {
       aspect-ratio: 1;
       background: #16213e;
       border-radius: 6px;
@@ -663,16 +662,16 @@
       position: relative;
       transition: background 0.15s;
     }
-    .card-cell:hover, .pill-cell:hover { background: #1f2a4a; }
+    .card-cell:hover { background: #1f2a4a; }
 
-    .card-cell img, .pill-cell img {
+    .card-cell img {
       width: 80%;
       height: 80%;
       image-rendering: pixelated;
       filter: grayscale(100%) brightness(0.4);
       transition: filter 0.15s;
     }
-    .card-cell.seen img, .pill-cell.seen img { filter: none; }
+    .card-cell.seen img { filter: none; }
 
     /* ==== Achievements tab — Cuadrícula adaptativa ==== */
     #view-achievements .progress-bar-container {
@@ -1573,7 +1572,7 @@
     <button class="tab" data-view="achievements">Logros</button>
     <button class="tab" data-view="items">Ítems</button>
     <button class="tab" data-view="trinkets">Trinkets</button>
-    <button class="tab" data-view="cards">Cartas y Píldoras</button>
+    <button class="tab" data-view="cards">Cartas</button>
   </div>
 
   <div class="view active" id="view-challenges">
@@ -1639,17 +1638,6 @@
     <div class="progress-label" id="cardsProgressLabel">Cartas: 0 / 0</div>
 
     <div id="cards-grouped"></div>
-
-    <div class="progress-bar-container" style="margin-top:24px;">
-      <div class="progress-bar" id="pillsProgressBar"></div>
-    </div>
-    <div class="progress-label" id="pillsProgressLabel">Píldoras: 0 / 0</div>
-
-    <div class="section-title">Efectos de píldora</div>
-    <div id="pills-grid"></div>
-    <div id="pills-pending-note" hidden style="color:#aaa; font-size:0.85rem; margin-top:12px;">
-      Pendiente de verificación con un save con píldoras identificadas.
-    </div>
   </div>
 </div>
 
@@ -1658,7 +1646,6 @@
 <script src="items_inline.js"></script>
 <script src="trinkets_inline.js"></script>
 <script src="cards_inline.js"></script>
-<script src="pills_inline.js"></script>
 <script>
   const CHARACTERS = [
     {
@@ -5931,7 +5918,7 @@
     positionTooltip(cell);
   }
 
-  // ===== Cartas y Píldoras tab — renderers + tooltips =====
+  // ===== Cartas tab — renderers + tooltips =====
 
   const CARD_GROUPS = [
     { key: "tarot_mayor", label: "Tarot Mayor" },
@@ -6018,81 +6005,10 @@
     positionTooltip(cell);
   }
 
-  function renderPillsGrid() {
-    const grid = document.getElementById('pills-grid');
-    const note = document.getElementById('pills-pending-note');
-    if (!grid || !window.PILLS_DATA) return;
-    const verified = !!window._pillsVerified;
-    const seen = window._pillsState || {};
-    grid.innerHTML = '';
-    for (const p of window.PILLS_DATA) {
-      const cell = document.createElement('div');
-      const isSeen = verified && !!seen[String(p.id)];
-      cell.className = 'pill-cell' + (isSeen ? ' seen' : '');
-      cell.dataset.pillId = p.id;
-      cell.dataset.pillName = p.name;
-      cell.dataset.pillDesc = p.desc || '';
-      const img = document.createElement('img');
-      img.src = 'pill_icons/' + p.sprite;
-      img.alt = p.name;
-      img.loading = 'lazy';
-      img.style.pointerEvents = 'none';
-      cell.appendChild(img);
-      cell.addEventListener('mouseenter', () => showPillTooltip(cell));
-      cell.addEventListener('mouseleave', hideTooltip);
-      grid.appendChild(cell);
-    }
-    if (note) note.hidden = verified;
-    updatePillsProgress();
-  }
-
-  function updatePillsProgress() {
-    const verified = !!window._pillsVerified;
-    const seen = window._pillsState || {};
-    const total = window.PILLS_DATA ? window.PILLS_DATA.length : 0;
-    let done = 0;
-    if (verified && total) for (const p of window.PILLS_DATA) if (seen[String(p.id)]) done++;
-    const pct = total ? Math.round((done / total) * 100) : 0;
-    const bar = document.getElementById('pillsProgressBar');
-    const lbl = document.getElementById('pillsProgressLabel');
-    if (bar) bar.style.width = pct + '%';
-    if (lbl) lbl.textContent = `Píldoras: ${done} / ${total}  (${pct}%)`;
-  }
-
-  function showPillTooltip(cell) {
-    if (_ctrlLocked) return;
-    const name = cell.dataset.pillName || '';
-    const desc = cell.dataset.pillDesc || 'Sin descripción.';
-    const seen = cell.classList.contains('seen');
-    const tierClass = seen ? 'tier-s' : 'tier-c';
-    const statusChip = seen
-      ? '<span class="tt-diff tier-s">✔ Identificada</span>'
-      : '<span class="tt-diff tier-c">✗ No identificada</span>';
-    tooltipEl.innerHTML = `
-      <div class="tt-card-header ${tierClass}">
-        <div class="tt-head-row">
-          <div class="tt-head-text">
-            <span class="tt-title">${escapeHtml(name)}</span>
-            <div class="tt-meta">Efecto de píldora ${statusChip}</div>
-          </div>
-        </div>
-      </div>
-      <div class="tt-body">
-        <div class="tt-block effect">
-          <div class="tt-block-label">💊 Efecto</div>
-          <div class="tt-block-body">${_descToHtml(desc)}</div>
-        </div>
-      </div>`;
-    cancelHideTooltip();
-    tooltipEl.classList.add('visible');
-    positionTooltip(cell);
-  }
-
   // Initial render (no state yet — everything renders as "te falta").
   renderItemsGrid();
   renderTrinketsGrid();
   renderCardsGrouped();
-  renderPillsGrid();
 
   // ===== PyWebView bridge (no-op when opened as plain file://) =====
   // applyIsaacState is invoked by IsaacTracker.exe to push save-derived state
@@ -6123,10 +6039,6 @@
     if (state && state.cards_state && typeof state.cards_state === 'object') {
       window._cardsState = state.cards_state;
     }
-    if (state && state.pills_state && typeof state.pills_state === 'object') {
-      window._pillsState = state.pills_state;
-    }
-    window._pillsVerified = !!(state && state.pills_verified);
     // render() appends to #list without clearing — clear it ourselves so a
     // second call doesn't produce a duplicate tier list. renderCharacterGrid
     // already clears its own container, so we don't need to touch it.
@@ -6138,7 +6050,6 @@
     renderItemsGrid();
     renderTrinketsGrid();
     renderCardsGrouped();
-    renderPillsGrid();
     _hideTrackerLoading();
   };
 

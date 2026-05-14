@@ -167,15 +167,3 @@ def test_cards_seen_from_fixture():
     assert all(isinstance(i, int) and 0 <= i < 104 for i in parsed.cards_seen)
 
 
-def test_pills_seen_empty_in_fixture():
-    """Fixture has chunk 10 todos a cero → set vacío, sin excepción."""
-    fixture = Path(__file__).parent / "fixtures" / "sample_save_repentance_plus.dat"
-    parsed = parse_save(fixture)
-    assert parsed.pills_seen == set()
-    assert parsed.pills_verified is False  # gate aún no superado
-
-
-def test_pills_seen_is_a_set_type():
-    fixture = Path(__file__).parent / "fixtures" / "sample_save_repentance_plus.dat"
-    parsed = parse_save(fixture)
-    assert isinstance(parsed.pills_seen, set)

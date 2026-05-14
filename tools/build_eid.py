@@ -5,7 +5,6 @@ the relevant tables in each, and writes Python dicts under `tracker/data/`:
 
 - `eid_descriptions.py`  -> collectibles (items)
 - `eid_cards.py`         -> cards/runes/soul stones
-- `eid_pills.py`         -> pill effects (NOT horse pills)
 
 Discovery:
 - ISAAC_PATH env var, then Steam default paths.
@@ -85,18 +84,6 @@ _CARD_TABLE_NAMES = (
     "repPlusCards",
     "rep_PlusCards",
     "repplusCards",
-)
-
-# Pill effect tables. Same shape as cards. NOTE: `horsepills` is EXCLUDED on
-# purpose — its id-to-effect mapping in EID is shifted (horse pill variants)
-# and is not what the tracker's pill ids point to.
-_PILL_TABLE_NAMES = (
-    "pillEffects",
-    "pills",
-    "repPills",
-    "repPlusPills",
-    "rep_PlusPills",
-    "repplusPills",
 )
 
 # EID inline tag, e.g. {{Coin}} {{Tears}} {{Warning}}. Most are sprite glyphs.
@@ -292,13 +279,6 @@ def main() -> int:
     out_cards = data_dir / "eid_cards.py"
     write_eid_py(cards, out_cards, var_name="EID_CARDS")
     print(f"[build_eid] wrote table -> {out_cards}")
-
-    # 3) Pill effects (NOT horse pills).
-    pills = _build_one(files, _PILL_TABLE_NAMES, "pills")
-    print(f"[build_eid] {len(pills)} unique pills after merge")
-    out_pills = data_dir / "eid_pills.py"
-    write_eid_py(pills, out_pills, var_name="EID_PILLS")
-    print(f"[build_eid] wrote table -> {out_pills}")
 
     return 0
 
