@@ -609,17 +609,17 @@
       color: #cfd5e8;
     }
     .items-jump-row label { font-weight: 600; }
-    .items-jump-row input[type="number"] {
+    .items-jump-row input[type="text"] {
       background: #16213e;
       color: #fff;
       border: 1px solid rgba(243,156,18,0.45);
       border-radius: 6px;
       padding: 5px 10px;
-      width: 110px;
+      width: 280px;
+      max-width: 60vw;
       font-size: 0.95rem;
-      font-family: monospace;
     }
-    .items-jump-row input[type="number"]:focus {
+    .items-jump-row input[type="text"]:focus {
       outline: none;
       border-color: #f39c12;
       box-shadow: 0 0 0 2px rgba(243,156,18,0.25);
@@ -1686,8 +1686,9 @@
     </div>
     <div class="progress-label" id="itemsProgressLabel">Ítems: 0 / 0</div>
     <div class="items-jump-row">
-      <label for="itemJumpInput">Ir al ID:</label>
-      <input type="number" id="itemJumpInput" min="1" placeholder="p.ej. 234" />
+      <label for="itemJumpInput">Ir al objeto:</label>
+      <input type="text" id="itemJumpInput" list="itemNameOptions" placeholder="empieza a escribir un nombre" autocomplete="off" />
+      <datalist id="itemNameOptions"></datalist>
       <button type="button" id="itemJumpBtn">Saltar</button>
       <span class="items-jump-hint">o pulsa Enter</span>
     </div>
@@ -5840,19 +5841,53 @@
     grid.innerHTML = '';
     grid.appendChild(frag);
     updateItemsProgress();
+    _populateItemNamesDatalist();
   }
 
-  // Jump-by-id: locate the item-cell with matching data-item-id, scroll into
-  // view, and flash it briefly. Keeps the rest of the grid intact (no filter).
-  function jumpToItemId(rawId) {
-    const id = Number(rawId);
-    if (!id || id <= 0) return;
-    const cell = document.querySelector(`#items-grid .item-cell[data-item-id="${id}"]`);
-    if (!cell) return;
+  // Jump-by-name: locate the item-cell matching the typed text and scroll/flash
+  // it. Match priority: exact name (case-insensitive) > startsWith > substring.
+  // If multiple candidates remain, the one with the lowest id wins. Keeps the
+  // rest of the grid intact (no filter).
+  function _findItemByQuery(rawQuery) {
+    if (!window.ITEMS_DATA) return null;
+    const q = String(rawQuery || '').trim().toLowerCase();
+    if (!q) return null;
+    let exact = null, prefix = null, contains = null;
+    for (const it of window.ITEMS_DATA) {
+      const n = String(it.name || '').toLowerCase();
+      if (n === q) { if (!exact || it.id < exact.id) exact = it; }
+      else if (n.startsWith(q)) { if (!prefix || it.id < prefix.id) prefix = it; }
+      else if (n.includes(q)) { if (!contains || it.id < contains.id) contains = it; }
+    }
+    return exact || prefix || contains;
+  }
+  function jumpToItemByName(rawQuery) {
+    const it = _findItemByQuery(rawQuery);
+    if (!it) return false;
+    const cell = document.querySelector(`#items-grid .item-cell[data-item-id="${it.id}"]`);
+    if (!cell) return false;
     cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
     cell.classList.remove('jump-flash');
     void cell.offsetWidth;  // restart the CSS animation
     cell.classList.add('jump-flash');
+    return true;
+  }
+  // Populate the <datalist> with every item name so the browser shows native
+  // autocomplete as the user types. Called once after ITEMS_DATA is available.
+  let _itemNamesPopulated = false;
+  function _populateItemNamesDatalist() {
+    if (_itemNamesPopulated) return;
+    const dl = document.getElementById('itemNameOptions');
+    if (!dl || !window.ITEMS_DATA) return;
+    const frag = document.createDocumentFragment();
+    for (const it of window.ITEMS_DATA) {
+      const opt = document.createElement('option');
+      opt.value = it.name;
+      frag.appendChild(opt);
+    }
+    dl.innerHTML = '';
+    dl.appendChild(frag);
+    _itemNamesPopulated = true;
   }
   // Wire up the jump UI once. The input and button live in #view-items, so
   // they're always present once the static HTML is rendered.
@@ -5860,7 +5895,15 @@
     const input = document.getElementById('itemJumpInput');
     const btn = document.getElementById('itemJumpBtn');
     if (!input || !btn) return;
-    const go = () => jumpToItemId(input.value);
+    const go = () => {
+      const ok = jumpToItemByName(input.value);
+      if (!ok) {
+        // Brief red flash on the input to signal "no match" without a dialog.
+        const orig = input.style.borderColor;
+        input.style.borderColor = '#e94560';
+        setTimeout(() => { input.style.borderColor = orig; }, 700);
+      }
+    };
     btn.addEventListener('click', go);
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); go(); }
