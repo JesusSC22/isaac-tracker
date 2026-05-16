@@ -107,14 +107,28 @@ Lista vertical bajo la cabecera, ordenada por cantidad ascendente. Una fila por 
 
 Los dos contadores viven en el **chunk 2 (counters)** del save file Repentance+. El parser actual estructura los 10 chunks (`_ENTRY_SIZES = (1, 4, 4, 1, 1, 1, 1, 4, 4, 1)`) pero solo decodifica los chunks 1, 4 y 7. El chunk 2 tiene 523 entradas de 4 bytes (s32 little-endian).
 
-**Pendiente de implementación (Task 0.1 del plan):**
+**Índices identificados** (cross-validated contra un save "all unlocked" forjado de `Zamiell/isaac-save-installer`, ambos cap a 999):
+
+- **`counters[8]`** = Donation Machine (normal).
+- **`counters[19]`** = Greed Donation Machine.
+
+**Implementación necesaria:**
 
 1. Extender `tracker/save_parser.py` para extraer el chunk 2 como lista de enteros.
-2. Identificar el índice exacto del contador de la máquina normal y del de Greed dentro de ese chunk.
-3. Añadir campos al dataclass `ParsedSave` (`donation_count: int`, `greed_donation_count: int`).
-4. Propagar por `state_mapper.py` al estado del frontend.
+2. Añadir campos al dataclass `ParsedSave` (`donation_count: int`, `greed_donation_count: int`) leyendo `counters[8]` y `counters[19]` respectivamente.
+3. Propagar por `state_mapper.py` al estado del frontend.
 
-**Método de identificación (sin requerir input del usuario):** usar los achievements de donación como acotamiento. Si el usuario tiene desbloqueado el achievement 250 ("Lost holds Holy Mantle"), su contador Greed es ≥ 879. Si NO tiene el 251 ("Keeper"), es < 1000. Combinando varios achievements de cada lista se acota un rango estrecho para cada contador, y se busca en el chunk 2 índices cuyo valor cumpla ambos rangos. Si el método deja ambigüedad, fallback: pedir al usuario su valor exacto en el menú Stats del juego.
+### Fuente de verdad híbrida (counter + achievement)
+
+**Observación crítica:** en saves de usuarios que **migraron desde Afterbirth+** (jugando antes de Repentance+), los achievements de donación están desbloqueados pero el contador del chunk 2 **vale 0** porque no se transfirió de la versión antigua. Confirmado en dos fixtures reales (`sample_save_repentance_plus.dat` y el save actual del usuario): ambos tienen `[8]=0`, `[19]=0` pero los 10 achievements de cada lista están set a 1.
+
+**Por tanto, la lógica de "hito desbloqueado" debe ser:**
+
+```
+unlocked = (counter >= milestone.amount) OR (milestone.achievement_id in achievements_set)
+```
+
+El **counter** se sigue mostrando en la cabecera (`X / 999`) — refleja el progreso real en Repentance+; un upgrader verá `0 / 999` pero todos los ítems aparecen desbloqueados. Un usuario que empieza desde cero verá el contador subir y las ticks ir apareciendo.
 
 ### Lista de hitos
 
@@ -151,7 +165,7 @@ GREED_DONATION_MILESTONES = [
 
 ## Riesgos
 
-- **Índices del chunk 2 desconocidos:** No documentados en el repo. **Mitigación:** heurística por achievements (descrita arriba). Si la heurística no acota a un único índice por contador, fallback a pedir al usuario los valores in-game.
+- **Cap real del Greed counter:** El spec asume cap = 999 para Greed (mismo valor que el save forjado de Zamiell, aunque el último achievement requiere "Donate 1000"). Si la realidad es cap=1000 en saves frescos, la barra solo subirá hasta 999 y el último achievement aparece desbloqueado por la fuente híbrida — coherente. Riesgo aceptado.
 - **Sprites de máquinas:** Si no están en assets, usar placeholders visuales (cuadrado gris) en la primera versión.
 
 ## Después de esta iteración
