@@ -1838,8 +1838,18 @@
       grid-area: icon;
       width: 64px;
       height: 64px;
-      background: #2c2c2c;
+      background-color: #2c2c2c;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
       border-radius: 6px;
+      image-rendering: pixelated;
+    }
+    .donation-icon[data-machine="normal"] {
+      background-image: url('icons/donation_machine.png');
+    }
+    .donation-icon[data-machine="greed"] {
+      background-image: url('icons/greed_donation_machine.png');
     }
     .donation-title {
       grid-area: title;
@@ -2031,7 +2041,7 @@
       <header class="donation-header">
         <div class="donation-icon" data-machine="greed"></div>
         <div class="donation-title">Máquina de Greed</div>
-        <div class="donation-counter"><span id="donationGreedCount">0</span> / 999</div>
+        <div class="donation-counter"><span id="donationGreedCount">0</span> / 1000</div>
         <div class="donation-progress-container">
           <div class="donation-progress" id="donationGreedBar"></div>
         </div>
@@ -5908,7 +5918,7 @@
   function renderDonations(state) {
     if (!state || !state.donations_state) return;
     renderDonationSection('normal', state.donations_state.normal, 999);
-    renderDonationSection('greed',  state.donations_state.greed,  999);
+    renderDonationSection('greed',  state.donations_state.greed,  1000);
   }
 
   function renderDonationSection(key, section, max) {
@@ -5941,8 +5951,9 @@
       li.className = 'donation-milestone ' + (m.unlocked ? 'unlocked' : 'locked');
       const remaining = Math.max(0, m.amount - count);
       const statusText = m.unlocked ? '✓ Desbloqueado' : `Faltan ${remaining}`;
+      const iconStyle = `background-image: url('ach_icons/${m.achievement_id}.webp');`;
       li.innerHTML = `
-        <div class="ms-icon"></div>
+        <div class="ms-icon" style="${iconStyle}"></div>
         <div class="ms-name">${escapeHtmlDon(m.name)}</div>
         <div class="ms-amount">${m.amount}</div>
         <div class="ms-status">${statusText}</div>
