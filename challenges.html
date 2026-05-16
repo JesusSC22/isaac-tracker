@@ -5904,6 +5904,57 @@
     grid.querySelectorAll('.col-highlight').forEach(el => el.classList.remove('col-highlight'));
   }
 
+  // ===== Donaciones =====
+  function renderDonations(state) {
+    if (!state || !state.donations_state) return;
+    renderDonationSection('normal', state.donations_state.normal, 999);
+    renderDonationSection('greed',  state.donations_state.greed,  999);
+  }
+
+  function renderDonationSection(key, section, max) {
+    const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+    const counterEl = document.getElementById(`donation${cap(key)}Count`);
+    const barEl     = document.getElementById(`donation${cap(key)}Bar`);
+    const summaryEl = document.getElementById(`donation${cap(key)}Summary`);
+    const listEl    = document.getElementById(`donation${cap(key)}Milestones`);
+    const sectionEl = document.getElementById(`donation-${key}`);
+    if (!counterEl) return;
+
+    const count = section.count || 0;
+    const milestones = section.milestones || [];
+    const unlocked = milestones.filter(m => m.unlocked).length;
+
+    counterEl.textContent = count;
+    barEl.style.width = `${Math.min(100, (count / max) * 100)}%`;
+
+    if (count >= max) {
+      summaryEl.textContent = "Máquina llena";
+      sectionEl.classList.add('full');
+    } else {
+      sectionEl.classList.remove('full');
+      summaryEl.textContent = `Has desbloqueado ${unlocked} de ${milestones.length} ítems`;
+    }
+
+    listEl.innerHTML = '';
+    for (const m of milestones) {
+      const li = document.createElement('li');
+      li.className = 'donation-milestone ' + (m.unlocked ? 'unlocked' : 'locked');
+      const remaining = Math.max(0, m.amount - count);
+      const statusText = m.unlocked ? '✓ Desbloqueado' : `Faltan ${remaining}`;
+      li.innerHTML = `
+        <div class="ms-icon"></div>
+        <div class="ms-name">${escapeHtmlDon(m.name)}</div>
+        <div class="ms-amount">${m.amount}</div>
+        <div class="ms-status">${statusText}</div>
+      `;
+      listEl.appendChild(li);
+    }
+  }
+
+  function escapeHtmlDon(s) {
+    return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
   // Tabs
   function switchTab(view) {
     document.querySelectorAll('.tab').forEach(t => {
@@ -7535,6 +7586,7 @@
     renderItemsGrid();
     renderTrinketsGrid();
     renderCardsGrouped();
+    renderDonations(state);
     _hideTrackerLoading();
   };
 
