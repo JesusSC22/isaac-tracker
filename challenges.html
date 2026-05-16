@@ -1810,6 +1810,107 @@
     body.tracker-locked .reset-btn {
       display: none;
     }
+
+    /* ===== Pestaña Donaciones ===== */
+    #view-donations {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 16px 0;
+    }
+    .donation-section {
+      background: #181818;
+      border: 1px solid #2c2c2c;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .donation-header {
+      display: grid;
+      grid-template-columns: 64px 1fr auto;
+      grid-template-areas:
+        "icon title counter"
+        "icon progress progress"
+        "icon summary summary";
+      gap: 8px 16px;
+      align-items: center;
+    }
+    .donation-icon {
+      grid-area: icon;
+      width: 64px;
+      height: 64px;
+      background: #2c2c2c;
+      border-radius: 6px;
+    }
+    .donation-title {
+      grid-area: title;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffd766;
+    }
+    .donation-counter {
+      grid-area: counter;
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffd766;
+    }
+    .donation-progress-container {
+      grid-area: progress;
+      height: 10px;
+      background: #2c2c2c;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .donation-progress {
+      height: 100%;
+      background: linear-gradient(90deg, #ffd766, #ffa500);
+      width: 0%;
+      transition: width 200ms ease;
+    }
+    .donation-summary {
+      grid-area: summary;
+      font-size: 13px;
+      color: #aaa;
+    }
+    .donation-milestones {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .donation-milestone {
+      display: grid;
+      grid-template-columns: 32px 1fr 60px 120px;
+      gap: 12px;
+      align-items: center;
+      padding: 6px 8px;
+      border-radius: 4px;
+      background: #1f1f1f;
+    }
+    .donation-milestone .ms-icon {
+      width: 32px;
+      height: 32px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    .donation-milestone.locked .ms-icon { filter: grayscale(1) brightness(0.5); }
+    .donation-milestone .ms-name { color: #ddd; }
+    .donation-milestone.locked .ms-name { color: #777; }
+    .donation-milestone .ms-amount {
+      text-align: right;
+      color: #aaa;
+      font-variant-numeric: tabular-nums;
+    }
+    .donation-milestone .ms-status {
+      text-align: right;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .donation-milestone.unlocked .ms-status { color: #6cd66c; }
+    .donation-milestone.locked .ms-status { color: #c08a3e; }
+    .donation-section.full .donation-summary { color: #6cd66c; font-weight: bold; }
   </style>
 </head>
 <body>
