@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from tracker.data.cards import CARDS
 from tracker.data.collectibles import COLLECTIBLES
+from tracker.data.donations import DONATION_MILESTONES, GREED_DONATION_MILESTONES
 from tracker.save_parser import ParsedSave
 
 CHALLENGE_IDS = range(1, 46)  # Repentance/Repentance+: 45 challenges, IDs 1..45.
@@ -87,6 +88,7 @@ def build_localstorage_state(parsed: ParsedSave) -> dict:
         "achievements_unlocked": sorted(parsed.achievements_unlocked),
         "items_state": _build_items_state(parsed),
         "cards_state": _build_cards_state(parsed),
+        "donations_state": _build_donations_state(parsed),
         "meta": {
             "slot": parsed.slot,
             "parsed_at": parsed.parsed_at.isoformat(),
@@ -106,10 +108,46 @@ def _build_items_state(parsed: ParsedSave) -> dict[str, bool]:
 
 
 def _build_cards_state(parsed: ParsedSave) -> dict[str, bool]:
+    """Return {card_id_str: unlocked?} for every real (non-removed) card.
+
+    A card is "unlocked" when:
+      - it has no achievement gate (achievement_id is None) — always available, or
+      - its achievement byte is set in the save's achievements chunk.
+
+    Isaac's save file does not contain a per-card "seen" bitfield, so this
+    achievement-based view is the most accurate signal we can give the player
+    about what is/isn't in their card pool. See tracker/PARSER_AUDIT.md.
+    """
+    out: dict[str, bool] = {}
+    for cid, meta in CARDS.items():
+        if meta["removed"]:
+            continue
+        ach_id = meta.get("achievement_id")
+        unlocked = ach_id is None or ach_id in parsed.achievements_unlocked
+        out[str(cid)] = unlocked
+    return out
+
+
+def _build_donations_state(parsed: ParsedSave) -> dict:
+    def section(raw_count: int, milestones: list[dict]) -> dict:
+        enriched = [
+            {
+                **m,
+                "unlocked": raw_count >= m["amount"]
+                            or m["achievement_id"] in parsed.achievements_unlocked,
+            }
+            for m in milestones
+        ]
+        biggest_unlocked = max(
+            (m["amount"] for m in enriched if m["unlocked"]),
+            default=0,
+        )
+        visible_count = max(raw_count, biggest_unlocked)
+        return {"count": visible_count, "milestones": enriched}
+
     return {
-        str(cid): cid in parsed.cards_seen
-        for cid, meta in CARDS.items()
-        if not meta["removed"]
+        "normal": section(parsed.donation_count, DONATION_MILESTONES),
+        "greed":  section(parsed.greed_donation_count, GREED_DONATION_MILESTONES),
     }
 
 
