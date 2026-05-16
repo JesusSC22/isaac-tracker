@@ -122,13 +122,30 @@ Los dos contadores viven en el **chunk 2 (counters)** del save file Repentance+.
 
 **Observación crítica:** en saves de usuarios que **migraron desde Afterbirth+** (jugando antes de Repentance+), los achievements de donación están desbloqueados pero el contador del chunk 2 **vale 0** porque no se transfirió de la versión antigua. Confirmado en dos fixtures reales (`sample_save_repentance_plus.dat` y el save actual del usuario): ambos tienen `[8]=0`, `[19]=0` pero los 10 achievements de cada lista están set a 1.
 
-**Por tanto, la lógica de "hito desbloqueado" debe ser:**
+**Lógica de "hito desbloqueado":**
 
 ```
 unlocked = (counter >= milestone.amount) OR (milestone.achievement_id in achievements_set)
 ```
 
-El **counter** se sigue mostrando en la cabecera (`X / 999`) — refleja el progreso real en Repentance+; un upgrader verá `0 / 999` pero todos los ítems aparecen desbloqueados. Un usuario que empieza desde cero verá el contador subir y las ticks ir apareciendo.
+**Lógica del contador visible en cabecera (clave para el UX):**
+
+Si simplemente mostráramos el counter raw del save (0 para un upgrader), la cabecera diría `0 / 999` y la barra estaría vacía — mientras que todos los hitos aparecerían en verde. Eso es incoherente.
+
+Para evitarlo, el contador visible es:
+
+```
+visible_count = max(counter_raw, biggest_amount_of_unlocked_milestone)
+```
+
+Es decir, si el achievement más alto desbloqueado vale 879 monedas, el contador visible es al menos 879 — aunque el counter raw del save sea 0. Si todos los achievements están desbloqueados, el contador visible es 999 (cap) y la barra aparece llena, coherente con "máquina llena".
+
+Esto hace que **cualquier user vea siempre un counter coherente con sus desbloqueos**:
+- Upgrader con todos achievements: `999 / 999`, barra llena, mensaje "Máquina llena".
+- Player fresh con 347 donadas: `347 / 999`, barra a 35%, algunos hitos verdes y otros con "Faltan X".
+- Player nuevo sin donar: `0 / 999`, barra vacía, todos los hitos con "Faltan X".
+
+El counter raw se sigue extrayendo del save (para usos futuros como mostrar "raw" en hover/debug si hace falta), pero la UI usa el visible.
 
 ### Lista de hitos
 

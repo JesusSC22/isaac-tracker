@@ -197,6 +197,16 @@ git add tracker/exceptions.py tests/test_exceptions.py; if ($?) { git commit -m 
 - Create: `tracker/save_locator.py`
 - Test: `tests/test_save_locator.py`
 
+**Important real-world discovery (2026-05-13):** The plan originally assumed saves live in `%USERPROFILE%\Documents\My Games\Binding of Isaac Repentance+\persistentgamedata*.dat`. They do not. The actual live save for Repentance+ is at:
+
+```
+<SteamPath>\userdata\<SteamID>\250900\remote\rep+persistentgamedata{1,2,3}.dat
+```
+
+`SteamPath` is read from the registry `HKCU\Software\Valve\Steam` value `SteamPath` (returns forward-slash form, normalize via `Path`). There may be multiple SteamIDs (one per Steam account that has run Isaac on this machine) — pick the most recent file across all of them.
+
+A secondary backup location exists at `%USERPROFILE%\Documents\My Games\Binding of Isaac Repentance+\save_backups\YYYYMMDD.rep+persistentgamedata*.dat` (date-prefixed, written by Isaac at session boundaries). Use as fallback only.
+
 - [ ] **Step 1: Write failing tests**
 
 `tests/test_save_locator.py`:
@@ -209,50 +219,98 @@ from pathlib import Path
 import pytest
 
 from tracker.exceptions import SaveNotFoundError
-from tracker.save_locator import locate_save_file, find_save_directory
+from tracker.save_locator import (
+    locate_save_file,
+    find_steam_userdata_roots,
+    iter_repentance_plus_saves,
+)
 
 
-def test_find_save_directory_repentance_plus_priority(tmp_path, monkeypatch):
-    monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    rep_plus = tmp_path / "Documents" / "My Games" / "Binding of Isaac Repentance+"
-    rep = tmp_path / "Documents" / "My Games" / "Binding of Isaac Repentance"
-    rep_plus.mkdir(parents=True)
-    rep.mkdir(parents=True)
-    assert find_save_directory() == rep_plus
+def test_find_steam_userdata_roots_uses_explicit_steam_path(tmp_path, monkeypatch):
+    steam = tmp_path / "Steam"
+    (steam / "userdata" / "111111" / "250900" / "remote").mkdir(parents=True)
+    monkeypatch.setattr(
+        "tracker.save_locator._read_steam_path_from_registry",
+        lambda: str(steam),
+    )
+    roots = list(find_steam_userdata_roots())
+    assert (steam / "userdata") in roots
 
 
-def test_find_save_directory_falls_back_to_repentance(tmp_path, monkeypatch):
-    monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    rep = tmp_path / "Documents" / "My Games" / "Binding of Isaac Repentance"
-    rep.mkdir(parents=True)
-    assert find_save_directory() == rep
+def test_find_steam_userdata_roots_falls_back_to_common_locations(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "tracker.save_locator._read_steam_path_from_registry",
+        lambda: None,
+    )
+    steam1 = tmp_path / "Program Files (x86)" / "Steam"
+    (steam1 / "userdata").mkdir(parents=True)
+    monkeypatch.setattr(
+        "tracker.save_locator._FALLBACK_STEAM_PATHS",
+        [steam1],
+    )
+    roots = list(find_steam_userdata_roots())
+    assert steam1 / "userdata" in roots
 
 
-def test_find_save_directory_raises_when_missing(tmp_path, monkeypatch):
-    monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    with pytest.raises(SaveNotFoundError):
-        find_save_directory()
-
-
-def test_locate_save_file_picks_most_recent(tmp_path, monkeypatch):
-    save_dir = tmp_path / "Documents" / "My Games" / "Binding of Isaac Repentance+"
-    save_dir.mkdir(parents=True)
-    monkeypatch.setenv("USERPROFILE", str(tmp_path))
-
-    for slot, mtime_offset in [(1, -300), (2, -100), (3, -200)]:
-        f = save_dir / f"persistentgamedata{slot}.dat"
+def test_iter_repentance_plus_saves_finds_steam_files(tmp_path, monkeypatch):
+    udata = tmp_path / "Steam" / "userdata"
+    (udata / "1111" / "250900" / "remote").mkdir(parents=True)
+    (udata / "2222" / "250900" / "remote").mkdir(parents=True)
+    a = udata / "1111" / "250900" / "remote" / "rep+persistentgamedata1.dat"
+    b = udata / "2222" / "250900" / "remote" / "rep+persistentgamedata2.dat"
+    c = udata / "1111" / "250900" / "remote" / "rep_persistentgamedata1.dat"  # rep_ ignored
+    for f in (a, b, c):
         f.write_bytes(b"x")
-        now = time.time()
-        os.utime(f, (now + mtime_offset, now + mtime_offset))
+    monkeypatch.setattr(
+        "tracker.save_locator.find_steam_userdata_roots",
+        lambda: [udata],
+    )
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "no-docs"))
+    saves = list(iter_repentance_plus_saves())
+    assert a in saves
+    assert b in saves
+    assert c not in saves
 
-    result = locate_save_file()
-    assert result.name == "persistentgamedata2.dat"
+
+def test_locate_save_file_picks_most_recent_across_steamids(tmp_path, monkeypatch):
+    udata = tmp_path / "Steam" / "userdata"
+    (udata / "1111" / "250900" / "remote").mkdir(parents=True)
+    (udata / "2222" / "250900" / "remote").mkdir(parents=True)
+    older = udata / "1111" / "250900" / "remote" / "rep+persistentgamedata1.dat"
+    newer = udata / "2222" / "250900" / "remote" / "rep+persistentgamedata1.dat"
+    older.write_bytes(b"x")
+    newer.write_bytes(b"x")
+    now = time.time()
+    os.utime(older, (now - 1000, now - 1000))
+    os.utime(newer, (now - 10, now - 10))
+    monkeypatch.setattr(
+        "tracker.save_locator.find_steam_userdata_roots",
+        lambda: [udata],
+    )
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "no-docs"))
+    assert locate_save_file() == newer
 
 
-def test_locate_save_file_raises_when_no_dat_files(tmp_path, monkeypatch):
-    save_dir = tmp_path / "Documents" / "My Games" / "Binding of Isaac Repentance+"
-    save_dir.mkdir(parents=True)
+def test_locate_save_file_falls_back_to_documents_backups(tmp_path, monkeypatch):
+    # No Steam saves
+    monkeypatch.setattr(
+        "tracker.save_locator.find_steam_userdata_roots",
+        lambda: [],
+    )
+    docs_backups = tmp_path / "Documents" / "My Games" / "Binding of Isaac Repentance+" / "save_backups"
+    docs_backups.mkdir(parents=True)
+    f = docs_backups / "20260513.rep+persistentgamedata1.dat"
+    f.write_bytes(b"x")
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    assert locate_save_file() == f
+
+
+def test_locate_save_file_raises_when_nothing_found(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "tracker.save_locator.find_steam_userdata_roots",
+        lambda: [],
+    )
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "empty"))
     with pytest.raises(SaveNotFoundError):
         locate_save_file()
 ```
@@ -263,40 +321,108 @@ def test_locate_save_file_raises_when_no_dat_files(tmp_path, monkeypatch):
 pytest tests/test_save_locator.py -v
 ```
 
-Expected: FAIL — module not found.
+Expected: FAIL — module not found / functions undefined.
 
 - [ ] **Step 3: Implement `tracker/save_locator.py`**
 
 ```python
+from __future__ import annotations
+
 import os
+import re
 from pathlib import Path
+from typing import Iterable, Iterator
 
 from tracker.exceptions import SaveNotFoundError
 
-_CANDIDATE_DIRNAMES = [
-    "Binding of Isaac Repentance+",
-    "Binding of Isaac Repentance",
+_FALLBACK_STEAM_PATHS: list[Path] = [
+    Path(r"C:\Program Files (x86)\Steam"),
+    Path(r"C:\Program Files\Steam"),
 ]
 
+# Repentance+ save filenames in Steam userdata: rep+persistentgamedata{1,2,3}.dat
+# In local backups: YYYYMMDD.rep+persistentgamedata*.dat (date-prefixed).
+# Match either, but never the rep_ (no +) variant which belongs to vanilla Repentance.
+_REP_PLUS_NAME_RE = re.compile(
+    r"^(?:\d{8}\.)?rep\+persistentgamedata\d+\.dat$",
+    re.IGNORECASE,
+)
 
-def find_save_directory() -> Path:
+
+def _read_steam_path_from_registry() -> str | None:
+    try:
+        import winreg
+    except ImportError:
+        return None
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as k:
+            value, _ = winreg.QueryValueEx(k, "SteamPath")
+            return value or None
+    except (FileNotFoundError, OSError):
+        return None
+
+
+def find_steam_userdata_roots() -> list[Path]:
+    """Return discoverable userdata/ roots for Steam installs on this machine."""
+    candidates: list[Path] = []
+    explicit = _read_steam_path_from_registry()
+    if explicit:
+        candidates.append(Path(explicit) / "userdata")
+    for fallback in _FALLBACK_STEAM_PATHS:
+        candidates.append(fallback / "userdata")
+    seen: set[Path] = set()
+    out: list[Path] = []
+    for c in candidates:
+        try:
+            resolved = c.resolve(strict=False)
+        except OSError:
+            resolved = c
+        if resolved in seen or not resolved.is_dir():
+            continue
+        seen.add(resolved)
+        out.append(c if c.is_dir() else resolved)
+    return out
+
+
+def _find_local_backups_dir() -> Path | None:
     user_profile = os.environ.get("USERPROFILE")
     if not user_profile:
-        raise SaveNotFoundError("USERPROFILE environment variable is not set")
-    base = Path(user_profile) / "Documents" / "My Games"
-    for name in _CANDIDATE_DIRNAMES:
-        candidate = base / name
-        if candidate.is_dir():
-            return candidate
-    raise SaveNotFoundError(f"No Isaac save directory found under {base}")
+        return None
+    backups = (
+        Path(user_profile)
+        / "Documents" / "My Games"
+        / "Binding of Isaac Repentance+" / "save_backups"
+    )
+    return backups if backups.is_dir() else None
+
+
+def iter_repentance_plus_saves() -> Iterator[Path]:
+    """Yield candidate rep+persistentgamedata*.dat files from all known sources."""
+    for udata in find_steam_userdata_roots():
+        for steamid_dir in udata.iterdir():
+            if not steamid_dir.is_dir():
+                continue
+            remote = steamid_dir / "250900" / "remote"
+            if not remote.is_dir():
+                continue
+            for f in remote.iterdir():
+                if f.is_file() and _REP_PLUS_NAME_RE.match(f.name):
+                    yield f
+    backups = _find_local_backups_dir()
+    if backups is not None:
+        for f in backups.iterdir():
+            if f.is_file() and _REP_PLUS_NAME_RE.match(f.name):
+                yield f
 
 
 def locate_save_file() -> Path:
-    save_dir = find_save_directory()
-    dat_files = list(save_dir.glob("persistentgamedata*.dat"))
-    if not dat_files:
-        raise SaveNotFoundError(f"No persistentgamedata*.dat files in {save_dir}")
-    return max(dat_files, key=lambda p: p.stat().st_mtime)
+    """Return the most recently modified Repentance+ save across all locations."""
+    candidates = list(iter_repentance_plus_saves())
+    if not candidates:
+        raise SaveNotFoundError(
+            "No rep+persistentgamedata*.dat files found in Steam userdata or local backups"
+        )
+    return max(candidates, key=lambda p: p.stat().st_mtime)
 ```
 
 - [ ] **Step 4: Run tests, verify pass**
@@ -305,7 +431,7 @@ def locate_save_file() -> Path:
 pytest tests/test_save_locator.py -v
 ```
 
-Expected: 5 passed.
+Expected: 6 passed.
 
 - [ ] **Step 5: Smoke test against real system**
 
@@ -313,12 +439,12 @@ Expected: 5 passed.
 python -c "from tracker.save_locator import locate_save_file; print(locate_save_file())"
 ```
 
-Expected: prints a real path like `C:\Users\jeiko\Documents\My Games\Binding of Isaac Repentance+\persistentgamedata1.dat`. If user has no Isaac installed yet, expected `SaveNotFoundError` — that's fine, the parser tasks need a real save to validate, see Task 3.
+Expected: prints a path like `C:\Program Files (x86)\Steam\userdata\<numbers>\250900\remote\rep+persistentgamedata1.dat`.
 
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add tracker/save_locator.py tests/test_save_locator.py; if ($?) { git commit -m "feat: locate latest Isaac save by mtime" }
+git add tracker/save_locator.py tests/test_save_locator.py; if ($?) { git commit -m "feat: locate Isaac Repentance+ save in Steam userdata with backup fallback" }
 ```
 
 ---

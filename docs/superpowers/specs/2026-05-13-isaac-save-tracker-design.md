@@ -101,16 +101,37 @@ tracker/
 
 ### `save_locator.py`
 
+**Ubicación real del save (descubierta tras auditoría — 2026-05-13):**
+
+El save activo de Repentance+ NO está en Documents. Vive en:
+
+```
+<Steam>\userdata\<SteamID>\250900\remote\rep+persistentgamedata{1,2,3}.dat
+```
+
+Donde:
+- `<Steam>` se obtiene del registro `HKCU\Software\Valve\Steam` valor `SteamPath` (devuelve ruta con forward slashes; normalizar con `Path`). Fallbacks: `C:\Program Files (x86)\Steam`, `C:\Program Files\Steam`.
+- `<SteamID>` puede haber varios en una misma máquina (cuentas Steam distintas). Iterar `userdata\*\250900\remote\` y elegir el `rep+persistentgamedata*.dat` con `mtime` más reciente entre todos.
+
+Prefijos:
+- `rep+persistentgamedata{1,2,3}.dat` — Repentance+ (target del proyecto).
+- `rep_persistentgamedata*.dat` — Repentance (sin DLC+). Se filtra y se ignora.
+- `abp_persistentgamedata*.dat`, `ab_persistentgamedata*.dat`, `persistentgamedata*.dat` (sin prefijo) — Afterbirth+/Afterbirth/Rebirth originales. Se ignoran.
+
+**Fallback secundario:** carpeta de backups locales
+```
+%USERPROFILE%\Documents\My Games\Binding of Isaac Repentance+\save_backups\YYYYMMDD.rep+persistentgamedata*.dat
+```
+Aquí Isaac copia el save cada vez que arranca y al cerrar. Útil solo si la búsqueda en Steam userdata falla. Patrón: cualquier `*.rep+persistentgamedata*.dat`.
+
 ```python
 def locate_save_file() -> Path:
     """
-    Busca persistentgamedataN.dat en:
-      %USERPROFILE%\Documents\My Games\Binding of Isaac Repentance+\
-    Fallback:
-      %USERPROFILE%\Documents\My Games\Binding of Isaac Repentance\
-
-    Returns: ruta del archivo más recientemente modificado (mtime).
-    Raises: SaveNotFoundError si no encuentra ninguno.
+    Returns the path to the most recently modified rep+persistentgamedata*.dat
+    across all discoverable locations:
+      1. Steam userdata: <SteamPath>\userdata\*\250900\remote\rep+persistentgamedata*.dat
+      2. Local backups: %USERPROFILE%\Documents\My Games\Binding of Isaac Repentance+\save_backups\*.rep+persistentgamedata*.dat
+    Raises SaveNotFoundError if no candidates found.
     """
 ```
 

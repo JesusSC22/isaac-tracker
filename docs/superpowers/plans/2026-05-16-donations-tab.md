@@ -2,106 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Añadir una pestaña "Donaciones" que muestra los contadores acumulados de la máquina de donación normal (0-1000) y de la Greed Donation Machine (0-999), junto con los ítems / personajes que se desbloquean en cada hito.
+**Goal:** Añadir una pestaña "Donaciones" que muestra los contadores acumulados de la máquina de donación normal (chunk 2 índice 8) y de la Greed Donation Machine (chunk 2 índice 19), junto con los ítems / personajes que se desbloquean en cada hito. Soporta saves "upgraded" desde Afterbirth+ donde el counter es 0 pero los achievements ya están desbloqueados (fuente de verdad híbrida).
 
-**Architecture:** Extender `save_parser` para extraer el chunk 2 (counters) que ya está estructurado pero no decodificado. Añadir dos campos a `ParsedSave`, propagar por `state_mapper`. Crear un módulo nuevo `tracker/data/donations.py` con las listas de hitos. En el frontend, añadir una séptima pestaña que renderiza dos secciones idénticas en estructura, alimentadas por el estado.
+**Architecture:** Extender `save_parser` para extraer el chunk 2 (counters) que ya está estructurado pero no decodificado. Añadir dos campos a `ParsedSave`, propagar por `state_mapper`. Crear un módulo nuevo `tracker/data/donations.py` con las listas de hitos (cada uno con `achievement_id` para soportar la fuente híbrida). En el frontend, añadir una séptima pestaña que renderiza dos secciones idénticas en estructura.
 
 **Tech Stack:** Python (parser/state), pytest (tests), HTML/CSS/JS vanilla (frontend), PyWebView (host), Nuitka (build).
 
 **Spec:** `docs/superpowers/specs/2026-05-16-greed-donations-design.md`
 
----
-
-## Pre-Task 0: Investigación bloqueante
-
-Esta investigación produce dos datos que **todas las tareas posteriores necesitan**. No avances sin esto.
-
-### 0.1 — Identificar índices del chunk 2
-
-**Files:**
-- Read: `tracker/save_parser.py` (entender extracción de chunks)
-- Read: `tests/fixtures/20260514.rep+persistentgamedata1.dat` (save real del usuario)
-
-- [ ] **Step 1: Preguntar al usuario los valores actuales en el juego**
-
-Mensaje exacto al usuario:
-
-> Para identificar los contadores de donación en el save, abre Isaac y ve a Stats → busca "Donation Machine" y "Greed Donation Machine". Dime el valor exacto de cada uno. Si nunca has donado en alguna, dime 0.
-
-Anotar los dos valores: `NORMAL_REAL` y `GREED_REAL`.
-
-- [ ] **Step 2: Extraer el chunk 2 completo del fixture y buscar los valores**
-
-Script ad-hoc (no commitear) para encontrar los offsets:
-
-```python
-import struct
-from pathlib import Path
-
-data = Path("tests/fixtures/20260514.rep+persistentgamedata1.dat").read_bytes()
-
-# Saltar header + chunk 1 (achievements, 1 byte/entry).
-off = 20  # header
-chunk1_count = struct.unpack_from("<iii", data, off)[2]
-off += 12 + chunk1_count * 1
-
-# Ahora estamos en chunk 2 (counters, 4 bytes/entry).
-chunk2_type, _len, chunk2_count = struct.unpack_from("<iii", data, off)
-assert chunk2_type == 2, f"expected chunk type 2, got {chunk2_type}"
-body_start = off + 12
-counters = [
-    struct.unpack_from("<i", data, body_start + i * 4)[0]
-    for i in range(chunk2_count)
-]
-
-print(f"chunk 2 has {len(counters)} counters")
-NORMAL_REAL = ...  # del Step 1
-GREED_REAL = ...   # del Step 1
-print(f"indices == NORMAL_REAL ({NORMAL_REAL}):", [i for i, v in enumerate(counters) if v == NORMAL_REAL])
-print(f"indices == GREED_REAL  ({GREED_REAL}):",  [i for i, v in enumerate(counters) if v == GREED_REAL])
-```
-
-Run: `python -c "<script arriba>"`
-Expected: Cada valor aparece típicamente en 1-3 índices. Si hay ambigüedad, pedir al usuario un segundo dato (ej. "deaths count") para descartar.
-
-- [ ] **Step 3: Validar contra una segunda referencia**
-
-Si el chunk 2 tiene varios índices con el mismo valor, buscar paralelamente otro contador conocido (deaths, mom kills, secret rooms found) en `achievements.json` (busca achievements con texto tipo "Mom kills") y triangula. Documentar el método en un comentario.
-
-- [ ] **Step 4: Anotar los índices identificados**
-
-Guardar en variables internas:
-```
-DONATION_NORMAL_INDEX = <int>
-DONATION_GREED_INDEX = <int>
-```
-
-Estos van a constantes en `tracker/save_parser.py` en Task 2.
-
-- [ ] **Step 5: Commit nada todavía** — esto es solo investigación.
-
-### 0.2 — Compilar lista de hitos de Greed Donation Machine
-
-**Files:**
-- Read: `tracker/data/achievements.json`
-
-- [ ] **Step 1: Filtrar achievements por términos relacionados**
-
-```bash
-rtk grep -i "greed donation\|greed machine\|greed mode donation" tracker/data/achievements.json
-```
-
-Buscar también: "Ultra Greed", "Greedier", "donate" sin "donation" — el dataset es ruidoso.
-
-- [ ] **Step 2: Construir la tabla manualmente cross-referencing con la wiki**
-
-Para cada achievement candidato, comprobar que su descripción menciona "donate to the Greed Donation Machine" (o equivalente en español si el JSON está traducido). Anotar `amount`, `achievement_id`, `name`, `item_id` (si aplica).
-
-- [ ] **Step 3: Si la lista no se puede construir con certeza**
-
-Documentar como TBD y, en Task 1, dejar `GREED_DONATION_MILESTONES = []` con un comentario `# TODO: confirmar lista (ver spec, sección Riesgos)`. La sección de Greed en la UI muestra "Lista pendiente — solo contador" hasta que se resuelva.
-
-- [ ] **Step 4: Commit nada** — esto entra en código en Task 1.
+**Investigación previa:** Los índices del chunk 2 (`[8]` normal, `[19]` Greed) ya están identificados y confirmados contra el save fixture y el save 100% completado de Zamiell/isaac-save-installer. No queda investigación bloqueante.
 
 ---
 
@@ -118,84 +27,91 @@ Documentar como TBD y, en Task 1, dejar `GREED_DONATION_MILESTONES = []` con un 
 from tracker.data.donations import DONATION_MILESTONES, GREED_DONATION_MILESTONES
 
 
-def test_donation_milestones_are_sorted_ascending():
+def test_donation_milestones_sorted_ascending():
     amounts = [m["amount"] for m in DONATION_MILESTONES]
     assert amounts == sorted(amounts), f"DONATION_MILESTONES not sorted: {amounts}"
 
 
+def test_greed_milestones_sorted_ascending():
+    amounts = [m["amount"] for m in GREED_DONATION_MILESTONES]
+    assert amounts == sorted(amounts), f"GREED_DONATION_MILESTONES not sorted: {amounts}"
+
+
 def test_donation_milestones_have_required_fields():
     required = {"amount", "achievement_id", "name"}
-    for m in DONATION_MILESTONES:
+    for m in DONATION_MILESTONES + GREED_DONATION_MILESTONES:
         assert required.issubset(m.keys()), f"missing fields in {m}"
         assert isinstance(m["amount"], int) and m["amount"] > 0
         assert isinstance(m["achievement_id"], int) and 0 <= m["achievement_id"] < 642
 
 
-def test_donation_normal_has_known_milestones():
-    by_amount = {m["amount"]: m["name"] for m in DONATION_MILESTONES}
-    assert 1 in by_amount
-    assert 879 in by_amount  # Holy Mantle para The Lost
-    assert 1000 in by_amount  # Keeper
-
-
-def test_greed_milestones_sorted_or_empty():
-    # GREED_DONATION_MILESTONES puede estar vacío si Task 0.2 quedó TBD.
-    if GREED_DONATION_MILESTONES:
-        amounts = [m["amount"] for m in GREED_DONATION_MILESTONES]
-        assert amounts == sorted(amounts)
+def test_known_milestones_present():
+    by_amount_greed = {m["amount"]: m for m in GREED_DONATION_MILESTONES}
+    by_amount_normal = {m["amount"]: m for m in DONATION_MILESTONES}
+    assert by_amount_greed[879]["name"] == "Lost holds Holy Mantle"
+    assert by_amount_greed[879]["achievement_id"] == 250
+    assert by_amount_greed[1000]["name"] == "Keeper"
+    assert by_amount_greed[1000]["achievement_id"] == 251
+    assert by_amount_normal[999]["name"] == "Stop Watch"
+    assert by_amount_normal[999]["achievement_id"] == 138
 ```
 
 - [ ] **Step 2: Verificar que falla**
 
 Run: `pytest tests/test_donations_data.py -v`
-Expected: FAIL con `ModuleNotFoundError: No module named 'tracker.data.donations'`.
+Expected: FAIL with `ModuleNotFoundError`.
 
 - [ ] **Step 3: Implementar el módulo**
 
 ```python
 # tracker/data/donations.py
 """
-Datos de las dos máquinas de donación de Repentance+.
+Hitos de las dos máquinas de donación de Repentance+.
 
-`DONATION_MILESTONES`: máquina de donación normal (la de tiendas en runs
-normales). Hitos confirmados contra tracker/data/achievements.json.
+Todos los hitos están cross-validated contra
+``tracker/data/achievements.json``. Cada entrada lleva el ``achievement_id``
+correspondiente — la lógica de "hito desbloqueado" del state_mapper usa
+fuente híbrida (counter >= amount OR achievement byte set), porque saves
+upgraded desde Afterbirth+ tienen el counter a 0 pero los achievements
+ya transferidos.
 
-`GREED_DONATION_MILESTONES`: máquina de la Greed Donation Machine (modo
-Greed). Lista confirmada en Task 0.2 del plan; puede estar vacía si esa
-investigación quedó pendiente — la UI lo gestiona mostrando solo contador.
+Ver: docs/superpowers/specs/2026-05-16-greed-donations-design.md
 """
 from __future__ import annotations
 
-DONATION_MILESTONES: list[dict] = [
-    {"amount": 1,    "achievement_id": <FILL>, "name": "Lucky Pennies",                  "item_id": <FILL or None>},
-    {"amount": 10,   "achievement_id": <FILL>, "name": "Special Hanging Shopkeepers",    "item_id": None},
-    {"amount": 30,   "achievement_id": <FILL>, "name": "Wooden Nickel",                  "item_id": <FILL>},
-    {"amount": 68,   "achievement_id": <FILL>, "name": "Cain holds Paperclip",           "item_id": None},
-    {"amount": 111,  "achievement_id": <FILL>, "name": "Everything is Terrible 2!!!",    "item_id": None},
-    {"amount": 234,  "achievement_id": <FILL>, "name": "Special Shopkeepers",            "item_id": None},
-    {"amount": 439,  "achievement_id": <FILL>, "name": "Eve holds Razor Blade",          "item_id": None},
-    {"amount": 500,  "achievement_id": <FILL>, "name": "Greedier!",                      "item_id": None},
-    {"amount": 666,  "achievement_id": <FILL>, "name": "Store Key",                      "item_id": <FILL>},
-    {"amount": 879,  "achievement_id": <FILL>, "name": "The Lost holds Holy Mantle",     "item_id": None},
-    {"amount": 1000, "achievement_id": <FILL>, "name": "Keeper",                         "item_id": None},
-]
-
+# Greed Donation Machine — counters[19] del chunk 2 del save Repentance+.
 GREED_DONATION_MILESTONES: list[dict] = [
-    # Si Task 0.2 produjo lista: rellenar igual que arriba.
-    # Si quedó TBD: dejar vacío con este comentario:
-    # TODO: compilar contra achievements.json y wiki oficial.
+    {"amount":    1, "achievement_id": 242, "name": "Lucky Pennies"},
+    {"amount":   10, "achievement_id": 243, "name": "Special Hanging Shopkeepers"},
+    {"amount":   30, "achievement_id": 244, "name": "Wooden Nickel"},
+    {"amount":   68, "achievement_id": 245, "name": "Cain holds Paperclip"},
+    {"amount":  111, "achievement_id": 246, "name": "Everything is Terrible 2!!!"},
+    {"amount":  234, "achievement_id": 247, "name": "Special Shopkeepers"},
+    {"amount":  439, "achievement_id": 248, "name": "Eve now holds Razor Blade"},
+    {"amount":  666, "achievement_id": 249, "name": "Store Key"},
+    {"amount":  879, "achievement_id": 250, "name": "Lost holds Holy Mantle"},
+    {"amount": 1000, "achievement_id": 251, "name": "Keeper"},
 ]
-```
 
-Resolver cada `<FILL>` buscando el achievement por `name` en `tracker/data/achievements.json`. Ejemplo:
-```bash
-rtk grep -n '"name": "Lucky Pennies"' tracker/data/achievements.json
+# Donation Machine (normal, de tiendas) — counters[8] del chunk 2 del save Repentance+.
+DONATION_MILESTONES: list[dict] = [
+    {"amount":  10, "achievement_id": 134, "name": "Blue Map"},
+    {"amount":  20, "achievement_id": 151, "name": "Store Upgrade lv.1"},
+    {"amount":  50, "achievement_id": 135, "name": "There's Options"},
+    {"amount": 100, "achievement_id": 152, "name": "Store Upgrade lv.2"},
+    {"amount": 150, "achievement_id": 136, "name": "Black Candle"},
+    {"amount": 200, "achievement_id": 153, "name": "Store Upgrade lv.3"},
+    {"amount": 400, "achievement_id": 137, "name": "Red Candle"},
+    {"amount": 600, "achievement_id": 154, "name": "Store Upgrade lv.4"},
+    {"amount": 900, "achievement_id":  59, "name": "Blue Candle"},
+    {"amount": 999, "achievement_id": 138, "name": "Stop Watch"},
+]
 ```
 
 - [ ] **Step 4: Verificar que pasa**
 
 Run: `pytest tests/test_donations_data.py -v`
-Expected: 4 PASS (o 3 PASS + 1 con `GREED_DONATION_MILESTONES` vacío todavía pasa por la guarda `if`).
+Expected: 4 PASS.
 
 - [ ] **Step 5: Commit**
 
@@ -210,7 +126,7 @@ rtk git commit -m "feat(data): añadir tabla de hitos de máquinas de donación"
 
 **Files:**
 - Modify: `tracker/save_parser.py`
-- Test: `tests/test_save_parser.py`
+- Modify: `tests/test_save_parser.py`
 
 - [ ] **Step 1: Escribir test fallido**
 
@@ -222,9 +138,20 @@ def test_parser_extracts_donation_counters(sample_save_path):
     parsed = parse_save(sample_save_path)
     assert isinstance(parsed.donation_count, int)
     assert isinstance(parsed.greed_donation_count, int)
-    # Rango sano: ambos contadores son <= 1000.
-    assert 0 <= parsed.donation_count <= 1000
-    assert 0 <= parsed.greed_donation_count <= 999
+    # Ambos contadores son enteros >=0. El fixture es un save migrado de
+    # Afterbirth+, por lo que ambos deberían ser 0 — pero el test no
+    # asume eso, solo asume rango sano.
+    assert parsed.donation_count >= 0
+    assert parsed.greed_donation_count >= 0
+
+
+def test_parser_donation_counters_default_zero_on_short_chunk():
+    """Si el chunk 2 es más corto de lo esperado, los contadores caen a 0."""
+    from tracker.save_parser import _extract_donation_counters
+    # 5 entradas (< índice 8 y 19) — debe defaultear ambos a 0.
+    body = b"\x00" * (5 * 4)
+    normal, greed = _extract_donation_counters(body)
+    assert normal == 0 and greed == 0
 ```
 
 - [ ] **Step 2: Verificar que falla**
@@ -239,10 +166,10 @@ Editar `tracker/save_parser.py`:
 ```python
 # Añadir constantes cerca de las existentes (alrededor de L103-105):
 _CHUNK_COUNTERS = 2
-_DONATION_NORMAL_INDEX = <índice de Task 0.1>  # validado en task 0.1
-_DONATION_GREED_INDEX = <índice de Task 0.1>
+_DONATION_NORMAL_INDEX = 8   # Donation Machine (tiendas) en chunk 2 de Repentance+
+_DONATION_GREED_INDEX  = 19  # Greed Donation Machine en chunk 2 de Repentance+
 
-# Añadir campos al dataclass ParsedSave (L75-81):
+# Añadir campos al dataclass ParsedSave (justo después de items_seen):
 @dataclass(frozen=True)
 class ParsedSave:
     slot: int
@@ -257,23 +184,32 @@ class ParsedSave:
 
 # Añadir helper:
 def _extract_donation_counters(counters_body: bytes) -> tuple[int, int]:
-    """Lee los dos contadores de donación del chunk 2 (4 bytes LE por entry).
+    """Lee los dos contadores de donación del chunk 2 (4 bytes s32 LE por
+    entry).
 
-    Los índices DONATION_NORMAL_INDEX y DONATION_GREED_INDEX fueron
-    validados contra un save real con valores conocidos (ver
-    docs/superpowers/plans/2026-05-16-donations-tab.md, Task 0.1).
+    Los índices están confirmados contra el save fixture de Repentance+
+    y un save 100% completado externo (Zamiell/isaac-save-installer). Ver
+    docs/superpowers/specs/2026-05-16-greed-donations-design.md sección
+    "Datos" para el detalle de la identificación.
     """
     def read_at(idx: int) -> int:
-        off = idx * 4
-        if off + 4 > len(counters_body):
-            return 0  # save antiguo / corto; defaultear a 0.
-        return struct.unpack_from("<i", counters_body, off)[0]
+        offset = idx * 4
+        if offset + 4 > len(counters_body):
+            return 0
+        return struct.unpack_from("<i", counters_body, offset)[0]
     return read_at(_DONATION_NORMAL_INDEX), read_at(_DONATION_GREED_INDEX)
 
-# En parse_save (L115+), extender:
-counters = chunks.get(_CHUNK_COUNTERS, b"")
+# En _extract_chunks (alrededor de L192-198): añadir CHUNK 2 a la lista
+# de chunks requeridos, junto a achievements/challenges/collectibles.
+# Si ya no está, agregarlo a la tupla `for required, label in (...)`:
+#   (_CHUNK_COUNTERS, "contadores"),
+
+# En parse_save (alrededor de L142): obtener counters y extraer contadores.
+# Justo después de la línea `collectibles = chunks[_CHUNK_COLLECTIBLES]`:
+counters = chunks[_CHUNK_COUNTERS]
 donation_count, greed_donation_count = _extract_donation_counters(counters)
 
+# Y al construir ParsedSave (alrededor de L148-155), añadir los dos campos:
 return ParsedSave(
     slot=slot,
     challenges_complete=challenges_complete,
@@ -289,7 +225,7 @@ return ParsedSave(
 - [ ] **Step 4: Verificar que pasa**
 
 Run: `pytest tests/test_save_parser.py -v`
-Expected: PASS (incluyendo el test nuevo y los existentes — no romper nada).
+Expected: PASS (incluyendo los tests nuevos y los existentes — no romper nada).
 
 - [ ] **Step 5: Commit**
 
@@ -300,42 +236,101 @@ rtk git commit -m "feat(parser): extraer contadores de máquinas de donación (c
 
 ---
 
-## Task 3: Propagar contadores por state_mapper
+## Task 3: Propagar contadores y aplicar fuente híbrida en state_mapper
 
 **Files:**
 - Modify: `tracker/state_mapper.py`
-- Test: `tests/test_state_mapper.py`
+- Modify: `tests/test_state_mapper.py`
 
 - [ ] **Step 1: Escribir test fallido**
 
 ```python
 # Añadir a tests/test_state_mapper.py
 def test_donations_state_exposes_counters_and_milestones():
-    """El estado del frontend debe exponer cuántos donations llevas y qué
-    hitos están desbloqueados / pendientes, para cada máquina."""
+    """El estado del frontend expone contadores e hitos con flag unlocked."""
     from tracker.save_parser import ParsedSave
     from tracker.state_mapper import build_localstorage_state
 
-    parsed = ParsedSave(slot=1, donation_count=500, greed_donation_count=50)
+    parsed = ParsedSave(
+        slot=1,
+        donation_count=500,
+        greed_donation_count=50,
+        achievements_unlocked=set(),
+    )
     state = build_localstorage_state(parsed)
-
     donations = state["donations_state"]
     assert donations["normal"]["count"] == 500
     assert donations["greed"]["count"] == 50
 
-    # Cada hito debe tener su flag desbloqueado/pendiente.
-    normal_milestones = donations["normal"]["milestones"]
-    assert isinstance(normal_milestones, list)
-    # En el spec hay un hito a 500 ("Greedier!") — con count=500, debe estar unlocked.
-    by_amount = {m["amount"]: m for m in normal_milestones}
-    assert by_amount[500]["unlocked"] is True
-    # 666 todavía no.
-    assert by_amount[666]["unlocked"] is False
+    by_amount_normal = {m["amount"]: m for m in donations["normal"]["milestones"]}
+    # Counter normal=500: hitos hasta 400 desbloqueados, 600+ no.
+    assert by_amount_normal[400]["unlocked"] is True
+    assert by_amount_normal[600]["unlocked"] is False
+
+
+def test_donations_state_uses_achievement_as_fallback_source_of_truth():
+    """Si el counter es 0 pero el achievement está set, el hito aparece
+    desbloqueado. Cubre el caso de saves upgraded desde Afterbirth+."""
+    from tracker.save_parser import ParsedSave
+    from tracker.state_mapper import build_localstorage_state
+
+    parsed = ParsedSave(
+        slot=1,
+        donation_count=0,
+        greed_donation_count=0,
+        # ach 250 = Lost holds Holy Mantle, 879 Greed.
+        # ach 138 = Stop Watch, 999 normal.
+        achievements_unlocked={250, 138},
+    )
+    state = build_localstorage_state(parsed)
+    by_g = {m["amount"]: m for m in state["donations_state"]["greed"]["milestones"]}
+    by_n = {m["amount"]: m for m in state["donations_state"]["normal"]["milestones"]}
+    # Solo los achievements 250 y 138 están set; los demás hitos quedan locked
+    # (counter=0 y ach byte=0).
+    assert by_g[879]["unlocked"] is True
+    assert by_g[666]["unlocked"] is False
+    assert by_n[999]["unlocked"] is True
+    assert by_n[900]["unlocked"] is False
+
+
+def test_donations_visible_count_bumps_to_biggest_unlocked():
+    """Si el counter raw es 0 pero el ach del hito 879 está set, el counter
+    visible debe ser ≥879 para que la barra de progreso sea coherente con
+    los hitos verdes."""
+    from tracker.save_parser import ParsedSave
+    from tracker.state_mapper import build_localstorage_state
+
+    parsed = ParsedSave(
+        slot=1,
+        donation_count=0,
+        greed_donation_count=0,
+        achievements_unlocked={250},  # 879 Greed
+    )
+    state = build_localstorage_state(parsed)
+    assert state["donations_state"]["greed"]["count"] == 879
+    # Normal no tiene ningún ach set ni counter — visible debe ser 0.
+    assert state["donations_state"]["normal"]["count"] == 0
+
+
+def test_donations_visible_count_uses_max_of_raw_and_unlocked():
+    """Si el counter raw está más alto que el ach más alto unlocked, el
+    visible es el counter raw."""
+    from tracker.save_parser import ParsedSave
+    from tracker.state_mapper import build_localstorage_state
+
+    parsed = ParsedSave(
+        slot=1,
+        donation_count=750,
+        greed_donation_count=0,
+        achievements_unlocked={134},  # 10 normal — el counter raw es más alto.
+    )
+    state = build_localstorage_state(parsed)
+    assert state["donations_state"]["normal"]["count"] == 750
 ```
 
-- [ ] **Step 2: Verificar que falla**
+- [ ] **Step 2: Verificar que fallan**
 
-Run: `pytest tests/test_state_mapper.py::test_donations_state_exposes_counters_and_milestones -v`
+Run: `pytest tests/test_state_mapper.py -v`
 Expected: FAIL con `KeyError: 'donations_state'`.
 
 - [ ] **Step 3: Implementar**
@@ -348,14 +343,26 @@ from tracker.data.donations import DONATION_MILESTONES, GREED_DONATION_MILESTONE
 
 # Añadir builder:
 def _build_donations_state(parsed: ParsedSave) -> dict:
-    def section(count: int, milestones: list[dict]) -> dict:
-        return {
-            "count": count,
-            "milestones": [
-                {**m, "unlocked": count >= m["amount"]}
-                for m in milestones
-            ],
-        }
+    def section(raw_count: int, milestones: list[dict]) -> dict:
+        enriched = [
+            {
+                **m,
+                "unlocked": raw_count >= m["amount"]
+                            or m["achievement_id"] in parsed.achievements_unlocked,
+            }
+            for m in milestones
+        ]
+        # Counter visible = max(raw, mayor amount entre hitos unlocked).
+        # Esto hace que la barra y el contador sean coherentes con los
+        # hitos en verde para saves migrados desde Afterbirth+ (raw=0
+        # pero achievements unlocked).
+        biggest_unlocked = max(
+            (m["amount"] for m in enriched if m["unlocked"]),
+            default=0,
+        )
+        visible_count = max(raw_count, biggest_unlocked)
+        return {"count": visible_count, "milestones": enriched}
+
     return {
         "normal": section(parsed.donation_count, DONATION_MILESTONES),
         "greed":  section(parsed.greed_donation_count, GREED_DONATION_MILESTONES),
@@ -380,13 +387,13 @@ def build_localstorage_state(parsed: ParsedSave) -> dict:
 - [ ] **Step 4: Verificar que pasa**
 
 Run: `pytest tests/test_state_mapper.py -v`
-Expected: PASS.
+Expected: PASS (tests nuevos y existentes).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 rtk git add tracker/state_mapper.py tests/test_state_mapper.py
-rtk git commit -m "feat(state): exponer donations_state al frontend"
+rtk git commit -m "feat(state): exponer donations_state con fuente híbrida counter/achievement"
 ```
 
 ---
@@ -394,11 +401,11 @@ rtk git commit -m "feat(state): exponer donations_state al frontend"
 ## Task 4: HTML de la pestaña Donaciones
 
 **Files:**
-- Modify: `challenges.html` (raíz) y `tracker/assets/challenges.html` (mirror — usar `cp` desde la raíz al final, o editar ambos)
+- Modify: `challenges.html` (raíz; el mirror se sincroniza en Task 7)
 
 - [ ] **Step 1: Añadir el botón en la barra de tabs**
 
-Localizar L1832-1839 (la barra de tabs). Añadir botón al final:
+Localizar L1832-1838 (barra de tabs). Añadir botón al final:
 
 ```html
     <button class="tab" data-view="donations">Donaciones</button>
@@ -406,23 +413,10 @@ Localizar L1832-1839 (la barra de tabs). Añadir botón al final:
 
 - [ ] **Step 2: Añadir el contenedor de la vista**
 
-Después de la última `<div class="view" id="view-cards">` (buscar `view-cards` para localizar) y antes del cierre del bloque de vistas, añadir:
+Localizar el cierre del último `<div class="view" id="view-cards">` (search `view-cards` para situarte). Después de ese cierre `</div>` y antes del cierre del bloque general de vistas, añadir:
 
 ```html
   <div class="view" id="view-donations">
-    <section class="donation-section" id="donation-normal">
-      <header class="donation-header">
-        <div class="donation-icon" data-machine="normal"></div>
-        <div class="donation-title">Máquina de donación</div>
-        <div class="donation-counter"><span id="donationNormalCount">0</span> / 1000</div>
-        <div class="donation-progress-container">
-          <div class="donation-progress" id="donationNormalBar"></div>
-        </div>
-        <div class="donation-summary" id="donationNormalSummary"></div>
-      </header>
-      <ul class="donation-milestones" id="donationNormalMilestones"></ul>
-    </section>
-
     <section class="donation-section" id="donation-greed">
       <header class="donation-header">
         <div class="donation-icon" data-machine="greed"></div>
@@ -435,10 +429,23 @@ Después de la última `<div class="view" id="view-cards">` (buscar `view-cards`
       </header>
       <ul class="donation-milestones" id="donationGreedMilestones"></ul>
     </section>
+
+    <section class="donation-section" id="donation-normal">
+      <header class="donation-header">
+        <div class="donation-icon" data-machine="normal"></div>
+        <div class="donation-title">Máquina de donación</div>
+        <div class="donation-counter"><span id="donationNormalCount">0</span> / 999</div>
+        <div class="donation-progress-container">
+          <div class="donation-progress" id="donationNormalBar"></div>
+        </div>
+        <div class="donation-summary" id="donationNormalSummary"></div>
+      </header>
+      <ul class="donation-milestones" id="donationNormalMilestones"></ul>
+    </section>
   </div>
 ```
 
-- [ ] **Step 3: Verificar manualmente**
+- [ ] **Step 3: Verificación manual**
 
 Abrir `challenges.html` directamente en un navegador. Click en "Donaciones" — debería cambiar de pestaña pero estar vacía (sin CSS ni JS aún).
 
@@ -490,7 +497,6 @@ Localizar el bloque `<style>` (busca `.tab.active {` cerca de L666 para situarte
   height: 64px;
   background: #2c2c2c;
   border-radius: 6px;
-  /* TODO: sprite real si existe; por ahora placeholder gris */
 }
 .donation-title {
   grid-area: title;
@@ -584,17 +590,18 @@ rtk git commit -m "feat(ui): añadir CSS de la pestaña Donaciones"
 
 - [ ] **Step 1: Añadir la función de renderizado**
 
-Localizar `function switchTab(view)` (L5778). Justo encima o debajo añadir:
+Localizar `function switchTab(view)` (L5778). Justo encima añadir:
 
 ```javascript
 // ===== Donaciones =====
 function renderDonations(state) {
   if (!state || !state.donations_state) return;
-  renderDonationSection('normal', state.donations_state.normal, 1000);
+  renderDonationSection('normal', state.donations_state.normal, 999);
   renderDonationSection('greed',  state.donations_state.greed,  999);
 }
 
 function renderDonationSection(key, section, max) {
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const counterEl = document.getElementById(`donation${cap(key)}Count`);
   const barEl     = document.getElementById(`donation${cap(key)}Bar`);
   const summaryEl = document.getElementById(`donation${cap(key)}Summary`);
@@ -614,9 +621,7 @@ function renderDonationSection(key, section, max) {
     sectionEl.classList.add('full');
   } else {
     sectionEl.classList.remove('full');
-    summaryEl.textContent = milestones.length === 0
-      ? "Lista de hitos pendiente — solo contador"
-      : `Has desbloqueado ${unlocked} de ${milestones.length} ítems`;
+    summaryEl.textContent = `Has desbloqueado ${unlocked} de ${milestones.length} ítems`;
   }
 
   listEl.innerHTML = '';
@@ -625,12 +630,9 @@ function renderDonationSection(key, section, max) {
     li.className = 'donation-milestone ' + (m.unlocked ? 'unlocked' : 'locked');
     const remaining = Math.max(0, m.amount - count);
     const statusText = m.unlocked ? '✓ Desbloqueado' : `Faltan ${remaining}`;
-    const iconStyle = m.item_id
-      ? `style="background-image: url('item_icons/collectibles_${String(m.item_id).padStart(3, '0')}.png');"`
-      : '';
     li.innerHTML = `
-      <div class="ms-icon" ${iconStyle}></div>
-      <div class="ms-name">${escapeHtml(m.name)}</div>
+      <div class="ms-icon"></div>
+      <div class="ms-name">${escapeHtmlDon(m.name)}</div>
       <div class="ms-amount">${m.amount}</div>
       <div class="ms-status">${statusText}</div>
     `;
@@ -638,21 +640,20 @@ function renderDonationSection(key, section, max) {
   }
 }
 
-function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-function escapeHtml(s) {
+function escapeHtmlDon(s) {
   return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 ```
 
 - [ ] **Step 2: Conectar al ciclo de actualización de estado**
 
-Localizar `window.applyIsaacState` (search "applyIsaacState"). Después de que aplique los demás estados, añadir:
+Localizar `window.applyIsaacState` (search ese identificador en el archivo). Identificar dónde se aplican los demás estados (items, cards, characters). Justo después de la última de esas llamadas añadir:
 
 ```javascript
 renderDonations(state);
 ```
 
-Si no existe ese punto explícito, conectar en el mismo sitio donde se renderiza la grid de items.
+Si no hay un único `applyIsaacState` definido, conectar también en el bootstrap inicial que carga el estado tras `pywebviewready` (search `get_initial_state` o `_state` para localizar).
 
 - [ ] **Step 3: Verificación manual**
 
@@ -660,11 +661,12 @@ Si no existe ese punto explícito, conectar en el mismo sitio donde se renderiza
 rtk python -m tracker.app
 ```
 
-Abrir Donaciones — deberías ver los contadores y la lista de hitos. Validar que:
-- Contadores muestran los valores reales del save.
-- Hitos por debajo del contador están en verde ("✓ Desbloqueado").
-- Hitos por encima están en gris con "Faltan X".
-- Hover sobre un hito con icono muestra el sprite del ítem.
+Abrir Donaciones — deberías ver:
+- Contador `999 / 999` arriba en ambas secciones (porque el visible_count bumpea al cap cuando todos los hitos están unlocked, aunque el counter raw del save sea 0).
+- Todos los hitos en verde "✓ Desbloqueado" (por fuente híbrida — los achievements están set).
+- Barra de progreso llena, summary "Máquina llena".
+
+Si el contador raw fuera >0 y solo algunos hitos están unlocked, la barra refleja el max(raw, biggest unlocked) y los hitos pendientes muestran "Faltan X".
 
 - [ ] **Step 4: Commit**
 
@@ -692,13 +694,15 @@ Copy-Item challenges.html tracker/assets/challenges.html -Force
 ```powershell
 rtk python build_nuitka.py
 ```
-o el script de build que el repo use. Verificar que `dist/IsaacTracker.exe` aparece y abrir el ejecutable.
+
+Verificar que `dist/IsaacTracker.exe` se crea correctamente y abrir el ejecutable.
 
 - [ ] **Step 3: Verificación manual en el .exe**
 
-- La pestaña "Donaciones" aparece.
-- Ambas secciones rellenan con los contadores reales.
+- La pestaña "Donaciones" aparece como séptima en la barra.
+- Ambas secciones rellenan con los contadores reales del save.
 - Cambiar de pestaña y volver mantiene el render.
+- Las pestañas existentes (Desafíos, Personajes, etc.) siguen funcionando.
 
 - [ ] **Step 4: Commit**
 
@@ -709,26 +713,29 @@ rtk git commit -m "build: sincronizar mirror HTML y rebuildear IsaacTracker.exe"
 
 ---
 
-## Task 8: Verificación final y limpieza
+## Task 8: Verificación final
 
 - [ ] **Step 1: Ejecutar suite completa**
 
 ```bash
 rtk pytest -q
 ```
+
 Expected: todos PASS.
 
 - [ ] **Step 2: Smoke test manual del flujo completo**
 
 Abrir `dist/IsaacTracker.exe`:
+
 1. La app levanta sin error.
 2. Pestañas existentes siguen funcionando (Desafíos, Personajes, Logros, Ítems, Trinkets, Cartas).
-3. Donaciones muestra ambas secciones con datos coherentes.
-4. Si la lista de Greed está vacía (TBD), aparece el mensaje "Lista de hitos pendiente — solo contador" y el contador sí se ve.
+3. Donaciones muestra las dos secciones con datos coherentes:
+   - Greed: contador real, hitos según fuente híbrida.
+   - Normal: contador real, hitos según fuente híbrida.
 
-- [ ] **Step 3: Si todo OK, no hay commit final.**
+- [ ] **Step 3: Sin más commits si todo OK.**
 
-Si algo falla, parar y abrir issue / pedir review en lugar de seguir.
+Si algo falla, parar y reportar el problema al humano en lugar de seguir.
 
 ---
 
@@ -737,25 +744,27 @@ Si algo falla, parar y abrir issue / pedir review en lugar de seguir.
 **Spec coverage:**
 
 - ✅ Pestaña nueva "Donaciones" en barra (Task 4).
-- ✅ Sección normal con cabecera + lista (Task 4, 5, 6).
-- ✅ Sección Greed con cabecera + lista (Task 4, 5, 6).
+- ✅ Sección Greed primero, normal después (Task 4 — orden confirmado en spec).
 - ✅ Cabecera: icono + contador + barra + resumen (Task 5, 6).
 - ✅ Lista con icono + nombre + cantidad + estado (Task 5, 6).
-- ✅ Tooltips reutilizando estilo de Ítems — **NO cubierto explícitamente**. Falta una task que conecte el hover sobre `.ms-icon` al `showItemTooltip` existente. Lo dejo como nota: si el usuario lo pide tras la primera implementación, añadir como Task 6.5.
 - ✅ Estados especiales (0, max) — Task 6.
-- ✅ Datos del chunk 2 — Task 0.1, Task 2.
-- ✅ Lista de hitos — Task 0.2, Task 1.
+- ✅ Datos del chunk 2 con índices identificados [8] y [19] — Task 2.
+- ✅ Fuente híbrida (counter OR achievement) — Task 3.
+- ✅ Lista de hitos completa — Task 1.
 - ✅ Tests parser, state mapper, donations data — Tasks 1, 2, 3.
 
 **Placeholder scan:**
 
-- `<FILL>` en Task 1: intencional — se resuelve buscando en `achievements.json` durante esa task. Cada `<FILL>` tiene un comando concreto para encontrarlo. Aceptable.
-- `<índice de Task 0.1>` en Task 2: intencional — depende de la investigación. Aceptable.
+- No quedan `<FILL>` ni TBD.
 
 **Type consistency:**
 
 - `ParsedSave.donation_count` / `greed_donation_count` consistentes entre Tasks 2 y 3.
 - `donations_state.normal` / `donations_state.greed` consistentes entre Task 3 y 6.
-- `milestone.amount` / `unlocked` / `name` / `item_id` consistentes entre Tasks 1, 3 y 6.
+- `milestone.amount` / `unlocked` / `name` / `achievement_id` consistentes entre Tasks 1, 3 y 6.
+- `_DONATION_NORMAL_INDEX = 8`, `_DONATION_GREED_INDEX = 19` — coherente con spec.
 
-**Tooltip gap:** lo añado al spec como nota de iteración futura, no como bloqueador.
+**Notas adicionales:**
+
+- Tooltips ricos sobre los iconos (estilo pestaña Ítems) quedan fuera de esta primera versión. Si se piden tras la implementación, añadir como follow-up.
+- El cap visual de ambas máquinas es 999 en el spec. Si la realidad del juego es 1000 para Greed, la barra solo subirá hasta el 99.9% en el caso edge — aceptable.
