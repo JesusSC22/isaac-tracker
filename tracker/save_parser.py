@@ -66,9 +66,14 @@ class ParsedSave:
         sets byte[id]=1 when an item is picked up for the first time; that
         flag persists across runs and is the source of truth for the
         Collection Page. Used by the "Ítems" view.
-    cards_seen: set of card IDs (byte indices in the CARDS chunk, chunk 6)
-        the player has touched at least once. Analogous to `items_seen` but
-        for cards/runes/objects.
+
+        Note: there is no analogous per-card chunk in the save. Cards are
+        derived from `achievements_unlocked` in `state_mapper`, since each
+        unlockable card has a corresponding achievement byte in chunk 1.
+    donation_count: total monedas depositadas en la Donation Machine (tiendas),
+        leído del chunk 2 (counters) en el índice 8.
+    greed_donation_count: total monedas depositadas en la Greed Donation
+        Machine (modo Greed/Greedier), leído del chunk 2 en el índice 19.
     parsed_at: when this parse ran. Useful for logging / UI footer.
     """
     slot: int
@@ -77,7 +82,8 @@ class ParsedSave:
     character_marks: dict[int, set[int]] = field(default_factory=dict)
     achievements_unlocked: set[int] = field(default_factory=set)
     items_seen: set[int] = field(default_factory=set)
-    cards_seen: set[int] = field(default_factory=set)
+    donation_count: int = 0
+    greed_donation_count: int = 0
     parsed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -96,11 +102,16 @@ _CHUNK_HEADER_SIZE = 12  # 3 x s32 LE: type, len, count
 # variable-length structure we do not parse.
 _ENTRY_SIZES = (1, 4, 4, 1, 1, 1, 1, 4, 4, 1)
 
-# Chunk type IDs we actually care about (1-indexed).
+# Chunk type IDs we actually care about (1-indexed). Note: chunk 6 is BOSSES
+# (104 boss-kill flags), not cards — see tracker/PARSER_AUDIT.md. Earlier
+# versions of this file misread it as cards; the Cards view now derives its
+# state from achievements instead (see state_mapper._build_cards_state).
 _CHUNK_ACHIEVEMENTS = 1
 _CHUNK_COLLECTIBLES = 4
-_CHUNK_CARDS = 6
 _CHUNK_CHALLENGE_COUNTERS = 7
+_CHUNK_COUNTERS = 2
+_DONATION_NORMAL_INDEX = 8   # Donation Machine (tiendas) en chunk 2 de Repentance+
+_DONATION_GREED_INDEX  = 19  # Greed Donation Machine en chunk 2 de Repentance+
 
 # Challenges chunk: 46 bytes; index 0 is unused, indices 1..45 are challenges.
 _NUM_CHALLENGES = 45
@@ -137,13 +148,13 @@ def parse_save(path: Path) -> ParsedSave:
     achievements = chunks[_CHUNK_ACHIEVEMENTS]
     challenges   = chunks[_CHUNK_CHALLENGE_COUNTERS]
     collectibles = chunks[_CHUNK_COLLECTIBLES]
-    cards_body   = chunks[_CHUNK_CARDS]
+    counters = chunks[_CHUNK_COUNTERS]
+    donation_count, greed_donation_count = _extract_donation_counters(counters)
 
     challenges_complete = _extract_challenges(challenges)
     characters_unlocked, character_marks = _extract_character_state(achievements)
     achievements_unlocked = _extract_achievements_set(achievements)
     items_seen = _extract_items_seen(collectibles)
-    cards_seen = _extract_cards_seen(cards_body)
 
     return ParsedSave(
         slot=slot,
@@ -152,7 +163,8 @@ def parse_save(path: Path) -> ParsedSave:
         character_marks=character_marks,
         achievements_unlocked=achievements_unlocked,
         items_seen=items_seen,
-        cards_seen=cards_seen,
+        donation_count=donation_count,
+        greed_donation_count=greed_donation_count,
     )
 
 
@@ -161,9 +173,20 @@ def _extract_items_seen(collectibles_body: bytes) -> set[int]:
     return {i for i, b in enumerate(collectibles_body) if b == 1}
 
 
-def _extract_cards_seen(cards_body: bytes) -> set[int]:
-    """Return the set of card IDs (byte indices) whose byte is 1."""
-    return {i for i, b in enumerate(cards_body) if b == 1}
+def _extract_donation_counters(counters_body: bytes) -> tuple[int, int]:
+    """Lee los dos contadores de donación del chunk 2 (4 bytes s32 LE por entry).
+
+    Los índices están confirmados contra el save fixture de Repentance+
+    y un save 100% completado externo (Zamiell/isaac-save-installer). Ver
+    docs/superpowers/specs/2026-05-16-greed-donations-design.md sección
+    "Datos" para el detalle de la identificación.
+    """
+    def read_at(idx: int) -> int:
+        offset = idx * 4
+        if offset + 4 > len(counters_body):
+            return 0
+        return struct.unpack_from("<i", counters_body, offset)[0]
+    return read_at(_DONATION_NORMAL_INDEX), read_at(_DONATION_GREED_INDEX)
 
 
 def _extract_achievements_set(achievements_body: bytes) -> set[int]:
@@ -199,7 +222,7 @@ def _extract_chunks(data: bytes, path: Path) -> dict[int, bytes]:
         (_CHUNK_ACHIEVEMENTS, "logros"),
         (_CHUNK_CHALLENGE_COUNTERS, "retos"),
         (_CHUNK_COLLECTIBLES, "ítems"),
-        (_CHUNK_CARDS, "cartas"),
+        (_CHUNK_COUNTERS, "contadores"),
     ):
         if required not in chunks:
             raise SaveParseError(f"No se encontró el bloque de {label} en la partida.", path=str(path))

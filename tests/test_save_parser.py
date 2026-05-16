@@ -159,11 +159,50 @@ def test_parser_character_marks_use_html_order(sample_save_path):
             assert 0 <= m <= 12, f"Mark {m} for char {char_id} out of HTML range 0..12"
 
 
-def test_cards_seen_from_fixture():
+def test_cards_state_uses_achievement_gates():
+    """The Cards view derives unlock state from achievements (Isaac's save has
+    no per-card seen bitfield). Sanity-check the mapping against the fixture:
+    cards without an achievement gate must always be unlocked; the 17 Soul
+    Stones (achievement ids 618..634) must mirror the fixture's achievement
+    bytes."""
+    from tracker.data.cards import CARDS
+    from tracker.state_mapper import _build_cards_state
     fixture = Path(__file__).parent / "fixtures" / "sample_save_repentance_plus.dat"
     parsed = parse_save(fixture)
-    # Fixture: chunk 6 tiene 97 bytes==1 sobre 104 entradas.
-    assert len(parsed.cards_seen) == 97
-    assert all(isinstance(i, int) and 0 <= i < 104 for i in parsed.cards_seen)
+    state = _build_cards_state(parsed)
+    # Every always-available card (achievement_id=None) must be unlocked.
+    for cid, meta in CARDS.items():
+        if meta["removed"]:
+            continue
+        if meta.get("achievement_id") is None:
+            assert state[str(cid)] is True, (
+                f"card {cid} ({meta['name']}) has no achievement gate; "
+                f"must be unlocked, got {state[str(cid)]}"
+            )
+    # Soul Stones: state must match the achievement byte exactly.
+    for cid in range(81, 98):
+        ach_id = CARDS[cid]["achievement_id"]
+        expected = ach_id in parsed.achievements_unlocked
+        assert state[str(cid)] is expected, (
+            f"Soul card {cid} expected unlocked={expected}, "
+            f"got {state[str(cid)]} (achievement {ach_id})"
+        )
 
+
+def test_parser_extracts_donation_counters(sample_save_path):
+    """El parser debe exponer los dos contadores de donación como ints."""
+    from tracker.save_parser import parse_save
+    parsed = parse_save(sample_save_path)
+    assert isinstance(parsed.donation_count, int)
+    assert isinstance(parsed.greed_donation_count, int)
+    assert parsed.donation_count >= 0
+    assert parsed.greed_donation_count >= 0
+
+
+def test_parser_donation_counters_default_zero_on_short_chunk():
+    """Si el chunk 2 es más corto de lo esperado, los contadores caen a 0."""
+    from tracker.save_parser import _extract_donation_counters
+    body = b"\x00" * (5 * 4)  # 5 entries; índice 8 y 19 fuera de rango.
+    normal, greed = _extract_donation_counters(body)
+    assert normal == 0 and greed == 0
 
