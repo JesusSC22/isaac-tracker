@@ -85,33 +85,46 @@ De arriba abajo:
 
 ### 3.2 Definición de "big boss"
 
-Los 13 big bosses son exactamente los que ya están en `MARK_BOSS_SPRITES` en
-`challenges.html` (las mismas casillas que aparecen en las marcas de
-completitud de cada personaje):
+Los 13 big bosses son los mismos que ya están en `MARK_BOSS_SPRITES` en
+`challenges.html` — las casillas que aparecen en las marcas de completitud de
+cada personaje. **No todos tienen una entrada `(type, variant)` en
+`BESTIARY_CATALOG`**: Boss Rush es un evento de juego, Ultra Greedier es una
+transformación de Ultra Greed, y Mega Satan no está catalogado actualmente.
+Estos casos se resuelven con un mapeo explícito definido durante la
+implementación de la tarea 1:
 
-| Idx | Nombre |
-|-----|--------|
-| 0 | Mom's Heart / It Lives |
-| 1 | Isaac |
-| 2 | Satan |
-| 3 | ??? (Blue Baby) |
-| 4 | The Lamb |
-| 5 | Boss Rush |
-| 6 | Hush |
-| 7 | Mega Satan |
-| 8 | Ultra Greed |
-| 9 | Ultra Greedier |
-| 10 | Delirium |
-| 11 | Mother |
-| 12 | The Beast |
+| Idx | Nombre | Fuente de datos |
+|-----|--------|-----------------|
+| 0 | Mom's Heart / It Lives | `(78, 0)` en BESTIARY_CATALOG |
+| 1 | Isaac (boss) | `(102, 0)` o equivalente — verificar en build |
+| 2 | Satan | catalog lookup |
+| 3 | ??? (Blue Baby) | catalog lookup |
+| 4 | The Lamb | catalog lookup |
+| 5 | Boss Rush | **evento** — kills/deaths no aplican; se muestra como "completado" usando `parsed.character_marks` (mark 5) sin counter numérico |
+| 6 | Hush | catalog lookup |
+| 7 | Mega Satan | si no está en catálogo, añadir entrada manual al build con kills=0 hasta que se confirme su (type, variant) real |
+| 8 | Ultra Greed | catalog lookup |
+| 9 | Ultra Greedier | **transformación** — se muestra como "completado" usando `parsed.character_marks` (mark 9) sin counter numérico independiente |
+| 10 | Delirium | catalog lookup |
+| 11 | Mother | catalog lookup |
+| 12 | The Beast | catalog lookup |
 
-Estos NO aparecen en el bestiario por capítulo de abajo — solo en el panel
-"Bosses derrotados" arriba.
+El build de la tarea 1 produce una constante `BIG_BOSS_TO_BESTIARY` en
+`tracker/data/big_bosses.py` (módulo nuevo) con el mapeo idx → (type, variant)
+o `None`. Para los `None`, el frontend renderiza la celda con:
+- Sprite tomado directamente de `MARK_BOSS_SPRITES[idx]` (URL local
+  bundleada o ya inline; sin contadores numéricos).
+- Etiqueta "✓ Completado" si la mark correspondiente está en
+  `parsed.character_marks` para algún personaje; vacío si no.
+
+Los big bosses que **sí** tienen entrada en BESTIARY_CATALOG no aparecen
+adicionalmente en el bestiario por capítulo de abajo — son excluidos de
+`bestiary_list` por su `(type, variant)` cuando se construye la respuesta.
 
 ### 3.3 Mapeo capítulo del juego
 
-`tools/build_bestiary.py` se amplía con una tabla `FLOOR_TO_CHAPTER` que
-mapea cada tipo de enemigo a su capítulo. La asignación se hace por el piso
+`tools/build_bestiary.py` se amplía con una tabla `ENEMY_TYPE_TO_CHAPTER` que
+mapea cada `type` de enemigo a su capítulo. La asignación se hace por el piso
 canónico donde aparece el enemigo por primera vez:
 
 | Cap | Pisos incluidos |
@@ -125,9 +138,22 @@ canónico donde aparece el enemigo por primera vez:
 | 7 | Void, Home |
 | extra | Mini-bosses recurrentes, bosses no big-boss, enemigos sin piso canónico |
 
-La asignación detallada por (type, variant) se hará durante la
-implementación cruzando el catálogo actual contra la wiki. Donde haya
-ambigüedad (un enemigo aparece en múltiples capítulos), se usa el primero.
+**Fuente canónica**: la wiki oficial (`bindingofisaacrebirth.wiki.gg/wiki/Monsters`)
+publica una lista "Monsters by Floor" — esa página se usa como input para
+generar el mapeo. La tarea 1 incluye un script auxiliar
+(`tools/scrape_chapter_mapping.py`, o tabla escrita a mano si la wiki es
+demasiado volátil) que produce `ENEMY_TYPE_TO_CHAPTER: dict[int, int|str]`
+en `tracker/data/chapters.py` (módulo nuevo).
+
+**Reglas de desempate** cuando un enemigo aparece en múltiples capítulos:
+1. Se asigna al capítulo más bajo en el que aparece (primer encuentro
+   esperado del jugador).
+2. Las variantes (`variant > 0`) heredan el capítulo del `type` base salvo
+   override explícito en una tabla `VARIANT_OVERRIDES: dict[tuple[int,int], int|str]`
+   en el mismo módulo.
+
+**Entradas sin mapeo** caen automáticamente en `"extra"` y se muestran al
+final del bestiario en una sección "Otros" — ningún enemigo se pierde.
 
 ### 3.4 Fuente de sprites
 
@@ -136,64 +162,112 @@ usamos para sprites de boss-marks en personajes. Pipeline:
 
 1. `tools/download_bestiary_sprites.py` construye URLs por nombre, descarga
    PNGs a `tracker/assets/bestiary_icons/<type>_<variant>.png`.
-2. Si la wiki devuelve hoja de animación, recortar al primer frame
-   (`width = height` típico de Isaac).
+2. Recorte de hoja de animación al primer frame:
+   - Si la imagen es cuadrada (`width == height`), se usa tal cual.
+   - Si es horizontal y `width % height == 0`, se asume `width / height`
+     frames y se recorta al primer frame de `height × height`.
+   - Si es vertical o el ratio no encaja, se conserva la imagen entera y se
+     marca para revisión manual en un `bestiary_sprite_review.log`.
 3. `tracker/data/_build_inline.py` regenera `tracker/assets/bestiary_inline.js`
    con cada PNG como base64 (igual que items/trinkets).
 4. El bundler Nuitka ya incluye `bestiary_inline.js` — verificado en commit
    `7a72855`.
 
-Esto sustituye la fuente actual que produce sprites cortados.
+Esto sustituye la fuente actual que produce sprites cortados. Para entradas
+sin sprite descargable (404 en wiki), se conserva el sprite actual como
+fallback y se loggea para revisión.
 
 ### 3.5 Corrección del bug 342/282
 
-Causa probable: el conteo de "vistos" itera sobre `bestiary_kills` (mapa por
-(type, variant)) sumando 1 por cada entrada vista, mientras que el total
-`282` está hardcodeado o cuenta por `type` solamente.
+Causa real (confirmada leyendo `tracker/state_mapper.py:104-117`): el
+numerador `len(all_seen_tv)` es `len(set(kills_tv) | set(encounters_tv))`,
+que incluye `(type, variant)` que **están en el save pero no en el
+catálogo** (variantes que no hemos cubierto al generar `BESTIARY_CATALOG`).
+El denominador `len(BESTIARY_CATALOG)` es 282; el numerador puede subir
+hasta 342 porque el save trackea variantes adicionales.
 
-Solución: en `_build_stats_state`, los dos números se calculan ambos sobre
-**la misma colección** — el catálogo `BESTIARY_CATALOG`. El numerador es
-`sum(1 for e in catalog if e.seen)`, el denominador es `len(catalog)`. Test
-en `tests/test_stats_state.py` verifica la invariante `seen <= total`.
+Solución: filtrar el numerador a la intersección con el catálogo:
+
+```python
+all_seen_in_catalog = (set(kills_tv) | set(encounters_tv)) & set(BESTIARY_CATALOG.keys())
+unique_seen_count = len(all_seen_in_catalog)
+```
+
+Y propagar `all_seen_in_catalog` (no `all_seen_tv`) al cálculo de `seen`
+por entrada en `bestiary_list`. Test nuevo en `tests/test_stats_state.py`:
+
+```python
+def test_unique_seen_never_exceeds_catalog():
+    # Simula save con variantes fuera del catálogo
+    state = _build_stats_state(_parsed(bestiary_kills={
+        0x02D00000: 5,  # Mom (sí en catálogo)
+        0xFFFFFFF0: 3,  # variante inventada (no en catálogo)
+    }))
+    by_key = {g["key"]: g for g in state["globals"]}
+    assert by_key["unique_seen"]["value"] <= by_key["unique_seen"]["max"]
+```
 
 ### 3.6 Contrato `stats_state` actualizado
+
+Se mantienen los nombres de keys actuales en `globals` (para no romper
+tests existentes ni el frontend que indiza por `key`); se añade un global
+nuevo `bosses_defeated` y se renombra solo la `label_es` de `unique_seen`
+a "Bestiario". El campo `icon` se conserva como dato, pero el frontend
+**ya no lo mapea a emoji** — se ignora o se usa como clase CSS opcional.
+La constante `STATS_ICONS` en `challenges.html` se elimina.
 
 ```python
 stats_state = {
     "globals": [
-        {"icon": "skull",      "label_es": "Enemigos eliminados", "value": int, "max": None},
-        {"icon": "tombstone",  "label_es": "Te han matado",       "value": int, "max": None},
-        {"icon": "heart_broken","label_es": "Golpes recibidos",   "value": int, "max": None},
-        {"icon": "eye",        "label_es": "Bestiario",           "value": int, "max": int},
+        {"key": "total_kills",      "label_es": "Enemigos eliminados",
+         "value": int, "icon": "skull"},
+        {"key": "total_deaths_by",  "label_es": "Te han matado",
+         "value": int, "icon": "tombstone"},
+        {"key": "total_hits",       "label_es": "Golpes recibidos",
+         "value": int, "icon": "heart_broken"},
+        {"key": "unique_seen",      "label_es": "Bestiario",
+         "value": int, "max": int, "icon": "eye"},
         # nuevo:
-        {"icon": "boss",       "label_es": "Bosses derrotados",   "value": int, "max": 13},
+        {"key": "bosses_defeated",  "label_es": "Bosses derrotados",
+         "value": int, "max": 13, "icon": "boss"},
     ],
     "big_bosses": [
         {
-            "sprite_id": "boss_moms_heart",
+            "idx": 0,                              # alineado con MARK_BOSS_SPRITES
+            "sprite_id": "boss_moms_heart",        # clave en bestiary_inline.js o URL de MARK_BOSS_SPRITES
             "name_es": "Corazón de Mamá",
             "name_en": "Mom's Heart",
-            "kills": int, "deaths": int, "hits": int, "encounters": int,
-            "seen": bool,
+            "kills": int | None,                   # None si es evento (Boss Rush) o transformación (Ultra Greedier)
+            "deaths": int | None,
+            "hits": int | None,
+            "encounters": int | None,
+            "seen": bool,                          # True si kills>0, encounters>0, o mark presente
+            "mark_completed": bool,                # True si algún personaje tiene la mark
         },
-        # … 13 entradas total
+        # … 13 entradas total, en orden de idx
     ],
     "bestiary": [
         {
+            "type": int, "variant": int,
             "sprite_id": "...",
             "name_es": "...", "name_en": "...",
-            "category": "enemy" | "miniboss" | "boss",  # ya no "big_boss"
+            "category": "enemy" | "miniboss" | "boss",
             "chapter": 1 | 2 | 3 | 4 | 5 | 6 | 7 | "extra",
             "kills": int, "deaths": int, "hits": int, "encounters": int,
             "seen": bool,
         },
-        # …
+        # … BESTIARY_CATALOG menos los (type,variant) ocupados por big bosses
     ],
 }
 ```
 
-El campo `icon` de globals ya **no** mapea a emojis — se ignora en frontend
-o se usa para clases CSS. La constante `STATS_ICONS` se elimina.
+**Test updates obligatorios** en `tests/test_stats_state.py`:
+- `test_bestiary_list_includes_all_catalog` se actualiza para esperar
+  `len(BESTIARY_CATALOG) - len(big_bosses_in_catalog)`.
+- Nuevo `test_big_bosses_has_13_entries`.
+- Nuevo `test_big_bosses_excluded_from_bestiary`.
+- Nuevo `test_every_bestiary_entry_has_chapter`.
+- Nuevo `test_unique_seen_never_exceeds_catalog` (ver §3.5).
 
 ### 3.7 Estilos
 
