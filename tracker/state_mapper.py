@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from tracker.data.bestiary import BESTIARY_CATALOG
 from tracker.data.cards import CARDS
 from tracker.data.collectibles import COLLECTIBLES
 from tracker.data.donations import DONATION_MILESTONES, GREED_DONATION_MILESTONES
+from tracker.data.stats_counters import GLOBAL_STAT_COUNTERS
 from tracker.save_parser import ParsedSave
 
 CHALLENGE_IDS = range(1, 46)  # Repentance/Repentance+: 45 challenges, IDs 1..45.
@@ -81,6 +83,72 @@ if _extra:
     )
 
 
+def _decode_packed_entity(packed: int) -> tuple[int, int]:
+    """packed → (type, variant). Fórmula validada en tests/test_bestiary_parser.py."""
+    return (packed >> 20, (packed >> 4) & 0xFFF)
+
+
+def _build_stats_state(parsed: ParsedSave) -> dict:
+    # Re-empaquetar por (type, variant)
+    def by_tv(d: dict[int, int]) -> dict[tuple[int, int], int]:
+        out: dict[tuple[int, int], int] = {}
+        for k, v in d.items():
+            tv = _decode_packed_entity(k)
+            out[tv] = out.get(tv, 0) + v
+        return out
+
+    kills_tv = by_tv(parsed.bestiary_kills)
+    deaths_tv = by_tv(parsed.bestiary_deaths)
+    hits_tv = by_tv(parsed.bestiary_hits)
+    encounters_tv = by_tv(parsed.bestiary_encounters)
+
+    # Unión de "vistos" (encontrado o matado al menos una vez)
+    all_seen_tv = set(kills_tv) | set(encounters_tv)
+
+    globals_list = [
+        {"key": "total_kills",        "label_es": "Enemigos eliminados",
+         "value": sum(kills_tv.values()),     "icon": "skull"},
+        {"key": "total_deaths_by",    "label_es": "Veces que te han matado",
+         "value": sum(deaths_tv.values()),    "icon": "tombstone"},
+        {"key": "total_hits",         "label_es": "Golpes recibidos",
+         "value": sum(hits_tv.values()),      "icon": "heart_broken"},
+        {"key": "unique_seen",        "label_es": "Enemigos distintos vistos",
+         "value": len(all_seen_tv),
+         "max":   len(BESTIARY_CATALOG),
+         "icon":  "eye"},
+    ]
+
+    # Globales del chunk 2 (hoy solo donaciones)
+    by_key = {"donations_normal": parsed.donation_count,
+              "donations_greed":  parsed.greed_donation_count}
+    for entry in GLOBAL_STAT_COUNTERS:
+        if entry["key"] in by_key:
+            globals_list.append({
+                "key": entry["key"],
+                "label_es": entry["label_es"],
+                "value": by_key[entry["key"]],
+                "icon": entry["icon"],
+            })
+
+    bestiary_list = []
+    for (t, v), meta in sorted(BESTIARY_CATALOG.items()):
+        k = kills_tv.get((t, v), 0)
+        d = deaths_tv.get((t, v), 0)
+        h = hits_tv.get((t, v), 0)
+        e = encounters_tv.get((t, v), 0)
+        bestiary_list.append({
+            "type": t, "variant": v,
+            "name_es": meta["name_es"],
+            "name_en": meta["name_en"],
+            "category": meta["category"],
+            "kills": k, "deaths": d, "hits": h, "encounters": e,
+            "sprite_id": f"{t:03d}.{v:03d}",
+            "seen": (t, v) in all_seen_tv,
+        })
+
+    return {"globals": globals_list, "bestiary": bestiary_list}
+
+
 def build_localstorage_state(parsed: ParsedSave) -> dict:
     return {
         "challenges_state": _build_challenges(parsed),
@@ -89,6 +157,7 @@ def build_localstorage_state(parsed: ParsedSave) -> dict:
         "items_state": _build_items_state(parsed),
         "cards_state": _build_cards_state(parsed),
         "donations_state": _build_donations_state(parsed),
+        "stats_state": _build_stats_state(parsed),
         "meta": {
             "slot": parsed.slot,
             "parsed_at": parsed.parsed_at.isoformat(),
