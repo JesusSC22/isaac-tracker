@@ -1906,8 +1906,16 @@
       background-position: center;
     }
     .donation-milestone.locked .ms-icon { filter: grayscale(1) brightness(0.5); }
-    .donation-milestone .ms-name { color: #ddd; }
+    .donation-milestone .ms-text { display: flex; flex-direction: column; min-width: 0; }
+    .donation-milestone .ms-name { color: #ddd; font-weight: bold; }
+    .donation-milestone .ms-description {
+      color: #888;
+      font-size: 11px;
+      line-height: 1.35;
+      margin-top: 1px;
+    }
     .donation-milestone.locked .ms-name { color: #777; }
+    .donation-milestone.locked .ms-description { color: #555; }
     .donation-milestone .ms-amount {
       text-align: right;
       color: #aaa;
@@ -5952,9 +5960,13 @@
       const remaining = Math.max(0, m.amount - count);
       const statusText = m.unlocked ? '✓ Desbloqueado' : `Faltan ${remaining}`;
       const iconStyle = `background-image: url('ach_icons/${m.achievement_id}.webp');`;
+      const descHtml = m.description ? `<div class="ms-description">${escapeHtmlDon(m.description)}</div>` : '';
       li.innerHTML = `
         <div class="ms-icon" style="${iconStyle}"></div>
-        <div class="ms-name">${escapeHtmlDon(m.name)}</div>
+        <div class="ms-text">
+          <div class="ms-name">${escapeHtmlDon(m.name)}</div>
+          ${descHtml}
+        </div>
         <div class="ms-amount">${m.amount}</div>
         <div class="ms-status">${statusText}</div>
       `;
