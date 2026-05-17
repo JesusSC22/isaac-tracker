@@ -1934,88 +1934,216 @@
 
     /* ===== Pestaña Estadísticas ===== */
     .hidden { display: none; }
-    #stats-view .stats-globals { margin-bottom: 1.5rem; }
-    #stats-view .stats-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 0.75rem;
+
+    /* Buscador "Ir al enemigo" — copia exacta de .items-jump-row */
+    #stats-view .stats-jump-row {
+      display: flex; align-items: center; gap: 8px;
+      justify-content: center; margin: 0 0 18px;
+      flex-wrap: wrap; font-size: 0.92rem; color: #cfd5e8;
     }
-    #stats-view .stats-card {
+    #stats-view .stats-jump-row label { font-weight: 600; }
+    #stats-view .stats-jump-row input[type="text"] {
+      background: #16213e; color: #fff;
+      border: 1px solid rgba(243,156,18,0.45); border-radius: 6px;
+      padding: 5px 10px; width: 280px; max-width: 60vw; font-size: 0.95rem;
+    }
+    #stats-view .stats-jump-row input[type="text"]:focus {
+      outline: none; border-color: #f39c12;
+      box-shadow: 0 0 0 2px rgba(243,156,18,0.25);
+    }
+    #stats-view .stats-jump-row button {
+      background: linear-gradient(135deg, #f39c12, #f5b041);
+      color: #1a1a2e; border: none; border-radius: 6px;
+      padding: 5px 14px; font-weight: 700; cursor: pointer; font-size: 0.9rem;
+    }
+    #stats-view .stats-jump-row button:hover { filter: brightness(1.08); }
+    #stats-view .stats-jump-row .hint { color: #8893a8; font-size: 0.82rem; }
+
+    /* Top — 2 columnas */
+    #stats-view .stats-top {
+      display: grid; grid-template-columns: 1fr 2fr;
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      #stats-view .stats-top { grid-template-columns: 1fr; }
+    }
+    #stats-view .stats-block-title {
+      font-size: 0.95rem; color: #cfd5e8; font-weight: 600;
+      margin: 0 0 0.6rem; padding-bottom: 0.3rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    #stats-view .stats-block-title .ratio { opacity: 0.55; font-weight: 400; font-size: 0.8rem; margin-left: 0.5rem; }
+
+    /* Cards trayectoria */
+    #stats-view .stat-card {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 6px;
-      padding: 0.85rem;
-      display: flex; flex-direction: column; align-items: flex-start;
+      border-radius: 6px; padding: 0.7rem 0.85rem;
+      margin-bottom: 0.5rem;
     }
-    #stats-view .stats-card .value {
-      font-size: 1.7rem; font-weight: 700; color: #f3f3f3;
-      margin-top: 0.25rem;
+    #stats-view .stat-card .lab {
+      font-size: 0.72rem; opacity: 0.65;
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
-    #stats-view .stats-card .label { font-size: 0.85rem; opacity: 0.75; }
-    #stats-view .stats-card .icon { font-size: 1.2rem; opacity: 0.85; }
+    #stats-view .stat-card .val {
+      font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.2rem;
+    }
+    #stats-view .stat-card .sub { font-size: 0.7rem; opacity: 0.55; margin-top: 0.2rem; }
+    #stats-view .stat-card .bar {
+      height: 6px; background: rgba(255,255,255,0.1);
+      border-radius: 3px; overflow: hidden; margin-top: 0.4rem;
+    }
+    #stats-view .stat-card .bar > div {
+      height: 100%; background: linear-gradient(90deg, #f39c12, #f5b041);
+    }
+
+    /* Big bosses panel */
+    #stats-view .bigboss-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+      gap: 6px;
+    }
+    #stats-view .bigboss {
+      background: linear-gradient(135deg, #1f2c4a 0%, #283759 100%);
+      border-radius: 6px; padding: 0.5rem 0.3rem;
+      display: flex; flex-direction: column; align-items: center;
+      box-shadow: inset 0 0 0 1px rgba(243,156,18,0.35);
+      cursor: help; transition: transform 0.1s;
+      position: relative;
+    }
+    #stats-view .bigboss:hover { transform: scale(1.05); }
+    #stats-view .bigboss.unseen {
+      opacity: 0.35; background: #16213e;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    #stats-view .bigboss img {
+      width: 48px; height: 48px; object-fit: contain;
+      image-rendering: pixelated;
+    }
+    #stats-view .bigboss .name {
+      font-size: 0.7rem; text-align: center; margin-top: 0.3rem;
+      white-space: nowrap; overflow: hidden; max-width: 100%;
+      text-overflow: ellipsis;
+    }
+    #stats-view .bigboss .k {
+      font-size: 0.78rem; color: #f5b041; font-weight: 700; margin-top: 0.1rem;
+    }
+    #stats-view .bigboss .k .d {
+      color: #e74c3c; font-weight: 500; font-size: 0.7rem; margin-left: 4px;
+    }
+    #stats-view .bigboss .mark-tag {
+      position: absolute; top: 2px; right: 2px;
+      background: #6cd66c; color: #1a1a2e;
+      font-size: 0.55rem; font-weight: 700;
+      padding: 1px 4px; border-radius: 2px;
+    }
+
+    /* Toolbar filtros */
     #stats-view .bestiary-toolbar {
-      display: flex; flex-wrap: wrap; gap: 0.6rem;
-      align-items: center; margin: 0.5rem 0 1rem;
+      display: flex; gap: 0.4rem; margin: 0.5rem 0 0.8rem;
+      align-items: center; flex-wrap: wrap;
     }
-    #stats-view .filter-group { display: inline-flex; gap: 0.3rem; }
     #stats-view .chip {
-      background: rgba(255,255,255,0.05); color: #ddd;
+      background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 999px; padding: 0.3rem 0.8rem;
-      cursor: pointer; font-size: 0.85rem;
+      color: #ddd; font-size: 0.78rem; padding: 4px 12px;
+      border-radius: 999px; cursor: pointer;
     }
-    #stats-view .chip.active { background: #5b8def; border-color: #5b8def; color: #fff; }
-    #stats-view #bestiarySearch {
-      background: rgba(255,255,255,0.05); color: #fff;
-      border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
-      padding: 0.35rem 0.6rem; min-width: 180px;
+    #stats-view .chip.active {
+      background: #f39c12; border-color: #f39c12;
+      color: #1a1a2e; font-weight: 600;
+    }
+    #stats-view .toolbar-sep {
+      width: 1px; height: 18px;
+      background: rgba(255,255,255,0.12); margin: 0 4px;
     }
     #stats-view #bestiarySort {
-      background: rgba(255,255,255,0.05); color: #fff;
-      border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
-      padding: 0.3rem 0.5rem;
+      background: #16213e; color: #fff;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px; padding: 4px 10px; font-size: 0.8rem;
     }
-    #stats-view .bestiary-grid {
+
+    /* Bloques por capítulo */
+    #stats-view .chapter-block { margin-top: 1rem; }
+    #stats-view .chapter-header {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.85rem; color: #cfd5e8;
+      margin-bottom: 0.4rem; font-weight: 600;
+    }
+    #stats-view .chapter-header .num {
+      background: rgba(243,156,18,0.18); color: #f5b041;
+      padding: 2px 8px; border-radius: 4px;
+      font-size: 0.7rem; font-weight: 700;
+    }
+    #stats-view .chapter-header .floors {
+      opacity: 0.6; font-weight: 400; font-size: 0.75rem;
+    }
+    #stats-view .chapter-header .count {
+      opacity: 0.55; font-size: 0.75rem; font-weight: 400;
+    }
+    #stats-view .chapter-header .line {
+      flex: 1; height: 1px; background: rgba(255,255,255,0.08);
+    }
+    #stats-view .chapter-header .prog {
+      height: 4px; width: 80px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px; overflow: hidden;
+    }
+    #stats-view .chapter-header .prog > div { height: 100%; background: #f5b041; }
+
+    /* Enemy grid */
+    #stats-view .enemy-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-      gap: 0.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+      gap: 5px;
     }
-    #stats-view .enemy-cell {
+    #stats-view .enemy {
       background: rgba(255,255,255,0.03);
-      border-radius: 4px; padding: 0.5rem 0.3rem;
+      border-radius: 4px; padding: 0.4rem 0.2rem;
       display: flex; flex-direction: column; align-items: center;
-      position: relative; cursor: default;
+      cursor: help; position: relative;
     }
-    #stats-view .enemy-cell.unseen { opacity: 0.3; }
-    #stats-view .enemy-cell img { width: 48px; height: 48px; image-rendering: pixelated; }
-    #stats-view .enemy-cell .name {
-      font-size: 0.7rem; text-align: center;
-      margin-top: 0.25rem; max-width: 100%;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    #stats-view .enemy.unseen { opacity: 0.3; }
+    #stats-view .enemy img {
+      width: 40px; height: 40px; object-fit: contain;
+      image-rendering: pixelated;
     }
-    #stats-view .enemy-cell .kills {
-      font-size: 1rem; font-weight: 700; color: #ffcd5b;
-    }
-    #stats-view .enemy-cell .placeholder-sprite {
-      width: 48px; height: 48px; background: #333;
+    #stats-view .enemy .placeholder {
+      width: 40px; height: 40px; background: #333;
       display: flex; align-items: center; justify-content: center;
-      color: #888;
+      color: #888; font-size: 1rem;
     }
-    #stats-view .enemy-cell .badge {
+    #stats-view .enemy .name {
+      font-size: 0.65rem; text-align: center; margin-top: 0.25rem;
+      white-space: nowrap; overflow: hidden;
+      max-width: 100%; text-overflow: ellipsis;
+    }
+    #stats-view .enemy .stats {
+      display: flex; gap: 0.3rem; font-size: 0.6rem; margin-top: 0.15rem;
+    }
+    #stats-view .enemy .stats .kk { color: #f5b041; font-weight: 700; }
+    #stats-view .enemy .stats .dd { color: #e74c3c; }
+    #stats-view .enemy .mb-tag {
       position: absolute; top: 2px; right: 2px;
-      font-size: 0.6rem; padding: 1px 4px; border-radius: 3px;
-      font-weight: 700;
+      background: #d4922a; color: #1a1a2e;
+      font-size: 0.55rem; font-weight: 700;
+      padding: 1px 4px; border-radius: 2px;
     }
-    #stats-view .enemy-cell .badge.boss     { background: #e74c3c; color: #fff; }
-    #stats-view .enemy-cell .badge.miniboss { background: #f39c12; color: #000; }
-    #stats-view .bestiary-empty {
-      text-align: center; padding: 2rem; opacity: 0.6;
+
+    /* Highlight de jump-to */
+    #stats-view .enemy.jump-highlight,
+    #stats-view .bigboss.jump-highlight {
+      box-shadow: 0 0 0 3px rgba(243,156,18,0.95), 0 0 18px 6px rgba(243,156,18,0.55);
+      transform: scale(1.15); z-index: 3;
+      transition: box-shadow 0.25s, transform 0.25s;
     }
+
+    /* Empty + tooltip */
+    #stats-view .bestiary-empty { text-align: center; padding: 2rem; opacity: 0.6; }
     #bestiaryTooltip {
       position: fixed; background: #111; color: #fff;
       padding: 0.5rem 0.7rem; border: 1px solid #444; border-radius: 4px;
-      font-size: 0.8rem; z-index: 9999; pointer-events: none;
-      display: none;
+      font-size: 0.8rem; z-index: 9999; pointer-events: none; display: none;
     }
   </style>
 </head>
@@ -2162,36 +2290,57 @@
   </div>
 
   <div id="stats-view" class="view">
-    <section class="stats-globals">
-      <h2>Trayectoria global</h2>
-      <div class="stats-cards" id="statsCards"></div>
-    </section>
-    <section class="bestiary">
-      <h2>Bestiario</h2>
+
+    <div class="stats-jump-row">
+      <label for="bestiaryJumpInput">Ir al enemigo:</label>
+      <input type="text" id="bestiaryJumpInput"
+             list="bestiaryNameOptions"
+             placeholder="empieza a escribir un nombre"
+             autocomplete="off" />
+      <datalist id="bestiaryNameOptions"></datalist>
+      <button type="button" id="bestiaryJumpBtn">Buscar</button>
+      <span class="hint">o pulsa Enter</span>
+    </div>
+
+    <div class="stats-top">
+      <section>
+        <h3 class="stats-block-title">Trayectoria global</h3>
+        <div id="statsCards"></div>
+      </section>
+      <section>
+        <h3 class="stats-block-title">
+          Bosses derrotados <span class="ratio" id="bossesRatio"></span>
+        </h3>
+        <div class="bigboss-grid" id="bigBossesGrid"></div>
+      </section>
+    </div>
+
+    <section>
+      <h3 class="stats-block-title">Bestiario</h3>
       <div class="bestiary-toolbar">
-        <div class="filter-group" id="bestiarySeenFilter">
+        <div id="bestiarySeenFilter" style="display:inline-flex;gap:0.3rem">
           <button class="chip active" data-filter="seen">Vistos</button>
           <button class="chip" data-filter="all">Todos</button>
         </div>
-        <div class="filter-group" id="bestiaryCategoryFilter">
+        <span class="toolbar-sep"></span>
+        <div id="bestiaryCategoryFilter" style="display:inline-flex;gap:0.3rem">
           <button class="chip active" data-cat="all">Todos</button>
           <button class="chip" data-cat="enemy">Enemigos</button>
           <button class="chip" data-cat="miniboss">Mini-bosses</button>
-          <button class="chip" data-cat="boss">Bosses</button>
         </div>
-        <input type="search" id="bestiarySearch" placeholder="Buscar enemigo…">
+        <span class="toolbar-sep"></span>
         <select id="bestiarySort">
-          <option value="kills_desc">Kills (más → menos)</option>
-          <option value="kills_asc">Kills (menos → más)</option>
+          <option value="chapter">Por capítulo</option>
+          <option value="kills_desc">Por kills</option>
           <option value="alpha">Alfabético</option>
-          <option value="category">Por tipo</option>
         </select>
       </div>
-      <div class="bestiary-grid" id="bestiaryGrid"></div>
+      <div id="bestiaryContainer"></div>
       <p class="bestiary-empty hidden" id="bestiaryEmpty">
         Empieza a jugar para llenar el bestiario.
       </p>
     </section>
+
   </div>
 </div>
 
@@ -6102,13 +6251,20 @@
   }
 
   /* ====== Pestaña Estadísticas ====== */
-  const STATS_ICONS = {
-    skull: "💀", tombstone: "🪦", heart_broken: "💔", eye: "👁️",
-    coin: "🪙", coin_gold: "💰",
-  };
 
   const BESTIARY_FILTER_STATE = {
-    filter: "seen", category: "all", search: "", sort: "kills_desc",
+    filter: "seen", category: "all", sort: "chapter",
+  };
+
+  const CHAPTER_LABELS = {
+    1: "Basement · Cellar · Burning Basement · Downpour · Dross",
+    2: "Caves · Catacombs · Flooded Caves · Mines · Ashpit",
+    3: "Depths · Necropolis · Dank Depths · Mausoleum · Gehenna",
+    4: "Womb · Utero · Scarred Womb · Corpse",
+    5: "Sheol · Cathedral",
+    6: "Dark Room · Chest",
+    7: "Blue Womb · Void · Home",
+    "extra": "Otros",
   };
 
   let _bestiaryTooltipEl = null;
@@ -6129,78 +6285,165 @@
   }
 
   function renderStatsCards(stats) {
-    const cardsEl = document.getElementById("statsCards");
-    if (!cardsEl) return;
-    cardsEl.innerHTML = "";
+    const el = document.getElementById("statsCards");
+    if (!el) return;
+    el.innerHTML = "";
+    const skipKeys = new Set(["bosses_defeated"]);  // se muestra como ratio del header
     for (const g of stats.globals) {
-      const valueText = (g.max != null)
+      if (skipKeys.has(g.key)) continue;
+      const card = document.createElement("div");
+      card.className = "stat-card";
+      const valText = g.max != null
         ? `${g.value.toLocaleString("es-ES")} / ${g.max.toLocaleString("es-ES")}`
         : g.value.toLocaleString("es-ES");
-      const card = document.createElement("div");
-      card.className = "stats-card";
+      const subText = (g.max != null)
+        ? `<div class="sub">faltan ${Math.max(0, g.max - g.value)}</div>
+           <div class="bar"><div style="width:${g.max ? Math.round(100*g.value/g.max) : 0}%"></div></div>`
+        : "";
       card.innerHTML = `
-        <span class="icon">${STATS_ICONS[g.icon] || "•"}</span>
-        <span class="value">${valueText}</span>
-        <span class="label">${g.label_es}</span>
+        <div class="lab">${g.label_es}</div>
+        <div class="val">${valText}</div>
+        ${subText}
       `;
-      cardsEl.appendChild(card);
+      el.appendChild(card);
     }
   }
 
-  function renderBestiaryGrid(stats) {
-    const grid = document.getElementById("bestiaryGrid");
-    const empty = document.getElementById("bestiaryEmpty");
+  function renderBigBossesPanel(stats) {
+    const grid = document.getElementById("bigBossesGrid");
+    const ratio = document.getElementById("bossesRatio");
     if (!grid) return;
+    grid.innerHTML = "";
+    let defeated = 0;
+    const sprites = (window.BESTIARY_SPRITES) || {};
+    for (const b of stats.big_bosses) {
+      if (b.seen) defeated++;
+      const cell = document.createElement("div");
+      cell.className = "bigboss" + (b.seen ? "" : " unseen");
+      cell.dataset.bigbossIdx = b.idx;
+      const spriteKey = `bigboss_${String(b.idx).padStart(2, "0")}`;
+      const src = sprites[spriteKey] || b.sprite_url || "";
+      const img = src
+        ? `<img src="${src}" alt="${b.name_en}">`
+        : `<div class="placeholder">?</div>`;
+      const k = b.kills == null ? "—" : `×${b.kills.toLocaleString("es-ES")}`;
+      const d = (b.deaths == null || b.deaths === 0) ? "" : `<span class="d">/${b.deaths}</span>`;
+      const markTag = b.mark_completed ? '<span class="mark-tag">✓</span>' : '';
+      cell.innerHTML = `
+        ${markTag}
+        ${img}
+        <span class="name" title="${b.name_es}">${b.name_es}</span>
+        <span class="k">${k}${d}</span>
+      `;
+      cell.addEventListener("mouseenter", ev => showBigBossTooltip(ev, b));
+      cell.addEventListener("mousemove", ev => positionBestiaryTooltip(ev));
+      cell.addEventListener("mouseleave", hideBestiaryTooltip);
+      grid.appendChild(cell);
+    }
+    if (ratio) ratio.textContent = `${defeated} / ${stats.big_bosses.length}`;
+  }
 
+  function _filterAndSortBestiary(stats) {
     let items = stats.bestiary.filter(e => {
       if (BESTIARY_FILTER_STATE.filter === "seen" && !e.seen) return false;
-      if (BESTIARY_FILTER_STATE.category !== "all" && e.category !== BESTIARY_FILTER_STATE.category) return false;
-      if (BESTIARY_FILTER_STATE.search) {
-        const q = BESTIARY_FILTER_STATE.search.toLowerCase();
-        if (!e.name_es.toLowerCase().includes(q) && !e.name_en.toLowerCase().includes(q)) return false;
-      }
+      if (BESTIARY_FILTER_STATE.category !== "all"
+          && e.category !== BESTIARY_FILTER_STATE.category) return false;
       return true;
     });
-
     const sorters = {
       kills_desc: (a, b) => b.kills - a.kills || a.name_es.localeCompare(b.name_es),
-      kills_asc:  (a, b) => a.kills - b.kills || a.name_es.localeCompare(b.name_es),
       alpha:      (a, b) => a.name_es.localeCompare(b.name_es),
-      category:   (a, b) => {
-        const ord = {boss: 0, miniboss: 1, enemy: 2};
-        return (ord[a.category] - ord[b.category]) || (b.kills - a.kills);
+      chapter:    (a, b) => {
+        const ord = ch => (ch === "extra" ? 99 : ch);
+        return (ord(a.chapter) - ord(b.chapter)) || (b.kills - a.kills);
       },
     };
-    items.sort(sorters[BESTIARY_FILTER_STATE.sort] || sorters.kills_desc);
+    items.sort(sorters[BESTIARY_FILTER_STATE.sort] || sorters.chapter);
+    return items;
+  }
 
-    grid.innerHTML = "";
+  function _renderEnemyCell(e) {
+    const cell = document.createElement("div");
+    cell.className = "enemy" + (e.seen ? "" : " unseen");
+    cell.dataset.spriteId = e.sprite_id;
+    const sprites = (window.BESTIARY_SPRITES) || {};
+    const src = sprites[e.sprite_id];
+    const img = src
+      ? `<img src="${src}" alt="${e.name_en}">`
+      : `<div class="placeholder">?</div>`;
+    const mb = e.category === "miniboss" ? '<span class="mb-tag">MB</span>' : '';
+    const kills = e.seen ? `<span class="kk">×${e.kills.toLocaleString("es-ES")}</span>` : `<span class="kk">×?</span>`;
+    const deaths = (e.seen && e.deaths > 0) ? `<span class="dd">/${e.deaths}</span>` : '';
+    cell.innerHTML = `
+      ${mb}
+      ${img}
+      <span class="name" title="${e.name_es}">${e.name_es}</span>
+      <span class="stats">${kills}${deaths}</span>
+    `;
+    cell.addEventListener("mouseenter", ev => showBestiaryTooltip(ev, e));
+    cell.addEventListener("mousemove", ev => positionBestiaryTooltip(ev));
+    cell.addEventListener("mouseleave", hideBestiaryTooltip);
+    return cell;
+  }
+
+  function renderBestiaryContainer(stats) {
+    const container = document.getElementById("bestiaryContainer");
+    const empty = document.getElementById("bestiaryEmpty");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const items = _filterAndSortBestiary(stats);
     if (items.length === 0) {
       empty && empty.classList.remove("hidden");
       return;
     }
     empty && empty.classList.add("hidden");
 
-    const sprites = (window.BESTIARY_SPRITES) || {};
+    if (BESTIARY_FILTER_STATE.sort !== "chapter") {
+      const grid = document.createElement("div");
+      grid.className = "enemy-grid";
+      for (const e of items) grid.appendChild(_renderEnemyCell(e));
+      container.appendChild(grid);
+      return;
+    }
+
+    // Agrupar por capítulo
+    const groups = {};
     for (const e of items) {
-      const cell = document.createElement("div");
-      cell.className = "enemy-cell" + (e.seen ? "" : " unseen");
-      const badge = e.category === "boss"
-        ? '<span class="badge boss">B</span>'
-        : e.category === "miniboss" ? '<span class="badge miniboss">MB</span>' : '';
-      const sprite = sprites[e.sprite_id];
-      const img = sprite
-        ? `<img src="${sprite}" alt="${e.name_en}">`
-        : `<div class="placeholder-sprite">?</div>`;
-      cell.innerHTML = `
-        ${badge}
-        ${img}
-        <span class="name" title="${e.name_es}">${e.name_es}</span>
-        <span class="kills">${e.seen ? "× " + e.kills.toLocaleString("es-ES") : "?"}</span>
+      const ch = e.chapter;
+      if (!groups[ch]) groups[ch] = [];
+      groups[ch].push(e);
+    }
+    // Totales por capítulo SOBRE EL CATÁLOGO COMPLETO (para "X/Y" honesto, no filtrado)
+    const totalsByChapter = {};
+    for (const e of stats.bestiary) {
+      const ch = e.chapter;
+      if (!totalsByChapter[ch]) totalsByChapter[ch] = { total: 0, seen: 0 };
+      totalsByChapter[ch].total++;
+      if (e.seen) totalsByChapter[ch].seen++;
+    }
+
+    const order = [1, 2, 3, 4, 5, 6, 7, "extra"];
+    for (const ch of order) {
+      if (!groups[ch]) continue;
+      const block = document.createElement("div");
+      block.className = "chapter-block";
+      const t = totalsByChapter[ch] || { total: 0, seen: 0 };
+      const pct = t.total ? Math.round(100 * t.seen / t.total) : 0;
+      const numLabel = (ch === "extra") ? "EXTRA" : `CAP ${ch}`;
+      block.innerHTML = `
+        <div class="chapter-header">
+          <span class="num">${numLabel}</span>
+          <span class="floors">${CHAPTER_LABELS[ch] || ""}</span>
+          <span class="count">${t.seen} / ${t.total}</span>
+          <span class="line"></span>
+          <div class="prog"><div style="width:${pct}%"></div></div>
+        </div>
+        <div class="enemy-grid"></div>
       `;
-      cell.addEventListener("mouseenter", ev => showBestiaryTooltip(ev, e));
-      cell.addEventListener("mousemove", ev => positionBestiaryTooltip(ev));
-      cell.addEventListener("mouseleave", hideBestiaryTooltip);
-      grid.appendChild(cell);
+      const grid = block.querySelector(".enemy-grid");
+      for (const e of groups[ch]) grid.appendChild(_renderEnemyCell(e));
+      container.appendChild(block);
     }
   }
 
@@ -6225,6 +6468,23 @@
     el.style.display = "block";
     positionBestiaryTooltip(ev);
   }
+
+  function showBigBossTooltip(ev, b) {
+    const el = ensureBestiaryTooltip();
+    const rows = [`<strong>${b.name_es}</strong>`];
+    if (b.kind === "event")          rows.push("<em>Evento del juego</em>");
+    else if (b.kind === "transformation") rows.push("<em>Transformación</em>");
+    if (b.kills != null && b.kills > 0)         rows.push(`Kills: ${b.kills.toLocaleString("es-ES")}`);
+    if (b.deaths != null && b.deaths > 0)       rows.push(`Te ha matado: ${b.deaths.toLocaleString("es-ES")}`);
+    if (b.hits != null && b.hits > 0)           rows.push(`Hits recibidos: ${b.hits.toLocaleString("es-ES")}`);
+    if (b.encounters != null && b.encounters > 0) rows.push(`Encuentros: ${b.encounters.toLocaleString("es-ES")}`);
+    if (b.mark_completed) rows.push("✓ Completado por algún personaje");
+    if (!b.seen) rows.push("<em>Aún no derrotado</em>");
+    el.innerHTML = rows.join("<br>");
+    el.style.display = "block";
+    positionBestiaryTooltip(ev);
+  }
+
   function positionBestiaryTooltip(ev) {
     if (!_bestiaryTooltipEl) return;
     _bestiaryTooltipEl.style.left = (ev.clientX + 12) + "px";
@@ -6234,11 +6494,60 @@
     if (_bestiaryTooltipEl) _bestiaryTooltipEl.style.display = "none";
   }
 
+  function populateBestiaryDatalist(stats) {
+    const dl = document.getElementById("bestiaryNameOptions");
+    if (!dl) return;
+    dl.innerHTML = "";
+    const all = [...stats.big_bosses, ...stats.bestiary];
+    for (const e of all) {
+      const opt = document.createElement("option");
+      opt.value = e.name_es;
+      dl.appendChild(opt);
+    }
+  }
+
+  function _findAndHighlight(name) {
+    const target = String(name || "").trim().toLowerCase();
+    if (!target) return false;
+    const candidates = document.querySelectorAll("#stats-view .enemy, #stats-view .bigboss");
+    let found = null;
+    candidates.forEach(c => {
+      const lab = (c.querySelector(".name")?.textContent || "").trim().toLowerCase();
+      if (!found && lab === target) found = c;
+      else if (!found && lab.includes(target)) found = c;
+    });
+    if (!found) return false;
+    found.scrollIntoView({behavior: "smooth", block: "center"});
+    found.classList.add("jump-highlight");
+    setTimeout(() => found.classList.remove("jump-highlight"), 1800);
+    return true;
+  }
+
+  function bindBestiaryJumpTo() {
+    const input = document.getElementById("bestiaryJumpInput");
+    const btn = document.getElementById("bestiaryJumpBtn");
+    if (input && !input.dataset.bound) {
+      input.dataset.bound = "1";
+      input.addEventListener("keydown", ev => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          _findAndHighlight(input.value);
+        }
+      });
+    }
+    if (btn && input && !btn.dataset.bound) {
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => _findAndHighlight(input.value));
+    }
+  }
+
   function renderStatsTab() {
     const stats = _loadStatsStateOrNull();
     if (!stats) return;
     renderStatsCards(stats);
-    renderBestiaryGrid(stats);
+    renderBigBossesPanel(stats);
+    renderBestiaryContainer(stats);
+    populateBestiaryDatalist(stats);
   }
 
   function bindBestiaryControls() {
@@ -6266,14 +6575,6 @@
         });
       });
     }
-    const s = document.getElementById("bestiarySearch");
-    if (s && !s.dataset.bound) {
-      s.dataset.bound = "1";
-      s.addEventListener("input", ev => {
-        BESTIARY_FILTER_STATE.search = ev.target.value;
-        renderStatsTab();
-      });
-    }
     const o = document.getElementById("bestiarySort");
     if (o && !o.dataset.bound) {
       o.dataset.bound = "1";
@@ -6282,6 +6583,7 @@
         renderStatsTab();
       });
     }
+    bindBestiaryJumpTo();
   }
   bindBestiaryControls();
 
