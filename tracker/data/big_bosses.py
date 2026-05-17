@@ -33,7 +33,7 @@ BIG_BOSSES: list[BigBossEntry] = [
      "sprite_url": "https://bindingofisaacrebirth.wiki.gg/images/Boss_The_Lamb_ingame.png",
      "bestiary_key": (273, 0), "kind": "boss"},
     {"idx": 5, "name_es": "Boss Rush",       "name_en": "Boss Rush",
-     "sprite_url": "",
+     "sprite_url": "bossrush.png",  # local asset bundled with the app (no wiki URL — es un evento, no un enemigo)
      "bestiary_key": None, "kind": "event"},
     {"idx": 6, "name_es": "Hush",            "name_en": "Hush",
      "sprite_url": "https://bindingofisaacrebirth.wiki.gg/images/Boss_Hush_ingame.png",
