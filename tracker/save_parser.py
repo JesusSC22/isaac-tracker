@@ -173,6 +173,66 @@ def _extract_items_seen(collectibles_body: bytes) -> set[int]:
     return {i for i, b in enumerate(collectibles_body) if b == 1}
 
 
+# Record types del chunk 11 (bestiario). Cada sub-registro lleva una de estas
+# IDs en su cabecera <ii> = (rec_type, len_field).
+_BESTIARY_HITS = 1
+_BESTIARY_DEATHS = 2
+_BESTIARY_KILLS = 3
+_BESTIARY_ENCOUNTERS = 4
+
+
+def _extract_bestiary(
+    data: bytes,
+    after_chunk10_off: int,
+    file_end: int,
+) -> dict[int, dict[int, int]]:
+    """Decodifica el chunk 11 (bestiario) a ``{record_type: {packed_entity_id: value}}``.
+
+    Record types: 1=hits, 2=deaths, 3=kills, 4=encounters.
+
+    Layout (validado contra el fixture, NO coincide con la spec del plan):
+      - Cabecera del chunk 11 ya leída por el caller (12 bytes <iii> con count=4).
+      - 4 sub-registros consecutivos. Cada uno:
+          header  : <ii> = (rec_type:s4, len_field:s4)
+          entries : (len_field // 4) entradas de 8 bytes <ii> = (packed_entity, value)
+        ``len_field`` NO es bytes del body — sigue la convención del header
+        de chunks "macro" (len = count * 4) independientemente del tamaño
+        real de cada entry (8 bytes aquí).
+      - Tras los 4 sub-registros hay 4 bytes de footer/padding que NO forman
+        parte del bestiario (van antes de la AfterbirthChecksum de 4 bytes).
+
+    El ``packed_entity_id`` se devuelve sin descomponer; la descomposición a
+    ``(type, variant)`` la hace el consumidor (state_mapper). Para referencia,
+    la fórmula validada es ``packed = (type << 20) | (variant << 4)``,
+    es decir ``type = packed >> 20`` y ``variant = (packed >> 4) & 0xFFF``.
+
+    Devuelve dicts vacíos si el chunk está truncado o tiene un count != 4.
+    """
+    out: dict[int, dict[int, int]] = {1: {}, 2: {}, 3: {}, 4: {}}
+    if after_chunk10_off + _CHUNK_HEADER_SIZE > file_end:
+        return out
+    _chunk_type, _len, count = struct.unpack_from("<iii", data, after_chunk10_off)
+    if count != 4:
+        return out
+    off = after_chunk10_off + _CHUNK_HEADER_SIZE
+    for _ in range(count):
+        if off + 8 > file_end:
+            break
+        rec_type, len_field = struct.unpack_from("<ii", data, off)
+        off += 8
+        n_entries = len_field // 4  # convención len = count*4 del header de chunks
+        body_end = off + n_entries * 8
+        if body_end > file_end or rec_type not in out:
+            off = body_end
+            continue
+        for i in range(n_entries):
+            entry_off = off + i * 8
+            entity, value = struct.unpack_from("<ii", data, entry_off)
+            out[rec_type][entity] = value
+        off = body_end
+    return out
+
+
 def _extract_donation_counters(counters_body: bytes) -> tuple[int, int]:
     """Lee los dos contadores de donación del chunk 2 (4 bytes s32 LE por entry).
 
