@@ -8,3 +8,22 @@ dist/
 .pytest_cache/
 IsaacTracker.log
 tools/_bestiary_raw/
+
+# Logs de build / herramientas auxiliares no versionables
+build.log
+nuitka-crash-report.xml
+.marks_all.txt
+.marks_extract.txt
+.trinkets_raw.txt
+
+# Binarios distribuidos por herramientas (no son código fuente)
+tools/upx/
+tools/appimagetool-x86_64.AppImage
+
+# Workspace temporal de los skills de brainstorming
+.superpowers/
+
+# Backups locales de assets PNG (regenerables)
+tracker/assets/ach_icons_png_backup/
+tracker/assets/item_icons_png_backup/
+

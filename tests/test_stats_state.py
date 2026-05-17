@@ -56,8 +56,9 @@ def test_seen_flag_from_kills_or_encounters():
     assert mom["seen"] is True
 
 
-def test_donations_appear_in_globals():
+def test_donations_not_in_stats_globals():
+    # Las donaciones se muestran en la pestaña de Donaciones, no en Estadísticas.
     state = _build_stats_state(_parsed(donation_count=120, greed_donation_count=450))
-    by_key = {g["key"]: g for g in state["globals"]}
-    assert by_key["donations_normal"]["value"] == 120
-    assert by_key["donations_greed"]["value"] == 450
+    keys = {g["key"] for g in state["globals"]}
+    assert "donations_normal" not in keys
+    assert "donations_greed" not in keys

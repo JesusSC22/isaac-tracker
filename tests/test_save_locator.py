@@ -31,7 +31,7 @@ def test_find_steam_userdata_roots_falls_back_to_common_locations(tmp_path, monk
     steam1 = tmp_path / "Program Files (x86)" / "Steam"
     (steam1 / "userdata").mkdir(parents=True)
     monkeypatch.setattr(
-        "tracker.save_locator._FALLBACK_STEAM_PATHS",
+        "tracker.save_locator._FALLBACK_STEAM_PATHS_WINDOWS",
         [steam1],
     )
     roots = list(find_steam_userdata_roots())

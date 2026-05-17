@@ -4,7 +4,6 @@ from tracker.data.bestiary import BESTIARY_CATALOG
 from tracker.data.cards import CARDS
 from tracker.data.collectibles import COLLECTIBLES
 from tracker.data.donations import DONATION_MILESTONES, GREED_DONATION_MILESTONES
-from tracker.data.stats_counters import GLOBAL_STAT_COUNTERS
 from tracker.save_parser import ParsedSave
 
 CHALLENGE_IDS = range(1, 46)  # Repentance/Repentance+: 45 challenges, IDs 1..45.
@@ -117,18 +116,6 @@ def _build_stats_state(parsed: ParsedSave) -> dict:
          "max":   len(BESTIARY_CATALOG),
          "icon":  "eye"},
     ]
-
-    # Globales del chunk 2 (hoy solo donaciones)
-    by_key = {"donations_normal": parsed.donation_count,
-              "donations_greed":  parsed.greed_donation_count}
-    for entry in GLOBAL_STAT_COUNTERS:
-        if entry["key"] in by_key:
-            globals_list.append({
-                "key": entry["key"],
-                "label_es": entry["label_es"],
-                "value": by_key[entry["key"]],
-                "icon": entry["icon"],
-            })
 
     bestiary_list = []
     for (t, v), meta in sorted(BESTIARY_CATALOG.items()):

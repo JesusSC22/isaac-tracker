@@ -149,3 +149,56 @@ SAVE_TO_HTML_MARK: dict[int, int] = {
     11: 11,  # Mother -> Mother
     12: 12,  # Beast -> Beast
 }
+
+# Maps Isaac PlayerType IDs to the achievement byte index that the game flips
+# to 1 the first time the character is unlocked. Used in addition to the
+# "any mark set" heuristic so that a character newly unlocked but with zero
+# completion marks still shows up as unlocked.
+#
+# Sourced from `tracker/data/achievements.json` by name+description:
+#   - Normal roster: achievements named after the character with description
+#     "Unlocked a new character." (IDs 1..405).
+#   - Tainted roster: achievements 474..490 with Name in
+#     {"The Broken", "The Dauntless", ...} and description
+#     "You unlocked \"<base character>\"" — these are the "Use the Red Key
+#     or Cracked Key in Home as <X>" unlocks.
+#
+# Isaac (PlayerType 0) is the starting character and has no unlock byte —
+# the parser hard-codes him as always unlocked.
+CHARACTER_UNLOCK_ACHIEVEMENTS: dict[int, int] = {
+    # Normal characters (PlayerType 0 Isaac is always unlocked, no entry).
+    1:  1,    # Magdalene -> ach 1
+    2:  2,    # Cain -> ach 2
+    3:  3,    # Judas -> ach 3
+    4:  32,   # ??? (Blue Baby) -> ach 32
+    5:  42,   # Eve -> ach 42
+    6:  67,   # Samson -> ach 67
+    7:  79,   # Azazel -> ach 79
+    8:  80,   # Lazarus -> ach 80
+    9:  81,   # Eden -> ach 81
+    10: 82,   # The Lost -> ach 82
+    13: 199,  # Lilith -> ach 199
+    14: 251,  # Keeper -> ach 251
+    15: 340,  # Apollyon -> ach 340
+    16: 390,  # The Forgotten -> ach 390
+    19: 404,  # Bethany -> ach 404
+    20: 405,  # Jacob & Esau -> ach 405
+    # Tainted characters (Red Key in Home unlocks, ach IDs 474..490 in order).
+    21: 474,  # Tainted Isaac
+    22: 475,  # Tainted Magdalene
+    23: 476,  # Tainted Cain
+    24: 477,  # Tainted Judas
+    25: 478,  # Tainted ???
+    26: 479,  # Tainted Eve
+    27: 480,  # Tainted Samson
+    28: 481,  # Tainted Azazel
+    29: 482,  # Tainted Lazarus
+    30: 483,  # Tainted Eden
+    31: 484,  # Tainted Lost
+    32: 485,  # Tainted Lilith
+    33: 486,  # Tainted Keeper
+    34: 487,  # Tainted Apollyon
+    35: 488,  # Tainted Forgotten
+    36: 489,  # Tainted Bethany
+    37: 490,  # Tainted Jacob & Esau
+}

@@ -31,12 +31,28 @@ def main() -> int:
         desc = eid.get("desc") or meta.get("desc_es", "")
         if eid.get("desc"):
             eid_used += 1
-        items.append({
+        entry = {
             "id": item_id,
             "name": meta["name"],
             "sprite": meta["sprite"],
             "desc": desc,
-        })
+        }
+        # Optional rich metadata — included only when present so the JS bundle
+        # stays small. The tooltip code checks for `undefined` before rendering.
+        kind = meta.get("kind")
+        if kind:
+            entry["kind"] = kind
+        if meta.get("max_charges") is not None:
+            entry["maxCharges"] = meta["max_charges"]
+        if meta.get("quality") is not None:
+            entry["quality"] = meta["quality"]
+        if meta.get("craft_quality") is not None:
+            entry["craftQuality"] = meta["craft_quality"]
+        if meta.get("tags"):
+            entry["tags"] = meta["tags"]
+        if meta.get("pools"):
+            entry["pools"] = meta["pools"]
+        items.append(entry)
     out = ROOT / "tracker" / "assets" / "items_inline.js"
     payload = json.dumps(items, ensure_ascii=False, separators=(",", ":"))
     out.write_text(f"window.ITEMS_DATA = {payload};\n", encoding="utf-8")

@@ -1813,10 +1813,12 @@
 
     /* ===== Pestaña Donaciones ===== */
     #view-donations {
-      display: flex;
       flex-direction: column;
       gap: 24px;
       padding: 16px 0;
+    }
+    #view-donations.active {
+      display: flex;
     }
     .donation-section {
       background: #181818;

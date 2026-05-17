@@ -123,11 +123,13 @@ def _strip_key(attr_value: str) -> str:
 
 
 def parse_items_xml(items_xml: Path, strings: dict[str, dict[str, str]]) -> list[dict]:
-    """Return [{id, name, sprite_file, removed, desc_es}] for every collectible.
+    """Return [{id, name, sprite_file, removed, desc_es, kind, max_charges}] for every collectible.
 
     Names come from stringtable.sta's English entry (canonical, with apostrophes).
     desc_es comes from the Spanish entry of the description key.
     Falls back to filename heuristics if a string lookup misses.
+    `kind` is one of {passive, active, familiar}.
+    `max_charges` is the int from items.xml maxcharges for active items, else None.
     """
     root = ET.parse(items_xml).getroot()
     out: list[dict] = []
@@ -151,6 +153,15 @@ def parse_items_xml(items_xml: Path, strings: dict[str, dict[str, str]]) -> list
         # Spanish in-game description (the pickup blurb).
         desc_es = strings.get(desc_key, {}).get("es") or ""
 
+        kind = elem.tag  # passive / active / familiar
+        max_charges = None
+        if kind == "active":
+            mc = elem.get("maxcharges")
+            try:
+                max_charges = int(mc) if mc is not None else None
+            except ValueError:
+                max_charges = None
+
         removed = not gfx or name_en.upper().startswith("REMOVED") or hidden
         out.append({
             "id": item_id,
@@ -158,7 +169,77 @@ def parse_items_xml(items_xml: Path, strings: dict[str, dict[str, str]]) -> list
             "gfx_filename": gfx,
             "removed": removed,
             "desc_es": desc_es,
+            "kind": kind,
+            "max_charges": max_charges,
         })
+    return out
+
+
+def parse_items_metadata(metadata_xml: Path) -> dict[int, dict]:
+    """Return {item_id: {quality, craft_quality, tags}} from items_metadata.xml.
+
+    tags is a list of strings (e.g. ["summonable", "offensive"]). Missing keys
+    or unparseable values default to quality=None, craft_quality=None, tags=[].
+    """
+    out: dict[int, dict] = {}
+    if not metadata_xml.exists():
+        return out
+    root = ET.parse(metadata_xml).getroot()
+    for elem in root:
+        # items_metadata.xml también contiene <trinket> con IDs solapados
+        # con los collectibles; solo nos interesan los <item>.
+        if elem.tag != "item":
+            continue
+        id_attr = elem.get("id")
+        if id_attr is None:
+            continue
+        try:
+            item_id = int(id_attr)
+        except ValueError:
+            continue
+        q_str = elem.get("quality")
+        cq_str = elem.get("craftquality")
+        try:
+            quality = int(q_str) if q_str is not None else None
+        except ValueError:
+            quality = None
+        try:
+            craft_quality = int(cq_str) if cq_str is not None else None
+        except ValueError:
+            craft_quality = None
+        tags_str = elem.get("tags") or ""
+        tags = [t for t in tags_str.split() if t]
+        out[item_id] = {"quality": quality, "craft_quality": craft_quality, "tags": tags}
+    return out
+
+
+def parse_item_pools(pools_xml: Path) -> dict[int, list[str]]:
+    """Return {item_id: [pool_name, ...]} from itempools.xml.
+
+    pool_name is the value of the <Pool Name="..."> attribute. Items may appear
+    in multiple pools (treasure, devil, angel, shop, secret, library, curse,
+    boss, beggar, demon_beggar, key_master_beggar, ultra_secret, planetarium,
+    rotten_beggar, etc).
+    """
+    out: dict[int, list[str]] = {}
+    if not pools_xml.exists():
+        return out
+    root = ET.parse(pools_xml).getroot()
+    for pool_elem in root.iter("Pool"):
+        name = pool_elem.get("Name") or ""
+        if not name:
+            continue
+        for it in pool_elem.iter("Item"):
+            id_attr = it.get("Id")
+            if id_attr is None:
+                continue
+            try:
+                item_id = int(id_attr)
+            except ValueError:
+                continue
+            out.setdefault(item_id, [])
+            if name not in out[item_id]:
+                out[item_id].append(name)
     return out
 
 
@@ -178,8 +259,23 @@ def fill_id_gaps_as_removed(items: list[dict]) -> list[dict]:
             out.append({
                 "id": i, "name": "", "gfx_filename": "",
                 "removed": True, "desc_es": "",
+                "kind": "", "max_charges": None,
             })
     return out
+
+
+def merge_metadata_into_items(
+    items: list[dict],
+    metadata: dict[int, dict],
+    pools_by_id: dict[int, list[str]],
+) -> None:
+    """In-place: add quality/craft_quality/tags/pools to each item dict."""
+    for it in items:
+        meta = metadata.get(it["id"], {})
+        it["quality"] = meta.get("quality")
+        it["craft_quality"] = meta.get("craft_quality")
+        it["tags"] = list(meta.get("tags") or [])
+        it["pools"] = list(pools_by_id.get(it["id"]) or [])
 
 
 def copy_sprites(items: list[dict], resources_dir: Path, dest: Path) -> int:
@@ -213,20 +309,37 @@ def write_collectibles_py(items: list[dict], path: Path) -> None:
         '"""Auto-generated by tools/build_collectibles.py — do not edit by hand."""',
         "from __future__ import annotations",
         "",
-        "# id -> {name, sprite, removed, desc_es}",
+        "# id -> {name, sprite, removed, desc_es, kind, max_charges, quality, craft_quality, tags, pools}",
         "# `sprite` is the filename under tracker/assets/item_icons/ (empty if removed).",
         "# `desc_es` is the in-game Spanish pickup description (empty for removed).",
+        "# `kind` is one of 'passive' / 'active' / 'familiar' (empty for removed slots).",
+        "# `max_charges` is the int from items.xml for active items, else None.",
+        "# `quality` and `craft_quality` (0..4) come from items_metadata.xml.",
+        "# `tags` is a list (e.g. ['summonable', 'offensive']) from items_metadata.xml.",
+        "# `pools` is a list of pool names (e.g. ['treasure', 'shop']) from itempools.xml.",
         "COLLECTIBLES: dict[int, dict] = {",
     ]
     for it in items:
         sprite = f"collectible_{it['id']:03d}.png" if not it["removed"] else ""
         desc = it.get("desc_es", "")
+        kind = it.get("kind", "")
+        max_charges = it.get("max_charges")
+        quality = it.get("quality")
+        craft_quality = it.get("craft_quality")
+        tags = it.get("tags", [])
+        pools = it.get("pools", [])
         lines.append(
             f"    {it['id']}: {{"
             f"'name': {it['name']!r}, "
             f"'sprite': {sprite!r}, "
             f"'removed': {it['removed']}, "
-            f"'desc_es': {desc!r}"
+            f"'desc_es': {desc!r}, "
+            f"'kind': {kind!r}, "
+            f"'max_charges': {max_charges!r}, "
+            f"'quality': {quality!r}, "
+            f"'craft_quality': {craft_quality!r}, "
+            f"'tags': {tags!r}, "
+            f"'pools': {pools!r}"
             f"}},"
         )
     lines.append("}")
@@ -247,11 +360,18 @@ def main() -> int:
 
     items_raw = parse_items_xml(resources_dir / "items.xml", strings)
     items = fill_id_gaps_as_removed(items_raw)
+    metadata = parse_items_metadata(resources_dir / "items_metadata.xml")
+    pools_by_id = parse_item_pools(resources_dir / "itempools.xml")
+    merge_metadata_into_items(items, metadata, pools_by_id)
     real = sum(1 for it in items if not it["removed"])
     holes = len(items) - real
     with_desc = sum(1 for it in items if not it["removed"] and it.get("desc_es"))
+    with_quality = sum(1 for it in items if not it["removed"] and it.get("quality") is not None)
+    with_pools = sum(1 for it in items if not it["removed"] and it.get("pools"))
     print(f"[build_collectibles] {len(items)} entries ({real} real, {holes} removed/placeholder)")
     print(f"[build_collectibles] {with_desc} items have a Spanish in-game description")
+    print(f"[build_collectibles] {with_quality} items have a quality from items_metadata.xml")
+    print(f"[build_collectibles] {with_pools} items appear in at least one pool")
 
     project_root = Path(__file__).resolve().parents[1]
     icons_dir = project_root / "tracker" / "assets" / "item_icons"
