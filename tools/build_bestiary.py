@@ -37,6 +37,7 @@ RAW_DIR = ROOT / "tools" / "_bestiary_raw"
 MANIFEST_PATH = RAW_DIR / "MANIFEST.json"
 OUT_CATALOG = ROOT / "tracker" / "data" / "bestiary.py"
 OUT_INLINE = ROOT / "tracker" / "assets" / "bestiary_inline.js"
+DOWNLOADED_ICONS_DIR = ROOT / "tracker" / "assets" / "bestiary_icons"
 
 TARGET_SIZE = 32
 
@@ -285,6 +286,17 @@ def process_sprite(path: Path) -> str:
     return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
 
 
+def resolve_sprite_for_entity(type_id: int, variant: int, fallback_path: Path) -> str:
+    """Prefiere el sprite descargado de la wiki, cae al extraído del juego.
+
+    Devuelve data URI base64 procesado con process_sprite.
+    """
+    wiki_path = DOWNLOADED_ICONS_DIR / f"{type_id:03d}_{variant:03d}.png"
+    if wiki_path.exists() and wiki_path.stat().st_size > 100:
+        return process_sprite(wiki_path)
+    return process_sprite(fallback_path)
+
+
 # --------------------------------------------------------------------------- #
 # Main build                                                                  #
 # --------------------------------------------------------------------------- #
@@ -384,7 +396,7 @@ def build_catalog() -> tuple[dict[tuple[int, int], dict], dict[str, str]]:
     failures = 0
     for key, info in sorted(chosen.items()):
         try:
-            data_uri = process_sprite(info["src"])
+            data_uri = resolve_sprite_for_entity(key[0], key[1], info["src"])
         except Exception as exc:  # noqa: BLE001
             failures += 1
             print(f"  [warn] failed to process {info['src']}: {exc}", file=sys.stderr)
