@@ -559,14 +559,14 @@ def _build_stats_state(parsed: ParsedSave) -> dict:
         else:
             k = d = h = e = None
             seen = False  # se actualizará abajo si hay mark
-        mark_completed = entry["idx"] in parsed.character_marks_global \
-            if hasattr(parsed, "character_marks_global") else False
-        # Si no podemos derivar mark_completed del parsed, intentar por character_marks
-        if not mark_completed and hasattr(parsed, "character_marks"):
-            for char_marks in parsed.character_marks.values():
-                if entry["idx"] in char_marks:
-                    mark_completed = True
-                    break
+        # parsed.character_marks tiene shape dict[char_id: int, set[mark_idx: int]]
+        # (verificado en tracker/save_parser.py:96 y state_mapper.py:219).
+        # mark_completed = True si CUALQUIER personaje tiene esta mark.
+        mark_completed = False
+        for char_marks in parsed.character_marks.values():
+            if entry["idx"] in char_marks:
+                mark_completed = True
+                break
         seen = seen or mark_completed
         if seen:
             bosses_defeated_count += 1
@@ -624,7 +624,7 @@ def _build_stats_state(parsed: ParsedSave) -> dict:
     }
 ```
 
-> **Nota:** la lógica de `mark_completed` asume que `ParsedSave` expone `character_marks: dict[char_slug, set[int]]`. **Verifica antes con `grep -n character_marks tracker/save_parser.py`** y ajusta el acceso si el shape difiere. Si tu parser no expone marks indexadas por idx, deja `mark_completed = False` y crea un TODO comment — el test `test_bosses_defeated_global` con save vacío seguirá pasando.
+> **Nota:** el shape `parsed.character_marks: dict[int, set[int]]` está verificado (clave = character ID, valor = set de mark indices). Si tu reading del parser difiere, ajusta el iter y corre los tests para confirmar.
 
 - [ ] **3.4 — Run tests, todos pasan**
 
@@ -1530,7 +1530,7 @@ Localizar `/* ====== Pestaña Estadísticas ====== */` (línea ~6104) y todo lo 
 - [ ] **6.2 — Confirma que NO queda nada de `STATS_ICONS` en el archivo**
 
 ```bash
-grep -n "STATS_ICONS" challenges.html
+rtk grep "STATS_ICONS" challenges.html
 ```
 
 Expected: nada. Si aparece, borrar la línea correspondiente.
