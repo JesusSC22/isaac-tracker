@@ -6251,13 +6251,20 @@
   }
 
   /* ====== Pestaña Estadísticas ====== */
-  const STATS_ICONS = {
-    skull: "💀", tombstone: "🪦", heart_broken: "💔", eye: "👁️",
-    coin: "🪙", coin_gold: "💰",
-  };
 
   const BESTIARY_FILTER_STATE = {
-    filter: "seen", category: "all", search: "", sort: "kills_desc",
+    filter: "seen", category: "all", sort: "chapter",
+  };
+
+  const CHAPTER_LABELS = {
+    1: "Basement · Cellar · Burning Basement · Downpour · Dross",
+    2: "Caves · Catacombs · Flooded Caves · Mines · Ashpit",
+    3: "Depths · Necropolis · Dank Depths · Mausoleum · Gehenna",
+    4: "Womb · Utero · Scarred Womb · Corpse",
+    5: "Sheol · Cathedral",
+    6: "Dark Room · Chest",
+    7: "Blue Womb · Void · Home",
+    "extra": "Otros",
   };
 
   let _bestiaryTooltipEl = null;
@@ -6278,78 +6285,165 @@
   }
 
   function renderStatsCards(stats) {
-    const cardsEl = document.getElementById("statsCards");
-    if (!cardsEl) return;
-    cardsEl.innerHTML = "";
+    const el = document.getElementById("statsCards");
+    if (!el) return;
+    el.innerHTML = "";
+    const skipKeys = new Set(["bosses_defeated"]);  // se muestra como ratio del header
     for (const g of stats.globals) {
-      const valueText = (g.max != null)
+      if (skipKeys.has(g.key)) continue;
+      const card = document.createElement("div");
+      card.className = "stat-card";
+      const valText = g.max != null
         ? `${g.value.toLocaleString("es-ES")} / ${g.max.toLocaleString("es-ES")}`
         : g.value.toLocaleString("es-ES");
-      const card = document.createElement("div");
-      card.className = "stats-card";
+      const subText = (g.max != null)
+        ? `<div class="sub">faltan ${Math.max(0, g.max - g.value)}</div>
+           <div class="bar"><div style="width:${g.max ? Math.round(100*g.value/g.max) : 0}%"></div></div>`
+        : "";
       card.innerHTML = `
-        <span class="icon">${STATS_ICONS[g.icon] || "•"}</span>
-        <span class="value">${valueText}</span>
-        <span class="label">${g.label_es}</span>
+        <div class="lab">${g.label_es}</div>
+        <div class="val">${valText}</div>
+        ${subText}
       `;
-      cardsEl.appendChild(card);
+      el.appendChild(card);
     }
   }
 
-  function renderBestiaryGrid(stats) {
-    const grid = document.getElementById("bestiaryGrid");
-    const empty = document.getElementById("bestiaryEmpty");
+  function renderBigBossesPanel(stats) {
+    const grid = document.getElementById("bigBossesGrid");
+    const ratio = document.getElementById("bossesRatio");
     if (!grid) return;
+    grid.innerHTML = "";
+    let defeated = 0;
+    const sprites = (window.BESTIARY_SPRITES) || {};
+    for (const b of stats.big_bosses) {
+      if (b.seen) defeated++;
+      const cell = document.createElement("div");
+      cell.className = "bigboss" + (b.seen ? "" : " unseen");
+      cell.dataset.bigbossIdx = b.idx;
+      const spriteKey = `bigboss_${String(b.idx).padStart(2, "0")}`;
+      const src = sprites[spriteKey] || b.sprite_url || "";
+      const img = src
+        ? `<img src="${src}" alt="${b.name_en}">`
+        : `<div class="placeholder">?</div>`;
+      const k = b.kills == null ? "—" : `×${b.kills.toLocaleString("es-ES")}`;
+      const d = (b.deaths == null || b.deaths === 0) ? "" : `<span class="d">/${b.deaths}</span>`;
+      const markTag = b.mark_completed ? '<span class="mark-tag">✓</span>' : '';
+      cell.innerHTML = `
+        ${markTag}
+        ${img}
+        <span class="name" title="${b.name_es}">${b.name_es}</span>
+        <span class="k">${k}${d}</span>
+      `;
+      cell.addEventListener("mouseenter", ev => showBigBossTooltip(ev, b));
+      cell.addEventListener("mousemove", ev => positionBestiaryTooltip(ev));
+      cell.addEventListener("mouseleave", hideBestiaryTooltip);
+      grid.appendChild(cell);
+    }
+    if (ratio) ratio.textContent = `${defeated} / ${stats.big_bosses.length}`;
+  }
 
+  function _filterAndSortBestiary(stats) {
     let items = stats.bestiary.filter(e => {
       if (BESTIARY_FILTER_STATE.filter === "seen" && !e.seen) return false;
-      if (BESTIARY_FILTER_STATE.category !== "all" && e.category !== BESTIARY_FILTER_STATE.category) return false;
-      if (BESTIARY_FILTER_STATE.search) {
-        const q = BESTIARY_FILTER_STATE.search.toLowerCase();
-        if (!e.name_es.toLowerCase().includes(q) && !e.name_en.toLowerCase().includes(q)) return false;
-      }
+      if (BESTIARY_FILTER_STATE.category !== "all"
+          && e.category !== BESTIARY_FILTER_STATE.category) return false;
       return true;
     });
-
     const sorters = {
       kills_desc: (a, b) => b.kills - a.kills || a.name_es.localeCompare(b.name_es),
-      kills_asc:  (a, b) => a.kills - b.kills || a.name_es.localeCompare(b.name_es),
       alpha:      (a, b) => a.name_es.localeCompare(b.name_es),
-      category:   (a, b) => {
-        const ord = {boss: 0, miniboss: 1, enemy: 2};
-        return (ord[a.category] - ord[b.category]) || (b.kills - a.kills);
+      chapter:    (a, b) => {
+        const ord = ch => (ch === "extra" ? 99 : ch);
+        return (ord(a.chapter) - ord(b.chapter)) || (b.kills - a.kills);
       },
     };
-    items.sort(sorters[BESTIARY_FILTER_STATE.sort] || sorters.kills_desc);
+    items.sort(sorters[BESTIARY_FILTER_STATE.sort] || sorters.chapter);
+    return items;
+  }
 
-    grid.innerHTML = "";
+  function _renderEnemyCell(e) {
+    const cell = document.createElement("div");
+    cell.className = "enemy" + (e.seen ? "" : " unseen");
+    cell.dataset.spriteId = e.sprite_id;
+    const sprites = (window.BESTIARY_SPRITES) || {};
+    const src = sprites[e.sprite_id];
+    const img = src
+      ? `<img src="${src}" alt="${e.name_en}">`
+      : `<div class="placeholder">?</div>`;
+    const mb = e.category === "miniboss" ? '<span class="mb-tag">MB</span>' : '';
+    const kills = e.seen ? `<span class="kk">×${e.kills.toLocaleString("es-ES")}</span>` : `<span class="kk">×?</span>`;
+    const deaths = (e.seen && e.deaths > 0) ? `<span class="dd">/${e.deaths}</span>` : '';
+    cell.innerHTML = `
+      ${mb}
+      ${img}
+      <span class="name" title="${e.name_es}">${e.name_es}</span>
+      <span class="stats">${kills}${deaths}</span>
+    `;
+    cell.addEventListener("mouseenter", ev => showBestiaryTooltip(ev, e));
+    cell.addEventListener("mousemove", ev => positionBestiaryTooltip(ev));
+    cell.addEventListener("mouseleave", hideBestiaryTooltip);
+    return cell;
+  }
+
+  function renderBestiaryContainer(stats) {
+    const container = document.getElementById("bestiaryContainer");
+    const empty = document.getElementById("bestiaryEmpty");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const items = _filterAndSortBestiary(stats);
     if (items.length === 0) {
       empty && empty.classList.remove("hidden");
       return;
     }
     empty && empty.classList.add("hidden");
 
-    const sprites = (window.BESTIARY_SPRITES) || {};
+    if (BESTIARY_FILTER_STATE.sort !== "chapter") {
+      const grid = document.createElement("div");
+      grid.className = "enemy-grid";
+      for (const e of items) grid.appendChild(_renderEnemyCell(e));
+      container.appendChild(grid);
+      return;
+    }
+
+    // Agrupar por capítulo
+    const groups = {};
     for (const e of items) {
-      const cell = document.createElement("div");
-      cell.className = "enemy-cell" + (e.seen ? "" : " unseen");
-      const badge = e.category === "boss"
-        ? '<span class="badge boss">B</span>'
-        : e.category === "miniboss" ? '<span class="badge miniboss">MB</span>' : '';
-      const sprite = sprites[e.sprite_id];
-      const img = sprite
-        ? `<img src="${sprite}" alt="${e.name_en}">`
-        : `<div class="placeholder-sprite">?</div>`;
-      cell.innerHTML = `
-        ${badge}
-        ${img}
-        <span class="name" title="${e.name_es}">${e.name_es}</span>
-        <span class="kills">${e.seen ? "× " + e.kills.toLocaleString("es-ES") : "?"}</span>
+      const ch = e.chapter;
+      if (!groups[ch]) groups[ch] = [];
+      groups[ch].push(e);
+    }
+    // Totales por capítulo SOBRE EL CATÁLOGO COMPLETO (para "X/Y" honesto, no filtrado)
+    const totalsByChapter = {};
+    for (const e of stats.bestiary) {
+      const ch = e.chapter;
+      if (!totalsByChapter[ch]) totalsByChapter[ch] = { total: 0, seen: 0 };
+      totalsByChapter[ch].total++;
+      if (e.seen) totalsByChapter[ch].seen++;
+    }
+
+    const order = [1, 2, 3, 4, 5, 6, 7, "extra"];
+    for (const ch of order) {
+      if (!groups[ch]) continue;
+      const block = document.createElement("div");
+      block.className = "chapter-block";
+      const t = totalsByChapter[ch] || { total: 0, seen: 0 };
+      const pct = t.total ? Math.round(100 * t.seen / t.total) : 0;
+      const numLabel = (ch === "extra") ? "EXTRA" : `CAP ${ch}`;
+      block.innerHTML = `
+        <div class="chapter-header">
+          <span class="num">${numLabel}</span>
+          <span class="floors">${CHAPTER_LABELS[ch] || ""}</span>
+          <span class="count">${t.seen} / ${t.total}</span>
+          <span class="line"></span>
+          <div class="prog"><div style="width:${pct}%"></div></div>
+        </div>
+        <div class="enemy-grid"></div>
       `;
-      cell.addEventListener("mouseenter", ev => showBestiaryTooltip(ev, e));
-      cell.addEventListener("mousemove", ev => positionBestiaryTooltip(ev));
-      cell.addEventListener("mouseleave", hideBestiaryTooltip);
-      grid.appendChild(cell);
+      const grid = block.querySelector(".enemy-grid");
+      for (const e of groups[ch]) grid.appendChild(_renderEnemyCell(e));
+      container.appendChild(block);
     }
   }
 
@@ -6374,6 +6468,23 @@
     el.style.display = "block";
     positionBestiaryTooltip(ev);
   }
+
+  function showBigBossTooltip(ev, b) {
+    const el = ensureBestiaryTooltip();
+    const rows = [`<strong>${b.name_es}</strong>`];
+    if (b.kind === "event")          rows.push("<em>Evento del juego</em>");
+    else if (b.kind === "transformation") rows.push("<em>Transformación</em>");
+    if (b.kills != null && b.kills > 0)         rows.push(`Kills: ${b.kills.toLocaleString("es-ES")}`);
+    if (b.deaths != null && b.deaths > 0)       rows.push(`Te ha matado: ${b.deaths.toLocaleString("es-ES")}`);
+    if (b.hits != null && b.hits > 0)           rows.push(`Hits recibidos: ${b.hits.toLocaleString("es-ES")}`);
+    if (b.encounters != null && b.encounters > 0) rows.push(`Encuentros: ${b.encounters.toLocaleString("es-ES")}`);
+    if (b.mark_completed) rows.push("✓ Completado por algún personaje");
+    if (!b.seen) rows.push("<em>Aún no derrotado</em>");
+    el.innerHTML = rows.join("<br>");
+    el.style.display = "block";
+    positionBestiaryTooltip(ev);
+  }
+
   function positionBestiaryTooltip(ev) {
     if (!_bestiaryTooltipEl) return;
     _bestiaryTooltipEl.style.left = (ev.clientX + 12) + "px";
@@ -6383,11 +6494,60 @@
     if (_bestiaryTooltipEl) _bestiaryTooltipEl.style.display = "none";
   }
 
+  function populateBestiaryDatalist(stats) {
+    const dl = document.getElementById("bestiaryNameOptions");
+    if (!dl) return;
+    dl.innerHTML = "";
+    const all = [...stats.big_bosses, ...stats.bestiary];
+    for (const e of all) {
+      const opt = document.createElement("option");
+      opt.value = e.name_es;
+      dl.appendChild(opt);
+    }
+  }
+
+  function _findAndHighlight(name) {
+    const target = String(name || "").trim().toLowerCase();
+    if (!target) return false;
+    const candidates = document.querySelectorAll("#stats-view .enemy, #stats-view .bigboss");
+    let found = null;
+    candidates.forEach(c => {
+      const lab = (c.querySelector(".name")?.textContent || "").trim().toLowerCase();
+      if (!found && lab === target) found = c;
+      else if (!found && lab.includes(target)) found = c;
+    });
+    if (!found) return false;
+    found.scrollIntoView({behavior: "smooth", block: "center"});
+    found.classList.add("jump-highlight");
+    setTimeout(() => found.classList.remove("jump-highlight"), 1800);
+    return true;
+  }
+
+  function bindBestiaryJumpTo() {
+    const input = document.getElementById("bestiaryJumpInput");
+    const btn = document.getElementById("bestiaryJumpBtn");
+    if (input && !input.dataset.bound) {
+      input.dataset.bound = "1";
+      input.addEventListener("keydown", ev => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          _findAndHighlight(input.value);
+        }
+      });
+    }
+    if (btn && !btn.dataset.bound) {
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => _findAndHighlight(input.value));
+    }
+  }
+
   function renderStatsTab() {
     const stats = _loadStatsStateOrNull();
     if (!stats) return;
     renderStatsCards(stats);
-    renderBestiaryGrid(stats);
+    renderBigBossesPanel(stats);
+    renderBestiaryContainer(stats);
+    populateBestiaryDatalist(stats);
   }
 
   function bindBestiaryControls() {
@@ -6415,14 +6575,6 @@
         });
       });
     }
-    const s = document.getElementById("bestiarySearch");
-    if (s && !s.dataset.bound) {
-      s.dataset.bound = "1";
-      s.addEventListener("input", ev => {
-        BESTIARY_FILTER_STATE.search = ev.target.value;
-        renderStatsTab();
-      });
-    }
     const o = document.getElementById("bestiarySort");
     if (o && !o.dataset.bound) {
       o.dataset.bound = "1";
@@ -6431,6 +6583,7 @@
         renderStatsTab();
       });
     }
+    bindBestiaryJumpTo();
   }
   bindBestiaryControls();
 
