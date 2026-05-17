@@ -25,7 +25,7 @@ BIG_BOSSES: list[BigBossEntry] = [
      "bestiary_key": (102, 0), "kind": "boss"},
     {"idx": 2, "name_es": "Satán",           "name_en": "Satan",
      "sprite_url": "https://bindingofisaacrebirth.wiki.gg/images/Boss_Satan_ingame.png",
-     "bestiary_key": None, "kind": "boss"},  # (84, 0) no está en BESTIARY_CATALOG
+     "bestiary_key": None, "kind": "boss"},  # (84, 0) no está en BESTIARY_CATALOG — kills no rastreados por el save
     {"idx": 3, "name_es": "???",             "name_en": "??? (Blue Baby)",
      "sprite_url": "https://bindingofisaacrebirth.wiki.gg/images/Boss_%3F%3F%3F_ingame.png",
      "bestiary_key": (110, 0), "kind": "boss"},
