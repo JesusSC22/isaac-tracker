@@ -3,13 +3,21 @@
 Uso: `python tools/extract_bestiary_assets.py [--tag TAG]`
 
 Default tag: 1.9.7.15.J374 (Repentance+ latest known at 2026-05-17).
-Output: `tools/_bestiary_raw/` con la estructura classic/, rebirth/,
-repentance/ + MANIFEST.json. Carpeta gitignored.
+Output: `tools/_bestiary_raw/` con la estructura:
+    monsters/{classic,rebirth,repentance}/...
+    bosses/...
++ MANIFEST.json. Carpeta gitignored.
+
+Extrae tanto `resources-dlc3/gfx/monsters/` (mobs regulares) como
+`resources-dlc3/gfx/bosses/` (bosses canónicos: Mom, Isaac, Satan, Lamb,
+Hush, Delirium, Mother, Beast, etc.) — sin la segunda carpeta el tab de
+bestiario no muestra kills de los bosses principales.
 
 El MANIFEST contiene una entrada por PNG con:
     type, variant, name_en_slug, suffix, folder, filename
 
-para ser consumido por `tools/build_bestiary.py` (siguiente paso).
+donde `folder` es la ruta relativa a `gfx/` (p.ej. `monsters/repentance`,
+`bosses`). Consumido por `tools/build_bestiary.py` (siguiente paso).
 
 URL scheme: probamos en orden
     1. https://github.com/<REPO>/archive/refs/tags/<TAG>.zip
@@ -31,7 +39,10 @@ from pathlib import Path
 
 REPO = "Derugon/TBoIR-resources"
 DEFAULT_TAG = "1.9.7.15.J374"
-SUBPATH = "resources-dlc3/gfx/monsters"
+SUBPATHS = [
+    "resources-dlc3/gfx/monsters",
+    "resources-dlc3/gfx/bosses",
+]
 OUT = Path(__file__).parent / "_bestiary_raw"
 
 # Filenames look like:
@@ -85,18 +96,28 @@ def main() -> int:
     skipped_unparseable = 0
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
         for info in z.infolist():
-            if SUBPATH not in info.filename or not info.filename.endswith(".png"):
+            if not info.filename.endswith(".png"):
                 continue
-            # Path inside the zip is `<root>/<SUBPATH>/<folder>/<filename>`.
-            tail = info.filename.split(SUBPATH + "/", 1)[1]
-            if "/" not in tail:
-                folder, fname = "misc", tail
+            matched = None
+            for sp in SUBPATHS:
+                if sp in info.filename:
+                    matched = sp
+                    break
+            if not matched:
+                continue
+            # Path inside the zip is `<root>/<matched>/<tail>`.
+            tail = info.filename.split(matched + "/", 1)[1]
+            sp_root = matched.split("/")[-1]  # 'monsters' or 'bosses'
+            if "/" in tail:
+                folder_inner, fname = tail.split("/", 1)
+                folder = f"{sp_root}/{folder_inner}"
+                # nested subdir support
+                if "/" in fname:
+                    folder = folder + "/" + "/".join(fname.split("/")[:-1])
+                    fname = fname.split("/")[-1]
             else:
-                folder, fname = tail.split("/", 1)
-            # Strip any nested subdirs (shouldn't be any in this tree).
-            if "/" in fname:
-                folder = folder + "/" + "/".join(fname.split("/")[:-1])
-                fname = fname.split("/")[-1]
+                folder = sp_root
+                fname = tail
             local = OUT / folder / fname
             local.parent.mkdir(parents=True, exist_ok=True)
             with z.open(info) as src, open(local, "wb") as dst:
