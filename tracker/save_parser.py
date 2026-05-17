@@ -208,7 +208,12 @@ def _extract_bestiary(
 
     Devuelve dicts vacíos si el chunk está truncado o tiene un count != 4.
     """
-    out: dict[int, dict[int, int]] = {1: {}, 2: {}, 3: {}, 4: {}}
+    out: dict[int, dict[int, int]] = {
+        _BESTIARY_HITS: {},
+        _BESTIARY_DEATHS: {},
+        _BESTIARY_KILLS: {},
+        _BESTIARY_ENCOUNTERS: {},
+    }
     if after_chunk10_off + _CHUNK_HEADER_SIZE > file_end:
         return out
     _chunk_type, _len, count = struct.unpack_from("<iii", data, after_chunk10_off)
