@@ -1929,6 +1929,92 @@
     .donation-milestone.unlocked .ms-status { color: #6cd66c; }
     .donation-milestone.locked .ms-status { color: #c08a3e; }
     .donation-section.full .donation-summary { color: #6cd66c; font-weight: bold; }
+
+    /* ===== Pestaña Estadísticas ===== */
+    .hidden { display: none; }
+    #stats-view .stats-globals { margin-bottom: 1.5rem; }
+    #stats-view .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+    #stats-view .stats-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 0.85rem;
+      display: flex; flex-direction: column; align-items: flex-start;
+    }
+    #stats-view .stats-card .value {
+      font-size: 1.7rem; font-weight: 700; color: #f3f3f3;
+      margin-top: 0.25rem;
+    }
+    #stats-view .stats-card .label { font-size: 0.85rem; opacity: 0.75; }
+    #stats-view .stats-card .icon { font-size: 1.2rem; opacity: 0.85; }
+    #stats-view .bestiary-toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.6rem;
+      align-items: center; margin: 0.5rem 0 1rem;
+    }
+    #stats-view .filter-group { display: inline-flex; gap: 0.3rem; }
+    #stats-view .chip {
+      background: rgba(255,255,255,0.05); color: #ddd;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px; padding: 0.3rem 0.8rem;
+      cursor: pointer; font-size: 0.85rem;
+    }
+    #stats-view .chip.active { background: #5b8def; border-color: #5b8def; color: #fff; }
+    #stats-view #bestiarySearch {
+      background: rgba(255,255,255,0.05); color: #fff;
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      padding: 0.35rem 0.6rem; min-width: 180px;
+    }
+    #stats-view #bestiarySort {
+      background: rgba(255,255,255,0.05); color: #fff;
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+      padding: 0.3rem 0.5rem;
+    }
+    #stats-view .bestiary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 0.5rem;
+    }
+    #stats-view .enemy-cell {
+      background: rgba(255,255,255,0.03);
+      border-radius: 4px; padding: 0.5rem 0.3rem;
+      display: flex; flex-direction: column; align-items: center;
+      position: relative; cursor: default;
+    }
+    #stats-view .enemy-cell.unseen { opacity: 0.3; }
+    #stats-view .enemy-cell img { width: 48px; height: 48px; image-rendering: pixelated; }
+    #stats-view .enemy-cell .name {
+      font-size: 0.7rem; text-align: center;
+      margin-top: 0.25rem; max-width: 100%;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #stats-view .enemy-cell .kills {
+      font-size: 1rem; font-weight: 700; color: #ffcd5b;
+    }
+    #stats-view .enemy-cell .placeholder-sprite {
+      width: 48px; height: 48px; background: #333;
+      display: flex; align-items: center; justify-content: center;
+      color: #888;
+    }
+    #stats-view .enemy-cell .badge {
+      position: absolute; top: 2px; right: 2px;
+      font-size: 0.6rem; padding: 1px 4px; border-radius: 3px;
+      font-weight: 700;
+    }
+    #stats-view .enemy-cell .badge.boss     { background: #e74c3c; color: #fff; }
+    #stats-view .enemy-cell .badge.miniboss { background: #f39c12; color: #000; }
+    #stats-view .bestiary-empty {
+      text-align: center; padding: 2rem; opacity: 0.6;
+    }
+    #bestiaryTooltip {
+      position: fixed; background: #111; color: #fff;
+      padding: 0.5rem 0.7rem; border: 1px solid #444; border-radius: 4px;
+      font-size: 0.8rem; z-index: 9999; pointer-events: none;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -1956,6 +2042,7 @@
     <button class="tab" data-view="trinkets">Trinkets</button>
     <button class="tab" data-view="cards">Cartas</button>
     <button class="tab" data-view="donations">Donaciones</button>
+    <button class="tab" data-view="stats">Estadísticas</button>
   </div>
 
   <div class="view active" id="view-challenges">
@@ -2071,6 +2158,39 @@
       <ul class="donation-milestones" id="donationNormalMilestones"></ul>
     </section>
   </div>
+
+  <div id="stats-view" class="view">
+    <section class="stats-globals">
+      <h2>Trayectoria global</h2>
+      <div class="stats-cards" id="statsCards"></div>
+    </section>
+    <section class="bestiary">
+      <h2>Bestiario</h2>
+      <div class="bestiary-toolbar">
+        <div class="filter-group" id="bestiarySeenFilter">
+          <button class="chip active" data-filter="seen">Vistos</button>
+          <button class="chip" data-filter="all">Todos</button>
+        </div>
+        <div class="filter-group" id="bestiaryCategoryFilter">
+          <button class="chip active" data-cat="all">Todos</button>
+          <button class="chip" data-cat="enemy">Enemigos</button>
+          <button class="chip" data-cat="miniboss">Mini-bosses</button>
+          <button class="chip" data-cat="boss">Bosses</button>
+        </div>
+        <input type="search" id="bestiarySearch" placeholder="Buscar enemigo…">
+        <select id="bestiarySort">
+          <option value="kills_desc">Kills (más → menos)</option>
+          <option value="kills_asc">Kills (menos → más)</option>
+          <option value="alpha">Alfabético</option>
+          <option value="category">Por tipo</option>
+        </select>
+      </div>
+      <div class="bestiary-grid" id="bestiaryGrid"></div>
+      <p class="bestiary-empty hidden" id="bestiaryEmpty">
+        Empieza a jugar para llenar el bestiario.
+      </p>
+    </section>
+  </div>
 </div>
 
 <div class="challenge-tooltip" id="tooltip"></div>
@@ -2078,6 +2198,7 @@
 <script src="items_inline.js"></script>
 <script src="trinkets_inline.js"></script>
 <script src="cards_inline.js"></script>
+<script src="bestiary_inline.js"></script>
 <script>
   const CHARACTERS = [
     {
@@ -5978,16 +6099,201 @@
     return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   }
 
+  /* ====== Pestaña Estadísticas ====== */
+  const STATS_ICONS = {
+    skull: "💀", tombstone: "🪦", heart_broken: "💔", eye: "👁️",
+    coin: "🪙", coin_gold: "💰",
+  };
+
+  const BESTIARY_FILTER_STATE = {
+    filter: "seen", category: "all", search: "", sort: "kills_desc",
+  };
+
+  let _bestiaryTooltipEl = null;
+
+  function _loadStatsStateOrNull() {
+    if (window._statsState) return window._statsState;
+    try {
+      const raw = localStorage.getItem("isaac_tracker_state") || localStorage.getItem("state");
+      if (raw) {
+        const obj = JSON.parse(raw);
+        if (obj && obj.stats_state) return obj.stats_state;
+      }
+    } catch {}
+    if (window.__APP_STATE__ && window.__APP_STATE__.stats_state) {
+      return window.__APP_STATE__.stats_state;
+    }
+    return null;
+  }
+
+  function renderStatsCards(stats) {
+    const cardsEl = document.getElementById("statsCards");
+    if (!cardsEl) return;
+    cardsEl.innerHTML = "";
+    for (const g of stats.globals) {
+      const valueText = (g.max != null)
+        ? `${g.value.toLocaleString("es-ES")} / ${g.max.toLocaleString("es-ES")}`
+        : g.value.toLocaleString("es-ES");
+      const card = document.createElement("div");
+      card.className = "stats-card";
+      card.innerHTML = `
+        <span class="icon">${STATS_ICONS[g.icon] || "•"}</span>
+        <span class="value">${valueText}</span>
+        <span class="label">${g.label_es}</span>
+      `;
+      cardsEl.appendChild(card);
+    }
+  }
+
+  function renderBestiaryGrid(stats) {
+    const grid = document.getElementById("bestiaryGrid");
+    const empty = document.getElementById("bestiaryEmpty");
+    if (!grid) return;
+
+    let items = stats.bestiary.filter(e => {
+      if (BESTIARY_FILTER_STATE.filter === "seen" && !e.seen) return false;
+      if (BESTIARY_FILTER_STATE.category !== "all" && e.category !== BESTIARY_FILTER_STATE.category) return false;
+      if (BESTIARY_FILTER_STATE.search) {
+        const q = BESTIARY_FILTER_STATE.search.toLowerCase();
+        if (!e.name_es.toLowerCase().includes(q) && !e.name_en.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+
+    const sorters = {
+      kills_desc: (a, b) => b.kills - a.kills || a.name_es.localeCompare(b.name_es),
+      kills_asc:  (a, b) => a.kills - b.kills || a.name_es.localeCompare(b.name_es),
+      alpha:      (a, b) => a.name_es.localeCompare(b.name_es),
+      category:   (a, b) => {
+        const ord = {boss: 0, miniboss: 1, enemy: 2};
+        return (ord[a.category] - ord[b.category]) || (b.kills - a.kills);
+      },
+    };
+    items.sort(sorters[BESTIARY_FILTER_STATE.sort] || sorters.kills_desc);
+
+    grid.innerHTML = "";
+    if (items.length === 0) {
+      empty && empty.classList.remove("hidden");
+      return;
+    }
+    empty && empty.classList.add("hidden");
+
+    const sprites = (window.BESTIARY_SPRITES) || {};
+    for (const e of items) {
+      const cell = document.createElement("div");
+      cell.className = "enemy-cell" + (e.seen ? "" : " unseen");
+      const badge = e.category === "boss"
+        ? '<span class="badge boss">B</span>'
+        : e.category === "miniboss" ? '<span class="badge miniboss">MB</span>' : '';
+      const sprite = sprites[e.sprite_id];
+      const img = sprite
+        ? `<img src="${sprite}" alt="${e.name_en}">`
+        : `<div class="placeholder-sprite">?</div>`;
+      cell.innerHTML = `
+        ${badge}
+        ${img}
+        <span class="name" title="${e.name_es}">${e.name_es}</span>
+        <span class="kills">${e.seen ? "× " + e.kills.toLocaleString("es-ES") : "?"}</span>
+      `;
+      cell.addEventListener("mouseenter", ev => showBestiaryTooltip(ev, e));
+      cell.addEventListener("mousemove", ev => positionBestiaryTooltip(ev));
+      cell.addEventListener("mouseleave", hideBestiaryTooltip);
+      grid.appendChild(cell);
+    }
+  }
+
+  function ensureBestiaryTooltip() {
+    if (_bestiaryTooltipEl) return _bestiaryTooltipEl;
+    _bestiaryTooltipEl = document.createElement("div");
+    _bestiaryTooltipEl.id = "bestiaryTooltip";
+    document.body.appendChild(_bestiaryTooltipEl);
+    return _bestiaryTooltipEl;
+  }
+
+  function showBestiaryTooltip(ev, e) {
+    const el = ensureBestiaryTooltip();
+    const catLabel = {enemy: "", miniboss: "(Mini-boss)", boss: "(Boss)"}[e.category] || "";
+    const rows = [`<strong>${e.name_es}</strong> ${catLabel}`];
+    if (e.kills > 0)      rows.push(`Kills: ${e.kills.toLocaleString("es-ES")}`);
+    if (e.deaths > 0)     rows.push(`Te ha matado: ${e.deaths.toLocaleString("es-ES")}`);
+    if (e.hits > 0)       rows.push(`Hits recibidos: ${e.hits.toLocaleString("es-ES")}`);
+    if (e.encounters > 0) rows.push(`Encuentros: ${e.encounters.toLocaleString("es-ES")}`);
+    if (rows.length === 1) rows.push("<em>Sin datos en el save</em>");
+    el.innerHTML = rows.join("<br>");
+    el.style.display = "block";
+    positionBestiaryTooltip(ev);
+  }
+  function positionBestiaryTooltip(ev) {
+    if (!_bestiaryTooltipEl) return;
+    _bestiaryTooltipEl.style.left = (ev.clientX + 12) + "px";
+    _bestiaryTooltipEl.style.top  = (ev.clientY + 12) + "px";
+  }
+  function hideBestiaryTooltip() {
+    if (_bestiaryTooltipEl) _bestiaryTooltipEl.style.display = "none";
+  }
+
+  function renderStatsTab() {
+    const stats = _loadStatsStateOrNull();
+    if (!stats) return;
+    renderStatsCards(stats);
+    renderBestiaryGrid(stats);
+  }
+
+  function bindBestiaryControls() {
+    const f = document.getElementById("bestiarySeenFilter");
+    if (f && !f.dataset.bound) {
+      f.dataset.bound = "1";
+      f.querySelectorAll(".chip").forEach(b => {
+        b.addEventListener("click", () => {
+          f.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+          b.classList.add("active");
+          BESTIARY_FILTER_STATE.filter = b.dataset.filter;
+          renderStatsTab();
+        });
+      });
+    }
+    const c = document.getElementById("bestiaryCategoryFilter");
+    if (c && !c.dataset.bound) {
+      c.dataset.bound = "1";
+      c.querySelectorAll(".chip").forEach(b => {
+        b.addEventListener("click", () => {
+          c.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+          b.classList.add("active");
+          BESTIARY_FILTER_STATE.category = b.dataset.cat;
+          renderStatsTab();
+        });
+      });
+    }
+    const s = document.getElementById("bestiarySearch");
+    if (s && !s.dataset.bound) {
+      s.dataset.bound = "1";
+      s.addEventListener("input", ev => {
+        BESTIARY_FILTER_STATE.search = ev.target.value;
+        renderStatsTab();
+      });
+    }
+    const o = document.getElementById("bestiarySort");
+    if (o && !o.dataset.bound) {
+      o.dataset.bound = "1";
+      o.addEventListener("change", ev => {
+        BESTIARY_FILTER_STATE.sort = ev.target.value;
+        renderStatsTab();
+      });
+    }
+  }
+  bindBestiaryControls();
+
   // Tabs
   function switchTab(view) {
     document.querySelectorAll('.tab').forEach(t => {
       t.classList.toggle('active', t.dataset.view === view);
     });
     document.querySelectorAll('.view').forEach(v => {
-      v.classList.toggle('active', v.id === `view-${view}`);
+      v.classList.toggle('active', v.id === `view-${view}` || v.id === `${view}-view`);
     });
     localStorage.setItem(ACTIVE_TAB_KEY, view);
     hideTooltip();
+    if (view === 'stats') renderStatsTab();
   }
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => switchTab(t.dataset.view));
@@ -7598,6 +7904,9 @@
     if (state && state.cards_state && typeof state.cards_state === 'object') {
       window._cardsState = state.cards_state;
     }
+    if (state && state.stats_state && typeof state.stats_state === 'object') {
+      window._statsState = state.stats_state;
+    }
     // render() appends to #list without clearing — clear it ourselves so a
     // second call doesn't produce a duplicate tier list. renderCharacterGrid
     // already clears its own container, so we don't need to touch it.
@@ -7610,6 +7919,7 @@
     renderTrinketsGrid();
     renderCardsGrouped();
     renderDonations(state);
+    renderStatsTab();
     _hideTrackerLoading();
   };
 
