@@ -158,7 +158,7 @@ def _build_stats_state(parsed: ParsedSave) -> dict:
          "max":   len(BESTIARY_CATALOG),
          "icon":  "eye"},
         {"key": "bosses_defeated",  "label_es": "Bosses derrotados",
-         "value": bosses_defeated_count, "max": 13, "icon": "boss"},
+         "value": bosses_defeated_count, "max": len(BIG_BOSSES), "icon": "boss"},
     ]
 
     # ---- Bestiary (excluyendo big bosses) ----

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from tracker.data.big_bosses import BIG_BOSSES
 from tracker.save_parser import ParsedSave
 from tracker.state_mapper import _build_stats_state, _decode_packed_entity
 
@@ -110,9 +111,21 @@ def test_every_bestiary_entry_has_chapter():
 
 
 def test_bosses_defeated_global():
-    """Hay un nuevo global 'bosses_defeated' con max=13."""
+    """Hay un nuevo global 'bosses_defeated' con max=len(BIG_BOSSES)."""
     state = _build_stats_state(_parsed())
     by_key = {g["key"]: g for g in state["globals"]}
     assert "bosses_defeated" in by_key
-    assert by_key["bosses_defeated"]["max"] == 13
+    assert by_key["bosses_defeated"]["max"] == len(BIG_BOSSES)
     assert by_key["bosses_defeated"]["value"] == 0  # empty save
+
+
+def test_big_boss_seen_via_mark_only():
+    """Boss with no bestiary_key counts as seen when any character has the mark."""
+    # Satan is idx=2, bestiary_key=None
+    state = _build_stats_state(_parsed(character_marks={0: {2}}))
+    by_key = {g["key"]: g for g in state["globals"]}
+    assert by_key["bosses_defeated"]["value"] == 1
+    satan = next(e for e in state["big_bosses"] if e["idx"] == 2)
+    assert satan["seen"] is True
+    assert satan["mark_completed"] is True
+    assert satan["kills"] is None
