@@ -74,6 +74,20 @@ class ParsedSave:
         leído del chunk 2 (counters) en el índice 8.
     greed_donation_count: total monedas depositadas en la Greed Donation
         Machine (modo Greed/Greedier), leído del chunk 2 en el índice 19.
+    bestiary_kills: contador de muertes infligidas por el jugador a cada enemigo,
+        leído del sub-registro 3 del chunk 11 (bestiario). Las claves son
+        ``packed entity ids`` sin descomponer (no tuplas ``(type, variant)``);
+        la descomposición a ``type = packed >> 20`` y
+        ``variant = (packed >> 4) & 0xFFF`` se hace en ``state_mapper.py``.
+    bestiary_deaths: contador de muertes del jugador a manos de cada enemigo,
+        leído del sub-registro 2 del chunk 11. Mismas claves ``packed`` que
+        ``bestiary_kills``.
+    bestiary_hits: contador de golpes recibidos por el jugador de cada enemigo,
+        leído del sub-registro 1 del chunk 11. Mismas claves ``packed``.
+    bestiary_encounters: contador de veces que el jugador se ha cruzado con
+        cada enemigo, leído del sub-registro 4 del chunk 11. Mismas claves
+        ``packed``; suele ser el dict más poblado y el que usa la pestaña
+        Estadísticas para "enemigos descubiertos".
     parsed_at: when this parse ran. Useful for logging / UI footer.
     """
     slot: int
@@ -84,6 +98,10 @@ class ParsedSave:
     items_seen: set[int] = field(default_factory=set)
     donation_count: int = 0
     greed_donation_count: int = 0
+    bestiary_kills:       dict[int, int] = field(default_factory=dict)
+    bestiary_deaths:      dict[int, int] = field(default_factory=dict)
+    bestiary_hits:        dict[int, int] = field(default_factory=dict)
+    bestiary_encounters:  dict[int, int] = field(default_factory=dict)
     parsed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -144,12 +162,13 @@ def parse_save(path: Path) -> ParsedSave:
         )
 
     slot = _infer_slot_from_name(path)
-    chunks = _extract_chunks(data, path)
+    chunks, post_chunk10_off = _extract_chunks(data, path)
     achievements = chunks[_CHUNK_ACHIEVEMENTS]
     challenges   = chunks[_CHUNK_CHALLENGE_COUNTERS]
     collectibles = chunks[_CHUNK_COLLECTIBLES]
     counters = chunks[_CHUNK_COUNTERS]
     donation_count, greed_donation_count = _extract_donation_counters(counters)
+    bestiary_raw = _extract_bestiary(data, post_chunk10_off, len(data))
 
     challenges_complete = _extract_challenges(challenges)
     characters_unlocked, character_marks = _extract_character_state(achievements)
@@ -165,6 +184,10 @@ def parse_save(path: Path) -> ParsedSave:
         items_seen=items_seen,
         donation_count=donation_count,
         greed_donation_count=greed_donation_count,
+        bestiary_hits=bestiary_raw[_BESTIARY_HITS],
+        bestiary_deaths=bestiary_raw[_BESTIARY_DEATHS],
+        bestiary_kills=bestiary_raw[_BESTIARY_KILLS],
+        bestiary_encounters=bestiary_raw[_BESTIARY_ENCOUNTERS],
     )
 
 
@@ -259,8 +282,13 @@ def _extract_achievements_set(achievements_body: bytes) -> set[int]:
     return {i for i, b in enumerate(achievements_body) if b == 1}
 
 
-def _extract_chunks(data: bytes, path: Path) -> dict[int, bytes]:
-    """Walk the 10 fixed-size chunks and return {chunk_type: body_bytes}."""
+def _extract_chunks(data: bytes, path: Path) -> tuple[dict[int, bytes], int]:
+    """Walk the 10 fixed-size chunks and return ({chunk_type: body_bytes}, after_chunk10_off).
+
+    The second element of the tuple is the file offset at which chunk 10 ends
+    (= where chunk 11, the bestiary, begins). It is exposed so `_extract_bestiary`
+    can decode the variable-length nested chunk 11 without re-walking the file.
+    """
     chunks: dict[int, bytes] = {}
     off = _HEADER_SIZE
     for i in range(10):
@@ -291,7 +319,7 @@ def _extract_chunks(data: bytes, path: Path) -> dict[int, bytes]:
     ):
         if required not in chunks:
             raise SaveParseError(f"No se encontró el bloque de {label} en la partida.", path=str(path))
-    return chunks
+    return chunks, off
 
 
 def _extract_challenges(challenges_body: bytes) -> set[int]:

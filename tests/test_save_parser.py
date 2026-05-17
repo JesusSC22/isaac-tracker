@@ -206,3 +206,17 @@ def test_parser_donation_counters_default_zero_on_short_chunk():
     normal, greed = _extract_donation_counters(body)
     assert normal == 0 and greed == 0
 
+
+def test_parser_extracts_bestiary_counts(sample_save_path):
+    """El parser debe exponer los 4 dicts del bestiario poblados desde un save real."""
+    parsed = parse_save(sample_save_path)
+    assert isinstance(parsed.bestiary_kills, dict)
+    assert isinstance(parsed.bestiary_deaths, dict)
+    assert isinstance(parsed.bestiary_hits, dict)
+    assert isinstance(parsed.bestiary_encounters, dict)
+    # Save real → al menos un enemigo encontrado.
+    assert len(parsed.bestiary_encounters) > 0
+    # Sanity: para matar a un enemigo tienes que haberle pegado al menos una vez,
+    # así que kills debe ser subconjunto de hits.
+    assert set(parsed.bestiary_kills.keys()).issubset(parsed.bestiary_hits.keys())
+
