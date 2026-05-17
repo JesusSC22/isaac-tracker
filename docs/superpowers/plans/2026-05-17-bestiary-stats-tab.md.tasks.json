@@ -1,0 +1,17 @@
+{
+  "planPath": "docs/superpowers/plans/2026-05-17-bestiary-stats-tab.md",
+  "tasks": [
+    {"id": 1,  "subject": "Task A1: Decoder del chunk 11 + validación de fórmula del packed entity id", "status": "pending"},
+    {"id": 2,  "subject": "Task A2: Integrar bestiario en parse_save y ParsedSave",                     "status": "pending", "blockedBy": [1]},
+    {"id": 3,  "subject": "Task B1: Script extract_bestiary_assets.py (descarga sprites de Derugon)",   "status": "pending"},
+    {"id": 4,  "subject": "Task B2: Script build_bestiary.py (crop + catálogo + sprites inline)",       "status": "pending", "blockedBy": [3]},
+    {"id": 5,  "subject": "Task C1: _build_stats_state en state_mapper.py + stats_counters.py",         "status": "pending", "blockedBy": [2, 4]},
+    {"id": 6,  "subject": "Task C2: Esqueleto HTML de la pestaña Estadísticas",                          "status": "pending", "blockedBy": [4]},
+    {"id": 7,  "subject": "Task C3: CSS de la pestaña Estadísticas",                                     "status": "pending", "blockedBy": [6]},
+    {"id": 8,  "subject": "Task C4: Render de cards globales",                                           "status": "pending", "blockedBy": [5, 7]},
+    {"id": 9,  "subject": "Task C5: Grid del bestiario con filtros, orden y tooltip",                    "status": "pending", "blockedBy": [8]},
+    {"id": 10, "subject": "Task C6: Sincronizar mirror, rebuild del .exe y verificación",                "status": "pending", "blockedBy": [9]},
+    {"id": 11, "subject": "Task D1: Utilidad tools/diff_counters.py para identificar índices del chunk 2", "status": "pending"}
+  ],
+  "lastUpdated": "2026-05-17T00:00:00Z"
+}
