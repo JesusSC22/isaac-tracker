@@ -16,6 +16,8 @@ Capítulos:
 """
 from __future__ import annotations
 
+__all__ = ["ENEMY_TYPE_TO_CHAPTER", "VARIANT_OVERRIDES", "resolve_chapter"]
+
 ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     # ── Cap 1: Basement / Cellar / Burning Basement / Downpour / Dross ──
     0: 1,    # Bodies (generic floor enemy)
@@ -81,7 +83,7 @@ ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     219: 2,  # Squirt
     220: 2,  # Cod Worm
     221: 2,  # Swinger
-    238: 2,  # Splasher (Flooded Caves)
+    238: 2,  # Splasher — appears in Flooded Caves (2) and Corpse (4); lowest = 2
     239: 2,  # Grub
     243: 2,  # Conjoined Spitty
     244: 2,  # Roundworm
@@ -93,7 +95,6 @@ ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     255: 2,  # Nightcrawler
     256: 2,  # Dartfly (Flooded Caves)
     302: 2,  # Stoney
-    803: 1,  # Blindbat — already cap 1 (Downpour); skip, already set
     814: 2,  # Strider (Mines)
     818: 2,  # Rockspider (Mines/Ashpit)
     819: 2,  # Flybomb (Ashpit)
@@ -124,10 +125,8 @@ ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     41: 2,   # The Hollow
     49: 2,   # Monstro II
     62: 2,   # Scolex
-    63: 2,   # Blastocyst
+    63: 2,   # Blastocyst — appears in Caves (2) and Womb (4); lowest = 2
     67: 2,   # Triachnid
-    906: 2,  # Hornfel (Mines boss)
-    907: 2,  # Gideon (Mines boss)
     909: 2,  # Scourge (Ashpit boss)
     910: 2,  # Chimera (Mines boss)
     913: 2,  # Min Min (Mines boss)
@@ -171,7 +170,7 @@ ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     257: 3,  # Conjoined Fatty
     259: 3,  # Imp (Mausoleum)
     283: 3,  # Bone Knight (Mausoleum)
-    285: 3,  # Red Ghost (Mausoleum)
+    285: 3,  # Red Ghost (Mausoleum) — appears in Mausoleum (3) and Cathedral area (5/6); lowest = 3
     286: 3,  # Flesh Deathshead (Mausoleum)
     830: 3,  # Big Bony (Mausoleum/Gehenna)
     831: 3,  # Necromancer (Mausoleum/Gehenna)
@@ -203,6 +202,8 @@ ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     903: 3,  # Visage (Mausoleum boss)
     904: 3,  # Siren (Mausoleum boss)
     905: 3,  # Heretic (Mausoleum boss)
+    906: 3,  # Hornfel (Mausoleum boss, Cap 3 alt route)
+    907: 3,  # Gideon (Mausoleum boss, Cap 3 alt route)
     919: 3,  # Raglich (Gehenna boss)
     920: 3,  # Horny Boys (Gehenna boss)
     921: 3,  # Clutch (Mausoleum boss)
@@ -230,7 +231,6 @@ ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     235: 4,  # Gaping Maw (Corpse)
     236: 4,  # Broken Gaping Maw (Corpse)
     237: 4,  # Gurgling Hands (Corpse boss room)
-    238: 4,  # Splasher — appears in Corpse too; Flooded is 2, Corpse is 4 → lowest = 2
     288: 4,  # Dukie
     289: 4,  # Ulcer
     290: 4,  # Meatball
@@ -251,7 +251,6 @@ ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     39: 4,   # Scarred Double Vis (Scarred Womb)
     45: 4,   # Mom
     60: 4,   # Bloat
-    63: 4,   # Blastocyst — also Womb; 2 vs 4 → 2 wins; leave 2 (already set)
     70: 4,   # It Lives
     78: 4,   # Mom's Heart
     90: 4,   # Fatty (boss variant 2 = Womb)
@@ -285,8 +284,6 @@ ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     101: 6,  # Red Boomfly (Chest)
     110: 6,  # Blue Baby / ??? (Chest)
     273: 6,  # The Lamb (Dark Room)
-    285: 5,  # Red Ghost — Cathedral too; but Mausoleum (3) is lowest → already set 3
-    # Note: Red Ghost (285) already set to cap 3 above
 
     # ── Cap 7: Blue Womb / Void / Home ──
     407: 7,  # Hush (Blue Womb)
@@ -296,17 +293,10 @@ ENEMY_TYPE_TO_CHAPTER: dict[int, int | str] = {
     # 912 already set above (Mother → 7)
 }
 
-# Fix duplicate/conflicting entries — remove the duplicates from the dict literal
-# (Python keeps the last value for duplicate keys, so we correct via post-processing)
+# Post-processing corrections for entries that cannot be expressed cleanly in the literal.
+# Fatty boss (89) → Depths (3); Fatty (90) = "Fatty2" boss variant — also Depths (3).
+# Type 90 is listed in Cap 4 block by position but belongs to Cap 3 → correct here.
 _CORRECTIONS: dict[int, int | str] = {
-    # Blastocyst appears in Caves (2) and Womb (4) → lowest = 2
-    63: 2,
-    # Splasher appears in Flooded Caves (2) and Corpse (4) → lowest = 2
-    238: 2,
-    # Red Ghost appears in Mausoleum (3) and Cathedral (5/6 area) → lowest = 3
-    285: 3,
-    # Fatty boss (89) → Depths (3); enemy variant Fatty (207) → Womb (4). Type 89 already set.
-    # Fatty (90) = Depths/Womb variant, but type 90 is "Fatty2" boss → keep 3
     90: 3,
 }
 for _t, _ch in _CORRECTIONS.items():
