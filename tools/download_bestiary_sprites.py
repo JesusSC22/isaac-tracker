@@ -23,12 +23,173 @@ from tracker.data.big_bosses import BIG_BOSSES  # noqa: E402
 BASE_FILE = "https://bindingofisaacrebirth.wiki.gg/wiki/Special:FilePath/"
 USER_AGENT = "isaac-tracker-bestiary-fetcher/1.0"
 
+# Slugs del catálogo → nombres reales en la wiki.
+# El generador del catálogo produce algunos slugs compactos (Larryjr, Dukeofflies)
+# que la wiki espera con underscores (Larry_Jr, Duke_of_Flies). Esta tabla los corrige
+# antes de probar los patrones genéricos.
+NAME_WIKI_OVERRIDES: dict[str, str] = {
+    # === Bosses con nombre compactado ===
+    "Larryjr": "Larry_Jr.",
+    "Dukeofflies": "Duke_of_Flies",
+    "Gurdyjr": "Gurdy_Jr.",
+    "Blightedovum": "Blighted_Ovum",
+    "Thehollow": "The_Hollow_(Boss)",
+    "Thewretched": "The_Wretched",
+    "Thefallen": "The_Fallen_(Boss)",
+    "Monstroii": "Monstro_II",
+    "Maskofinfamy": "Mask_of_Infamy",
+    "Daddylonglegs": "Daddy_Long_Legs",
+    "Headlesshorseman": "Headless_Horseman",
+    "Itlives": "It_Lives_(Boss)",
+    "Lokii": "Lokii",          # wiki usa exactamente "Lokii"
+    "Megamaw2": "Mega_Maw",
+    "Fatty2": "Conjoined_Fatty",
+    "Camillojr": "Camillo_Jr.",
+    # === Enemies con nombre compactado ===
+    "Flaminggaper": "Flaming_Gaper",
+    "Rottengaper": "Rotten_Gaper",
+    "Grilledclotty": "Grilled_Clotty",
+    "Drownedhive": "Drowned_Hive",
+    "Dankcharger": "Dank_Charger",
+    "Drownedcharger": "Drowned_Charger",
+    "Dankglobin": "Dank_Globin",
+    "Drownedboomfly": "Drowned_Boomfly",
+    "Dragonfly": "Dragon_Fly",
+    "Sickboomfly": "Sick_Boom_Fly",
+    "Hardhost": "Hard_Host",
+    "Scarreddoublevis": "Scarred_Double_Vis",
+    "Scarredguts": "Scarred_Guts",
+    "Looseknight": "Loose_Knight",
+    "Blackknight": "Black_Knight",
+    "Hopperleaper": "Hopper_Leaper",
+    "Scaredparabite Scarred": "Scarred_Parabite",
+    "Muliboom": "Muli_Boom",
+    "Mamafly": "Mama_Fly",
+    "Lblob": "L_Blob",
+    "Redboomfly": "Red_Boom_Fly",
+    "Redhost": "Red_Host",
+    "Psychicmaw": "Psychic_Maw",
+    "Selflessknight": "Selfless_Knight",
+    "Angelicbaby": "Angelic_Baby",
+    "Membrain": "Membrain",    # wiki usa "Membrain" (una palabra)
+    "Mamaguts": "Mama_Guts",
+    "Kamikazeleech": "Kamikaze_Leech",
+    "Holyleech": "Holy_Leech",
+    "Cagevis": "Cage_Vis",
+    "Maskandheart": "Mask_+_Heart",
+    "Eviltwin": "Evil_Twin",
+    "Brimstoneeye": "Brimstone_Eye",
+    "Constantstoneshooter": "Constant_Stone_Shooter",
+    "Flamingfatty": "Flaming_Fatty",
+    "Dankdeathshead": "Dank_Death's_Head",
+    "Deathshead": "Death's_Head",
+    "Level2fly": "Level_2_Fly",
+    "Danksquirt": "Dank_Squirt",
+    "Blackmaw": "Black_Maw",
+    "Nerveending2": "Nerve_Ending_2",
+    "Gapingmaw": "Gaping_Maw",
+    "Wallcreep": "Wall_Creep",
+    "Soicreep": "Soi_Creep",
+    "Ragecreep": "Rage_Creep",
+    "Blindcreep": "Blind_Creep",
+    "Nullbody": "Null_Body",
+    "Psytumer": "Psy-Tumor",
+    "Nightcrawler": "Night_Crawler",
+    "Dartfly": "Dart_Fly",
+    "Conjoinedfatty": "Conjoined_Fatty",
+    "Blueconjoinedfatty": "Blue_Conjoined_Fatty",
+    "Lilhaunt": "Lil'_Haunt",
+    "Blackglobin": "Black_Globin",
+    "Blackglobinhead": "Black_Globin_(Head)",
+    "Blackglobinbody": "Black_Globin_(Body)",
+    "Megaclotty": "Mega_Clotty",
+    "Boneknight": "Bone_Knight",
+    "Redghost": "Red_Ghost_(Enemy)",
+    "Fleshdeathshead": "Flesh_Death's_Head",
+    "Ultragreedcoins": "Ultra_Greed_(Coins)",
+    "Ultragreeddoor": "Ultra_Greed_(Door_Portal)",
+    "Mushroomman": "Mushroom_Man",
+    "Poisonmind": "Poison_Mind",
+    "Thething": "The_Thing",
+    "Blindbat": "Blind_Bat",
+    "Rockgrimace": "Rock_Grimace",
+    "Bombgrimace": "Bomb_Grimace",
+    "Deepgaper": "Deep_Gaper",
+    "Subhorf": "Sub_Horf",
+    "Rockspider": "Rock_Spider",
+    "Tintedrockspider": "Tinted_Rock_Spider",
+    "Flybomb": "Fly_Bomb",
+    "Redflybomb": "Red_Fly_Bomb",
+    "Coalboy": "Coal_Boy",
+    "Grilledgyro": "Grilled_Gyro",
+    "Fireworm": "Fire_Worm",
+    "Echobat": "Echo_Bat",
+    "Mullighoul": "Mulli_Ghoul",
+    "Adultleech": "Adult_Leech",
+    "Floatinghost": "Floating_Host",
+    "Armyfly": "Army_Fly",
+    "Visversa": "Vis_Versa",
+    "Blicker": "Blicker",      # wiki usa "Blicker" (una palabra)
+    "Dople": "Dople",          # wiki usa "Dople"
+    "Hanger": "Hanger",        # wiki usa "Hanger"
+    "Homunculus": "Homunculus",
+    "Splasher": "Splasher",
+    "Roundworm": "Round_Worm",
+    "Swapper": "Swapper_(Enemy)",
+    "Strifer": "Strifer",
+    "Revenant": "Revenant",
+    "Nightwatch": "Night_Watch",
+    "Spikeball": "Spike_Ball",
+    "Cohort": "Cohort",
+    "Vessel": "Vessel_(Enemy)",
+    "Unborn": "Unborn_(Enemy)",
+    # === Repentance bosses ===
+    "Visage": "Visage",
+    "Heretic": "Heretic",
+    "Hornfel": "Hornfel",
+    "Gideon": "Gideon_(Boss)",
+    "Scourge": "Scourge",
+    "Singe": "Singe",
+    "Colostomia": "Colostomia",
+    "Raglich": "Raglich",
+    "Cadavra": "Cadavra",
+    # === Bosses con nombre ambiguo (solo los que dan 404 en el fallback) ===
+    "Husk": "Husk_(Boss)",
+    "Gish": "Gish_(Boss)",
+    "Loki": "Loki_(Boss)",
+    "Haunt": "Haunt_(Boss)",
+    "Hush": "Hush_(Boss)",
+    # === Enemies con nombre ambiguo o distinto en la wiki ===
+    "Bodies": "Flesh_(Posthumous_Fate)",
+    "Satan Leg": "Satan_(Leg_of)",
+    "Blue Baby": "Blue_Baby_(Boss)",
+    "Lump Corpse2": "Lump",
+    "Brimstone Head": "Brimstone_Head_(Enemy)",
+    "Dip Corn": "Dip_Corn",
+    "Boney Body": "Boney",
+    "Wall Hugger": "Wallhugger",
+    "Level2spider Small": "Level_2_Spider",
+    "Moms Hand": "Mom's_Hand",
+    "Mother's Shadow": "Mother's_Shadow_(Boss)",
+    "Ultra Greed": "Ultra_Greed_(Boss)",
+    "Horny Boys": "Horny_Boys",
+    # === Enemies con nombre compuesto sin underscore en wiki ===
+    "Boomfly": "Boom_Fly",
+    "Codworm": "Cod_Worm",
+    "Roundy": "Roundy_(Enemy)",
+    "Canary": "Canary",
+    "Foreigner": "Foreigner",
+    "Wraith": "Wraith",
+    "Gyro": "Gyro",
+    "Faceless": "Faceless",
+    "Necromancer": "Necromancer",
+    "Coal": "Coal_(Enemy)",
+    "Bouncer": "Bouncer_(Enemy)",
+}
+
 
 def candidate_urls(name_en: str, category: str) -> list[str]:
     """Patrones de naming en la wiki para sprites de enemigos."""
-    base = name_en.strip().replace(" ", "_")
-    no_apos = re.sub(r"['']", "", base)
-
     if category == "boss":
         suffixes = ["_ingame.png", ".png", "_appear.png"]
     elif category == "miniboss":
@@ -36,12 +197,26 @@ def candidate_urls(name_en: str, category: str) -> list[str]:
     else:
         suffixes = [".png", "_appear.png"]
 
+    def _variants_for(wiki_name: str) -> list[str]:
+        no_apos = re.sub(r"['']", "", wiki_name)
+        variants = list(dict.fromkeys([wiki_name, no_apos]))
+        result = []
+        for v in variants:
+            for suf in suffixes:
+                result.append(BASE_FILE + urllib.parse.quote(v + suf, safe=""))
+                if category in {"boss", "miniboss"}:
+                    result.append(BASE_FILE + urllib.parse.quote(f"Boss_{v}{suf}", safe=""))
+        return result
+
     candidates = []
-    for variant in dict.fromkeys([base, no_apos]):  # dedup preserving order
-        for suf in suffixes:
-            candidates.append(BASE_FILE + urllib.parse.quote(variant + suf, safe=""))
-            if category in {"boss", "miniboss"}:
-                candidates.append(BASE_FILE + urllib.parse.quote(f"Boss_{variant}{suf}", safe=""))
+
+    # 1) Intentar primero el override conocido de la wiki
+    if name_en in NAME_WIKI_OVERRIDES:
+        candidates.extend(_variants_for(NAME_WIKI_OVERRIDES[name_en]))
+
+    # 2) Fallback genérico: nombre tal como está en el catálogo
+    base = name_en.strip().replace(" ", "_")
+    candidates.extend(_variants_for(base))
 
     # Dedup manteniendo orden
     seen: set[str] = set()
