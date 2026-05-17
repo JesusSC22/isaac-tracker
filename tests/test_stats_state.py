@@ -38,10 +38,12 @@ def test_kills_sum_into_total():
     assert by_key["total_kills"]["value"] == 8
 
 
-def test_bestiary_list_includes_all_catalog():
+def test_bestiary_list_includes_all_catalog_except_big_bosses():
     from tracker.data.bestiary import BESTIARY_CATALOG
+    from tracker.data.big_bosses import BIG_BOSS_BESTIARY_KEYS
     state = _build_stats_state(_parsed())
-    assert len(state["bestiary"]) == len(BESTIARY_CATALOG)
+    expected = len(BESTIARY_CATALOG) - len(BIG_BOSS_BESTIARY_KEYS & set(BESTIARY_CATALOG.keys()))
+    assert len(state["bestiary"]) == expected
     assert all(e["seen"] is False for e in state["bestiary"])
 
 
@@ -62,3 +64,55 @@ def test_donations_not_in_stats_globals():
     keys = {g["key"] for g in state["globals"]}
     assert "donations_normal" not in keys
     assert "donations_greed" not in keys
+
+
+def test_unique_seen_never_exceeds_catalog():
+    """Bug 342/282: el numerador no puede pasarse del catálogo."""
+    # Simula save con variantes del save que NO están en el catálogo.
+    state = _build_stats_state(_parsed(bestiary_kills={
+        0x02D00000: 5,        # Mom (45, 0) — sí está en catálogo
+        0x7FFFFFF0: 3,        # variante inventada — NO en catálogo
+        0x7EEEEEF0: 2,        # otra inventada
+    }))
+    by_key = {g["key"]: g for g in state["globals"]}
+    seen = by_key["unique_seen"]["value"]
+    total = by_key["unique_seen"]["max"]
+    assert seen <= total, f"seen={seen} > total={total} — bug 342/282 vuelve"
+
+
+def test_big_bosses_array_has_13():
+    state = _build_stats_state(_parsed())
+    assert "big_bosses" in state
+    assert len(state["big_bosses"]) == 13
+
+
+def test_big_bosses_indices_0_12():
+    state = _build_stats_state(_parsed())
+    for i, e in enumerate(state["big_bosses"]):
+        assert e["idx"] == i
+
+
+def test_big_bosses_excluded_from_bestiary():
+    """Los (type, variant) ocupados por big bosses no aparecen en bestiary_list."""
+    from tracker.data.big_bosses import BIG_BOSS_BESTIARY_KEYS
+    state = _build_stats_state(_parsed())
+    bestiary_keys = {(e["type"], e["variant"]) for e in state["bestiary"]}
+    overlap = bestiary_keys & BIG_BOSS_BESTIARY_KEYS
+    assert not overlap, f"big bosses fugados al bestiario: {overlap}"
+
+
+def test_every_bestiary_entry_has_chapter():
+    state = _build_stats_state(_parsed())
+    valid = {1, 2, 3, 4, 5, 6, 7, "extra"}
+    for e in state["bestiary"]:
+        assert "chapter" in e, f"missing chapter in {e}"
+        assert e["chapter"] in valid
+
+
+def test_bosses_defeated_global():
+    """Hay un nuevo global 'bosses_defeated' con max=13."""
+    state = _build_stats_state(_parsed())
+    by_key = {g["key"]: g for g in state["globals"]}
+    assert "bosses_defeated" in by_key
+    assert by_key["bosses_defeated"]["max"] == 13
+    assert by_key["bosses_defeated"]["value"] == 0  # empty save

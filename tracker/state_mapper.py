@@ -88,7 +88,9 @@ def _decode_packed_entity(packed: int) -> tuple[int, int]:
 
 
 def _build_stats_state(parsed: ParsedSave) -> dict:
-    # Re-empaquetar por (type, variant)
+    from tracker.data.big_bosses import BIG_BOSSES, BIG_BOSS_BESTIARY_KEYS
+    from tracker.data.chapters import resolve_chapter
+
     def by_tv(d: dict[int, int]) -> dict[tuple[int, int], int]:
         out: dict[tuple[int, int], int] = {}
         for k, v in d.items():
@@ -101,24 +103,69 @@ def _build_stats_state(parsed: ParsedSave) -> dict:
     hits_tv = by_tv(parsed.bestiary_hits)
     encounters_tv = by_tv(parsed.bestiary_encounters)
 
-    # Unión de "vistos" (encontrado o matado al menos una vez)
-    all_seen_tv = set(kills_tv) | set(encounters_tv)
+    catalog_keys = set(BESTIARY_CATALOG.keys())
+    # Bug 342/282 fix: el numerador SOLO cuenta entradas del catálogo.
+    all_seen_tv = (set(kills_tv) | set(encounters_tv)) & catalog_keys
 
+    # Excluir big bosses del bestiario normal de abajo.
+    big_boss_keys_in_catalog = BIG_BOSS_BESTIARY_KEYS & catalog_keys
+
+    # ---- Big bosses panel ----
+    big_bosses_list = []
+    bosses_defeated_count = 0
+    for entry in BIG_BOSSES:
+        bkey = entry["bestiary_key"]
+        if bkey is not None and bkey in catalog_keys:
+            k = kills_tv.get(bkey, 0)
+            d = deaths_tv.get(bkey, 0)
+            h = hits_tv.get(bkey, 0)
+            e = encounters_tv.get(bkey, 0)
+            seen = bkey in all_seen_tv
+        else:
+            k = d = h = e = None
+            seen = False
+        # parsed.character_marks: dict[int, set[int]] (verificado en save_parser.py:96)
+        # mark_completed = True si CUALQUIER personaje tiene esta mark.
+        mark_completed = False
+        for char_marks in parsed.character_marks.values():
+            if entry["idx"] in char_marks:
+                mark_completed = True
+                break
+        seen = seen or mark_completed
+        if seen:
+            bosses_defeated_count += 1
+        big_bosses_list.append({
+            "idx": entry["idx"],
+            "name_es": entry["name_es"],
+            "name_en": entry["name_en"],
+            "sprite_url": entry["sprite_url"],
+            "kind": entry["kind"],
+            "kills": k, "deaths": d, "hits": h, "encounters": e,
+            "seen": seen,
+            "mark_completed": mark_completed,
+        })
+
+    # ---- Globals ----
     globals_list = [
-        {"key": "total_kills",        "label_es": "Enemigos eliminados",
-         "value": sum(kills_tv.values()),     "icon": "skull"},
-        {"key": "total_deaths_by",    "label_es": "Veces que te han matado",
-         "value": sum(deaths_tv.values()),    "icon": "tombstone"},
-        {"key": "total_hits",         "label_es": "Golpes recibidos",
-         "value": sum(hits_tv.values()),      "icon": "heart_broken"},
-        {"key": "unique_seen",        "label_es": "Enemigos distintos vistos",
+        {"key": "total_kills",      "label_es": "Enemigos eliminados",
+         "value": sum(kills_tv.values()),  "icon": "skull"},
+        {"key": "total_deaths_by",  "label_es": "Te han matado",
+         "value": sum(deaths_tv.values()), "icon": "tombstone"},
+        {"key": "total_hits",       "label_es": "Golpes recibidos",
+         "value": sum(hits_tv.values()),   "icon": "heart_broken"},
+        {"key": "unique_seen",      "label_es": "Bestiario",
          "value": len(all_seen_tv),
          "max":   len(BESTIARY_CATALOG),
          "icon":  "eye"},
+        {"key": "bosses_defeated",  "label_es": "Bosses derrotados",
+         "value": bosses_defeated_count, "max": 13, "icon": "boss"},
     ]
 
+    # ---- Bestiary (excluyendo big bosses) ----
     bestiary_list = []
     for (t, v), meta in sorted(BESTIARY_CATALOG.items()):
+        if (t, v) in big_boss_keys_in_catalog:
+            continue
         k = kills_tv.get((t, v), 0)
         d = deaths_tv.get((t, v), 0)
         h = hits_tv.get((t, v), 0)
@@ -128,12 +175,17 @@ def _build_stats_state(parsed: ParsedSave) -> dict:
             "name_es": meta["name_es"],
             "name_en": meta["name_en"],
             "category": meta["category"],
+            "chapter": resolve_chapter(t, v),
             "kills": k, "deaths": d, "hits": h, "encounters": e,
             "sprite_id": f"{t:03d}.{v:03d}",
             "seen": (t, v) in all_seen_tv,
         })
 
-    return {"globals": globals_list, "bestiary": bestiary_list}
+    return {
+        "globals": globals_list,
+        "big_bosses": big_bosses_list,
+        "bestiary": bestiary_list,
+    }
 
 
 def build_localstorage_state(parsed: ParsedSave) -> dict:
