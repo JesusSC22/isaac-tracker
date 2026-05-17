@@ -6535,7 +6535,7 @@
         }
       });
     }
-    if (btn && !btn.dataset.bound) {
+    if (btn && input && !btn.dataset.bound) {
       btn.dataset.bound = "1";
       btn.addEventListener("click", () => _findAndHighlight(input.value));
     }
