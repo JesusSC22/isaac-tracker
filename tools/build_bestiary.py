@@ -274,7 +274,7 @@ def crop_first_frame(img: Image.Image) -> Image.Image:
 
 
 def process_sprite(path: Path) -> str:
-    """Carga PNG, recorta, redimensiona a 48x48, devuelve data URI base64."""
+    """Carga PNG, recorta, redimensiona a TARGET_SIZExTARGET_SIZE, devuelve data URI base64."""
     with Image.open(path) as im:
         im = im.convert("RGBA")
         im = crop_first_frame(im)
