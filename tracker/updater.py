@@ -1,11 +1,23 @@
 """Auto-update system: check GitHub for newer releases, download, swap.
 
+Swap strategy (Windows): instead of killing ourselves and letting an external
+.bat rename + relaunch us, we launch the freshly downloaded .new.exe directly
+while the old process is still alive, passing ``--finalize-update <old-pid>``.
+The new process starts up normally (so Defender has all the time it needs to
+scan it), then in a background thread waits for the old PID to die, deletes
+the old .exe, and renames itself from IsaacTracker.new.exe to IsaacTracker.exe.
+
+This avoids the PyInstaller-onefile "Failed to load Python DLL" race that
+appeared when a .bat tried to launch the .exe immediately after replacing it
+on disk.
+
 All failures (network, parse, missing assets, permission denied) are caught
-and surfaced as a None return / mode="manual" hint rather than raised — the
+and surfaced as a None return / mode="manual" hint rather than raised --- the
 update path must never crash the app or surface an error to the user.
 """
 from __future__ import annotations
 
+import ctypes
 import json
 import logging
 import os
@@ -13,11 +25,13 @@ import re
 import subprocess
 import sys
 import threading
+import time
 import urllib.error
 import urllib.request
 import webbrowser
+from ctypes import wintypes
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 from tracker._version import __version__
 
@@ -26,10 +40,13 @@ logger = logging.getLogger("tracker.updater")
 GITHUB_REPO = "JesusSC22/isaac-tracker"
 EXE_NAME = "IsaacTracker.exe"
 NEW_EXE_NAME = "IsaacTracker.new.exe"
-SWAP_SCRIPT_NAME = "_update.bat"
+LEGACY_SWAP_SCRIPT_NAME = "_update.bat"
+FINALIZE_FLAG = "--finalize-update"
 USER_AGENT = f"IsaacTracker/{__version__}"
 NETWORK_TIMEOUT = 5.0
 DOWNLOAD_TIMEOUT = 60.0
+FINALIZE_WAIT_TIMEOUT = 30.0
+FINALIZE_POST_DOWNLOAD_GRACE = 1.0
 
 _SEMVER_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
 
@@ -166,67 +183,28 @@ def _download_to(url: str, dest: Path, on_progress: Callable[[int, int | None], 
         return False
 
 
-_SWAP_SCRIPT = """@echo off
-set WAITED=0
-set RETRIES=15
-:wait
-timeout /t 1 /nobreak >nul
-tasklist /FI "IMAGENAME eq {exe_name}" 2>nul | find /I "{exe_name}" >nul
-if %ERRORLEVEL% NEQ 0 goto swap
-set /a WAITED+=1
-if %WAITED% GEQ 12 (
-    taskkill /F /IM "{exe_name}" >nul 2>&1
-    timeout /t 2 /nobreak >nul
-    goto swap
-)
-goto wait
-:swap
-move /Y "%~dp0{new_exe_name}" "%~dp0{exe_name}" >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    set /a RETRIES-=1
-    if %RETRIES% GTR 0 (
-        timeout /t 1 /nobreak >nul
-        goto swap
-    )
-    exit /b 1
-)
-rem Give Windows a moment to fully release the freshly-renamed .exe.
-rem Without this, PyInstaller's bootloader sometimes fails with "Failed to
-rem load Python DLL" because the file isn't yet visible to LoadLibrary.
-timeout /t 2 /nobreak >nul
-start "" "%~dp0{exe_name}"
-(goto) 2>nul & del "%~f0"
-"""
+def _launch_finalizer(new_exe: Path, old_pid: int) -> None:
+    """Spawn the freshly downloaded .new.exe with the finalize flag, detached.
 
-
-def _write_swap_script(exe_dir: Path) -> Path:
-    script_path = exe_dir / SWAP_SCRIPT_NAME
-    script_path.write_text(
-        _SWAP_SCRIPT.format(exe_name=EXE_NAME, new_exe_name=NEW_EXE_NAME),
-        encoding="ascii",
-    )
-    return script_path
-
-
-def _launch_detached(script_path: Path) -> None:
-    """Launch the swap script detached so it survives our process exit.
-    CREATE_NO_WINDOW hides the cmd console; we don't pair it with
-    DETACHED_PROCESS because the two flags are mutually exclusive per MSDN
-    and combining them shows the console window anyway."""
+    The new process must outlive us, so we set CREATE_NEW_PROCESS_GROUP and
+    close inherited handles. We do NOT pass DETACHED_PROCESS / CREATE_NO_WINDOW:
+    a --windowed PyInstaller binary has no console, so console-control flags
+    are unnecessary and (per MSDN) some are mutually exclusive in ways that
+    have surprised this code before.
+    """
     flags = 0
     if sys.platform == "win32":
-        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | \
-                getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+        flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
     subprocess.Popen(
-        ["cmd", "/c", str(script_path)],
+        [str(new_exe), FINALIZE_FLAG, str(old_pid)],
         creationflags=flags,
         close_fds=True,
-        cwd=str(script_path.parent),
+        cwd=str(new_exe.parent),
     )
 
 
 def apply_update(asset_url: str, on_progress: Callable[[int, int | None], None]) -> dict[str, Any]:
-    """Download new exe, stage swap script, launch it detached.
+    """Download new exe, launch it with finalize flag, ask caller to exit.
 
     Returns {"ok": True, "should_exit": True} on success (caller should close
     the app cleanly), or {"ok": False, "error": "<reason>"} on failure.
@@ -246,13 +224,134 @@ def apply_update(asset_url: str, on_progress: Callable[[int, int | None], None])
             pass
     if not _download_to(asset_url, dest, on_progress):
         return {"ok": False, "error": "download-failed"}
+    # Brief pause lets Defender finish its on-write scan of the freshly
+    # created .exe before we hand it to CreateProcess. The download itself
+    # already gave Defender most of the window; this is belt-and-suspenders.
+    time.sleep(FINALIZE_POST_DOWNLOAD_GRACE)
     try:
-        script = _write_swap_script(exe_dir)
-        _launch_detached(script)
+        _launch_finalizer(dest, os.getpid())
     except OSError as e:
-        logger.warning("Could not stage swap script: %s", e)
-        return {"ok": False, "error": "swap-script-failed"}
+        logger.warning("Could not launch finalizer: %s", e)
+        return {"ok": False, "error": "launch-finalizer-failed"}
     return {"ok": True, "should_exit": True}
+
+
+def parse_finalize_pid(argv: Sequence[str]) -> int | None:
+    """Extract the old PID from ``argv`` if ``--finalize-update <pid>`` is set.
+
+    Returns None when the flag is missing or its argument is malformed.
+    Accepts the flag anywhere after argv[0]; ignores everything else.
+    """
+    for i, token in enumerate(argv):
+        if token == FINALIZE_FLAG and i + 1 < len(argv):
+            try:
+                return int(argv[i + 1])
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
+def _wait_for_pid_to_die(pid: int, timeout_seconds: float) -> bool:
+    """Block until ``pid`` exits or ``timeout_seconds`` elapses (Windows only).
+
+    Returns True iff the process is gone by the time we return. If we cannot
+    open the process (already exited, or no permission), we treat it as dead.
+    """
+    if sys.platform != "win32":
+        # Non-Windows fallback: poll os.kill(pid, 0). Auto-update is Windows-only
+        # in practice, but keep this branch so the function is unit-testable.
+        deadline = time.monotonic() + timeout_seconds
+        while time.monotonic() < deadline:
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                return True
+            except PermissionError:
+                return True
+            time.sleep(0.1)
+        try:
+            os.kill(pid, 0)
+            return False
+        except (ProcessLookupError, PermissionError):
+            return True
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    kernel32.WaitForSingleObject.restype = wintypes.DWORD
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    kernel32.CloseHandle.restype = wintypes.BOOL
+
+    PROCESS_SYNCHRONIZE = 0x00100000
+    WAIT_OBJECT_0 = 0x00000000
+
+    h = kernel32.OpenProcess(PROCESS_SYNCHRONIZE, False, pid)
+    if not h:
+        return True
+    try:
+        timeout_ms = max(0, int(timeout_seconds * 1000))
+        return kernel32.WaitForSingleObject(h, timeout_ms) == WAIT_OBJECT_0
+    finally:
+        kernel32.CloseHandle(h)
+
+
+def _finalize_swap(exe_dir: Path) -> bool:
+    """Rename ``IsaacTracker.new.exe`` to ``IsaacTracker.exe`` in ``exe_dir``.
+
+    Removes any stale legacy ``_update.bat`` left over from pre-1.0.7 upgrades
+    while we're at it. Returns True on success; False if the rename failed
+    (in which case the user can keep using ``IsaacTracker.new.exe`` directly).
+    """
+    target = exe_dir / EXE_NAME
+    source = exe_dir / NEW_EXE_NAME
+    if not source.exists():
+        # Nothing to swap (e.g. invoked manually with the flag). Treat as ok.
+        return True
+    try:
+        # os.replace atomically overwrites the old .exe if it still exists;
+        # Windows allows renaming over a non-running .exe file just fine.
+        os.replace(source, target)
+    except OSError as e:
+        logger.warning("Finalize rename failed: %s", e)
+        return False
+    legacy_bat = exe_dir / LEGACY_SWAP_SCRIPT_NAME
+    if legacy_bat.exists():
+        try:
+            legacy_bat.unlink()
+        except OSError:
+            pass
+    return True
+
+
+def finalize_pending_update(old_pid: int, exe_dir: Path | None = None) -> bool:
+    """Wait for the old process to exit, then swap .new.exe -> .exe on disk.
+
+    Returns True if the swap completed (or there was nothing to do); False if
+    we timed out waiting for the old process or the rename itself failed.
+    Safe to call when ``exe_dir`` doesn't contain a .new.exe (no-op).
+    """
+    if exe_dir is None:
+        exe_dir = _exe_dir()
+    if exe_dir is None:
+        return False
+    died = _wait_for_pid_to_die(old_pid, FINALIZE_WAIT_TIMEOUT)
+    if not died:
+        logger.warning("Old PID %s did not exit within %ss", old_pid, FINALIZE_WAIT_TIMEOUT)
+        return False
+    return _finalize_swap(exe_dir)
+
+
+def finalize_pending_update_async(old_pid: int) -> threading.Thread:
+    """Fire-and-forget background finalizer used at startup."""
+    def _run() -> None:
+        try:
+            finalize_pending_update(old_pid)
+        except Exception:
+            logger.exception("Finalize thread crashed")
+    t = threading.Thread(target=_run, daemon=True, name="updater-finalize")
+    t.start()
+    return t
 
 
 def open_release_page(html_url: str) -> bool:

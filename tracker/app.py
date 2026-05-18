@@ -357,6 +357,15 @@ def main() -> None:
         logging.disable(logging.CRITICAL)
     logger.info("IsaacTracker starting")
 
+    # If we were launched by an in-progress update (we are running as
+    # IsaacTracker.new.exe and the previous PID was passed in argv), kick off
+    # the swap in the background while the GUI loads. The user sees a normal
+    # cold start; behind the scenes the old .exe is removed and we rename
+    # ourselves to IsaacTracker.exe so the next launch is unsurprising.
+    old_pid = updater.parse_finalize_pid(sys.argv)
+    if old_pid is not None:
+        updater.finalize_pending_update_async(old_pid)
+
     api = TrackerApi()
     main_url, splash_url = _prepare_asset_urls()
     logger.info("Loading UI from %s", main_url)
