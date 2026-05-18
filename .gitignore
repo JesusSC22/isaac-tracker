@@ -7,7 +7,6 @@ dist/
 *.egg-info/
 .pytest_cache/
 IsaacTracker.log
-tools/_bestiary_raw/
 
 # Logs de build / herramientas auxiliares no versionables
 build.log
@@ -27,4 +26,3 @@ tools/appimagetool-x86_64.AppImage
 tracker/assets/ach_icons_png_backup/
 tracker/assets/item_icons_png_backup/
 
-tools/bestiary_sprite_review.log

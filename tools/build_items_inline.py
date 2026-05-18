@@ -18,6 +18,10 @@ try:
     from tracker.data.eid_descriptions import EID_DESCRIPTIONS  # noqa: E402
 except ImportError:
     EID_DESCRIPTIONS = {}  # gracefully degrade if EID build hasn't been run
+try:
+    from tracker.data.item_unlocks import ITEM_UNLOCKS  # noqa: E402
+except ImportError:
+    ITEM_UNLOCKS = {}  # gracefully degrade if unlocks build hasn't been run
 
 
 def main() -> int:
@@ -52,12 +56,23 @@ def main() -> int:
             entry["tags"] = meta["tags"]
         if meta.get("pools"):
             entry["pools"] = meta["pools"]
+        # Unlock info: si hay logro de desbloqueo, embedemos achId y texto en
+        # español; si no, marcamos el item como inicial.
+        unlock_meta = ITEM_UNLOCKS.get(item_id)
+        if unlock_meta:
+            entry["achId"] = unlock_meta["ach_id"]
+            entry["unlock"] = unlock_meta["unlock_es"]
+        else:
+            entry["achId"] = None
+            entry["unlock"] = "Inicial - disponible desde el principio"
         items.append(entry)
     out = ROOT / "tracker" / "assets" / "items_inline.js"
     payload = json.dumps(items, ensure_ascii=False, separators=(",", ":"))
     out.write_text(f"window.ITEMS_DATA = {payload};\n", encoding="utf-8")
+    n_unlocks = sum(1 for it in items if it.get("achId") is not None)
     print(f"[build_items_inline] wrote {len(items)} items "
-          f"({eid_used} with EID rich desc) -> {out} ({out.stat().st_size} bytes)")
+          f"({eid_used} with EID rich desc, {n_unlocks} with unlock data) "
+          f"-> {out} ({out.stat().st_size} bytes)")
     return 0
 
 

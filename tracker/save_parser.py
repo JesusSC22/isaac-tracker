@@ -74,20 +74,6 @@ class ParsedSave:
         leído del chunk 2 (counters) en el índice 8.
     greed_donation_count: total monedas depositadas en la Greed Donation
         Machine (modo Greed/Greedier), leído del chunk 2 en el índice 19.
-    bestiary_kills: contador de muertes infligidas por el jugador a cada enemigo,
-        leído del sub-registro 3 del chunk 11 (bestiario). Las claves son
-        ``packed entity ids`` sin descomponer (no tuplas ``(type, variant)``);
-        la descomposición a ``type = packed >> 20`` y
-        ``variant = (packed >> 4) & 0xFFF`` se hace en ``state_mapper.py``.
-    bestiary_deaths: contador de muertes del jugador a manos de cada enemigo,
-        leído del sub-registro 2 del chunk 11. Mismas claves ``packed`` que
-        ``bestiary_kills``.
-    bestiary_hits: contador de golpes recibidos por el jugador de cada enemigo,
-        leído del sub-registro 1 del chunk 11. Mismas claves ``packed``.
-    bestiary_encounters: contador de veces que el jugador se ha cruzado con
-        cada enemigo, leído del sub-registro 4 del chunk 11. Mismas claves
-        ``packed``; suele ser el dict más poblado y el que usa la pestaña
-        Estadísticas para "enemigos descubiertos".
     parsed_at: when this parse ran. Useful for logging / UI footer.
     """
     slot: int
@@ -98,10 +84,6 @@ class ParsedSave:
     items_seen: set[int] = field(default_factory=set)
     donation_count: int = 0
     greed_donation_count: int = 0
-    bestiary_kills:       dict[int, int] = field(default_factory=dict)
-    bestiary_deaths:      dict[int, int] = field(default_factory=dict)
-    bestiary_hits:        dict[int, int] = field(default_factory=dict)
-    bestiary_encounters:  dict[int, int] = field(default_factory=dict)
     parsed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -162,13 +144,12 @@ def parse_save(path: Path) -> ParsedSave:
         )
 
     slot = _infer_slot_from_name(path)
-    chunks, post_chunk10_off = _extract_chunks(data, path)
+    chunks, _post_chunk10_off = _extract_chunks(data, path)
     achievements = chunks[_CHUNK_ACHIEVEMENTS]
     challenges   = chunks[_CHUNK_CHALLENGE_COUNTERS]
     collectibles = chunks[_CHUNK_COLLECTIBLES]
     counters = chunks[_CHUNK_COUNTERS]
     donation_count, greed_donation_count = _extract_donation_counters(counters)
-    bestiary_raw = _extract_bestiary(data, post_chunk10_off, len(data))
 
     challenges_complete = _extract_challenges(challenges)
     characters_unlocked, character_marks = _extract_character_state(achievements)
@@ -184,81 +165,12 @@ def parse_save(path: Path) -> ParsedSave:
         items_seen=items_seen,
         donation_count=donation_count,
         greed_donation_count=greed_donation_count,
-        bestiary_hits=bestiary_raw[_BESTIARY_HITS],
-        bestiary_deaths=bestiary_raw[_BESTIARY_DEATHS],
-        bestiary_kills=bestiary_raw[_BESTIARY_KILLS],
-        bestiary_encounters=bestiary_raw[_BESTIARY_ENCOUNTERS],
     )
 
 
 def _extract_items_seen(collectibles_body: bytes) -> set[int]:
     """Return the set of collectible IDs whose byte is 1 (touched at least once)."""
     return {i for i, b in enumerate(collectibles_body) if b == 1}
-
-
-# Record types del chunk 11 (bestiario). Cada sub-registro lleva una de estas
-# IDs en su cabecera <ii> = (rec_type, len_field).
-_BESTIARY_HITS = 1
-_BESTIARY_DEATHS = 2
-_BESTIARY_KILLS = 3
-_BESTIARY_ENCOUNTERS = 4
-
-
-def _extract_bestiary(
-    data: bytes,
-    after_chunk10_off: int,
-    file_end: int,
-) -> dict[int, dict[int, int]]:
-    """Decodifica el chunk 11 (bestiario) a ``{record_type: {packed_entity_id: value}}``.
-
-    Record types: 1=hits, 2=deaths, 3=kills, 4=encounters.
-
-    Layout (validado contra el fixture, NO coincide con la spec del plan):
-      - Cabecera del chunk 11 ya leída por el caller (12 bytes <iii> con count=4).
-      - 4 sub-registros consecutivos. Cada uno:
-          header  : <ii> = (rec_type:s4, len_field:s4)
-          entries : (len_field // 4) entradas de 8 bytes <ii> = (packed_entity, value)
-        ``len_field`` NO es bytes del body — sigue la convención del header
-        de chunks "macro" (len = count * 4) independientemente del tamaño
-        real de cada entry (8 bytes aquí).
-      - Tras los 4 sub-registros hay 4 bytes de footer/padding que NO forman
-        parte del bestiario (van antes de la AfterbirthChecksum de 4 bytes).
-
-    El ``packed_entity_id`` se devuelve sin descomponer; la descomposición a
-    ``(type, variant)`` la hace el consumidor (state_mapper). Para referencia,
-    la fórmula validada es ``packed = (type << 20) | (variant << 4)``,
-    es decir ``type = packed >> 20`` y ``variant = (packed >> 4) & 0xFFF``.
-
-    Devuelve dicts vacíos si el chunk está truncado o tiene un count != 4.
-    """
-    out: dict[int, dict[int, int]] = {
-        _BESTIARY_HITS: {},
-        _BESTIARY_DEATHS: {},
-        _BESTIARY_KILLS: {},
-        _BESTIARY_ENCOUNTERS: {},
-    }
-    if after_chunk10_off + _CHUNK_HEADER_SIZE > file_end:
-        return out
-    _chunk_type, _len, count = struct.unpack_from("<iii", data, after_chunk10_off)
-    if count != 4:
-        return out
-    off = after_chunk10_off + _CHUNK_HEADER_SIZE
-    for _ in range(count):
-        if off + 8 > file_end:
-            break
-        rec_type, len_field = struct.unpack_from("<ii", data, off)
-        off += 8
-        n_entries = len_field // 4  # convención len = count*4 del header de chunks
-        body_end = off + n_entries * 8
-        if body_end > file_end or rec_type not in out:
-            off = body_end
-            continue
-        for i in range(n_entries):
-            entry_off = off + i * 8
-            entity, value = struct.unpack_from("<ii", data, entry_off)
-            out[rec_type][entity] = value
-        off = body_end
-    return out
 
 
 def _extract_donation_counters(counters_body: bytes) -> tuple[int, int]:

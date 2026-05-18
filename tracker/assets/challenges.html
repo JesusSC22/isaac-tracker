@@ -1932,222 +1932,91 @@
     .donation-milestone.locked .ms-status { color: #c08a3e; }
     .donation-section.full .donation-summary { color: #6cd66c; font-weight: bold; }
 
-    /* ===== Pestaña Estadísticas ===== */
-    .hidden { display: none; }
+    /* (CSS de Pestaña Estadísticas eliminado) */
 
-    /* Buscador "Ir al enemigo" — copia exacta de .items-jump-row */
-    #stats-view .stats-jump-row {
-      display: flex; align-items: center; gap: 8px;
-      justify-content: center; margin: 0 0 18px;
-      flex-wrap: wrap; font-size: 0.92rem; color: #cfd5e8;
+    /* --- Update banner (auto-update from GitHub releases) --- */
+    .update-banner {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      background: linear-gradient(90deg, #d4a64a, #c89942);
+      color: #1a1a2e;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      border-bottom: 1px solid #8a6d2a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
-    #stats-view .stats-jump-row label { font-weight: 600; }
-    #stats-view .stats-jump-row input[type="text"] {
-      background: #16213e; color: #fff;
-      border: 1px solid rgba(243,156,18,0.45); border-radius: 6px;
-      padding: 5px 10px; width: 280px; max-width: 60vw; font-size: 0.95rem;
+    .update-banner-icon { width: 18px; height: 18px; flex-shrink: 0; }
+    .update-banner-msg { flex: 1; }
+    .update-banner-btn {
+      background: #1a1a2e;
+      color: #d4a64a;
+      border: 1px solid #1a1a2e;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 4px;
     }
-    #stats-view .stats-jump-row input[type="text"]:focus {
-      outline: none; border-color: #f39c12;
-      box-shadow: 0 0 0 2px rgba(243,156,18,0.25);
+    .update-banner-btn:hover:not(:disabled) { background: #16213e; }
+    .update-banner-btn:disabled { opacity: 0.6; cursor: default; }
+    .update-banner-dismiss {
+      background: transparent;
+      border: none;
+      color: #1a1a2e;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0 6px;
+      line-height: 1;
     }
-    #stats-view .stats-jump-row button {
-      background: linear-gradient(135deg, #f39c12, #f5b041);
-      color: #1a1a2e; border: none; border-radius: 6px;
-      padding: 5px 14px; font-weight: 700; cursor: pointer; font-size: 0.9rem;
+    .update-banner-dismiss:hover { color: #000; }
+    .update-banner-progress {
+      flex: 1;
+      height: 10px;
+      background: rgba(26, 26, 46, 0.25);
+      border-radius: 5px;
+      overflow: hidden;
     }
-    #stats-view .stats-jump-row button:hover { filter: brightness(1.08); }
-    #stats-view .stats-jump-row .hint { color: #8893a8; font-size: 0.82rem; }
-
-    /* Top — 2 columnas */
-    #stats-view .stats-top {
-      display: grid; grid-template-columns: 1fr 2fr;
-      gap: 1rem; margin-bottom: 1.5rem;
+    .update-banner-progress-fill {
+      height: 100%;
+      background: #1a1a2e;
+      width: 0%;
+      transition: width 0.15s linear;
     }
-    @media (max-width: 900px) {
-      #stats-view .stats-top { grid-template-columns: 1fr; }
+    .update-banner-progress-text {
+      min-width: 70px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
     }
-    #stats-view .stats-block-title {
-      font-size: 0.95rem; color: #cfd5e8; font-weight: 600;
-      margin: 0 0 0.6rem; padding-bottom: 0.3rem;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+    .update-banner.is-error {
+      background: #c0392b;
+      color: #fff;
+      border-bottom-color: #7a2418;
     }
-    #stats-view .stats-block-title .ratio { opacity: 0.55; font-weight: 400; font-size: 0.8rem; margin-left: 0.5rem; }
-
-    /* Cards trayectoria */
-    #stats-view .stat-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 6px; padding: 0.7rem 0.85rem;
-      margin-bottom: 0.5rem;
+    .update-banner.is-error .update-banner-btn {
+      background: #fff; color: #c0392b; border-color: #fff;
     }
-    #stats-view .stat-card .lab {
-      font-size: 0.72rem; opacity: 0.65;
-      text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    #stats-view .stat-card .val {
-      font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.2rem;
-    }
-    #stats-view .stat-card .sub { font-size: 0.7rem; opacity: 0.55; margin-top: 0.2rem; }
-    #stats-view .stat-card .bar {
-      height: 6px; background: rgba(255,255,255,0.1);
-      border-radius: 3px; overflow: hidden; margin-top: 0.4rem;
-    }
-    #stats-view .stat-card .bar > div {
-      height: 100%; background: linear-gradient(90deg, #f39c12, #f5b041);
-    }
-
-    /* Big bosses panel */
-    #stats-view .bigboss-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
-      gap: 6px;
-    }
-    #stats-view .bigboss {
-      background: linear-gradient(135deg, #1f2c4a 0%, #283759 100%);
-      border-radius: 6px; padding: 0.5rem 0.3rem;
-      display: flex; flex-direction: column; align-items: center;
-      box-shadow: inset 0 0 0 1px rgba(243,156,18,0.35);
-      cursor: help; transition: transform 0.1s;
-      position: relative;
-    }
-    #stats-view .bigboss:hover { transform: scale(1.05); }
-    #stats-view .bigboss.unseen {
-      opacity: 0.35; background: #16213e;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
-    }
-    #stats-view .bigboss img {
-      width: 48px; height: 48px; object-fit: contain;
-      image-rendering: pixelated;
-    }
-    #stats-view .bigboss .name {
-      font-size: 0.7rem; text-align: center; margin-top: 0.3rem;
-      white-space: nowrap; overflow: hidden; max-width: 100%;
-      text-overflow: ellipsis;
-    }
-    #stats-view .bigboss .k {
-      font-size: 0.78rem; color: #f5b041; font-weight: 700; margin-top: 0.1rem;
-    }
-    #stats-view .bigboss .k .d {
-      color: #e74c3c; font-weight: 500; font-size: 0.7rem; margin-left: 4px;
-    }
-    #stats-view .bigboss .mark-tag {
-      position: absolute; top: 2px; right: 2px;
-      background: #6cd66c; color: #1a1a2e;
-      font-size: 0.55rem; font-weight: 700;
-      padding: 1px 4px; border-radius: 2px;
-    }
-
-    /* Toolbar filtros */
-    #stats-view .bestiary-toolbar {
-      display: flex; gap: 0.4rem; margin: 0.5rem 0 0.8rem;
-      align-items: center; flex-wrap: wrap;
-    }
-    #stats-view .chip {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: #ddd; font-size: 0.78rem; padding: 4px 12px;
-      border-radius: 999px; cursor: pointer;
-    }
-    #stats-view .chip.active {
-      background: #f39c12; border-color: #f39c12;
-      color: #1a1a2e; font-weight: 600;
-    }
-    #stats-view .toolbar-sep {
-      width: 1px; height: 18px;
-      background: rgba(255,255,255,0.12); margin: 0 4px;
-    }
-    #stats-view #bestiarySort {
-      background: #16213e; color: #fff;
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 6px; padding: 4px 10px; font-size: 0.8rem;
-    }
-
-    /* Bloques por capítulo */
-    #stats-view .chapter-block { margin-top: 1rem; }
-    #stats-view .chapter-header {
-      display: flex; align-items: center; gap: 0.6rem;
-      font-size: 0.85rem; color: #cfd5e8;
-      margin-bottom: 0.4rem; font-weight: 600;
-    }
-    #stats-view .chapter-header .num {
-      background: rgba(243,156,18,0.18); color: #f5b041;
-      padding: 2px 8px; border-radius: 4px;
-      font-size: 0.7rem; font-weight: 700;
-    }
-    #stats-view .chapter-header .floors {
-      opacity: 0.6; font-weight: 400; font-size: 0.75rem;
-    }
-    #stats-view .chapter-header .count {
-      opacity: 0.55; font-size: 0.75rem; font-weight: 400;
-    }
-    #stats-view .chapter-header .line {
-      flex: 1; height: 1px; background: rgba(255,255,255,0.08);
-    }
-    #stats-view .chapter-header .prog {
-      height: 4px; width: 80px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 2px; overflow: hidden;
-    }
-    #stats-view .chapter-header .prog > div { height: 100%; background: #f5b041; }
-
-    /* Enemy grid */
-    #stats-view .enemy-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
-      gap: 5px;
-    }
-    #stats-view .enemy {
-      background: rgba(255,255,255,0.03);
-      border-radius: 4px; padding: 0.4rem 0.2rem;
-      display: flex; flex-direction: column; align-items: center;
-      cursor: help; position: relative;
-    }
-    #stats-view .enemy.unseen { opacity: 0.3; }
-    #stats-view .enemy img {
-      width: 40px; height: 40px; object-fit: contain;
-      image-rendering: pixelated;
-    }
-    #stats-view .enemy .placeholder {
-      width: 40px; height: 40px; background: #333;
-      display: flex; align-items: center; justify-content: center;
-      color: #888; font-size: 1rem;
-    }
-    #stats-view .enemy .name {
-      font-size: 0.65rem; text-align: center; margin-top: 0.25rem;
-      white-space: nowrap; overflow: hidden;
-      max-width: 100%; text-overflow: ellipsis;
-    }
-    #stats-view .enemy .stats {
-      display: flex; gap: 0.3rem; font-size: 0.6rem; margin-top: 0.15rem;
-    }
-    #stats-view .enemy .stats .kk { color: #f5b041; font-weight: 700; }
-    #stats-view .enemy .stats .dd { color: #e74c3c; }
-    #stats-view .enemy .mb-tag {
-      position: absolute; top: 2px; right: 2px;
-      background: #d4922a; color: #1a1a2e;
-      font-size: 0.55rem; font-weight: 700;
-      padding: 1px 4px; border-radius: 2px;
-    }
-
-    /* Highlight de jump-to */
-    #stats-view .enemy.jump-highlight,
-    #stats-view .bigboss.jump-highlight {
-      box-shadow: 0 0 0 3px rgba(243,156,18,0.95), 0 0 18px 6px rgba(243,156,18,0.55);
-      transform: scale(1.15); z-index: 3;
-      transition: box-shadow 0.25s, transform 0.25s;
-    }
-
-    /* Empty + tooltip */
-    #stats-view .bestiary-empty { text-align: center; padding: 2rem; opacity: 0.6; }
-    #bestiaryTooltip {
-      position: fixed; background: #111; color: #fff;
-      padding: 0.5rem 0.7rem; border: 1px solid #444; border-radius: 4px;
-      font-size: 0.8rem; z-index: 9999; pointer-events: none; display: none;
-    }
+    .update-banner.is-error .update-banner-dismiss { color: #fff; }
   </style>
 </head>
 <body>
+
+<!-- Update banner (auto-update from GitHub releases). Hidden until check_update finds a newer version. -->
+<div id="update-banner" class="update-banner" style="display:none" role="status">
+  <svg class="update-banner-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2L4.5 13.5h6L9 22l8.5-11.5h-6L13 2z"/></svg>
+  <span class="update-banner-msg" id="update-banner-text">Nueva versión disponible</span>
+  <div id="update-banner-progress-wrap" class="update-banner-progress" style="display:none">
+    <div id="update-banner-progress-fill" class="update-banner-progress-fill"></div>
+  </div>
+  <span id="update-banner-progress-text" class="update-banner-progress-text" style="display:none">0%</span>
+  <button type="button" id="update-banner-btn" class="update-banner-btn">Actualizar ahora</button>
+  <button type="button" id="update-banner-dismiss" class="update-banner-dismiss" aria-label="Cerrar">×</button>
+</div>
 
 <!-- Loading overlay (shown inside IsaacTracker.exe while get_initial_state is in flight) -->
 <div id="tracker-loading" class="tracker-loading-overlay" style="display:none" aria-hidden="true">
@@ -2172,7 +2041,6 @@
     <button class="tab" data-view="trinkets">Trinkets</button>
     <button class="tab" data-view="cards">Cartas</button>
     <button class="tab" data-view="donations">Donaciones</button>
-    <button class="tab" data-view="stats">Estadísticas</button>
   </div>
 
   <div class="view active" id="view-challenges">
@@ -2288,60 +2156,6 @@
       <ul class="donation-milestones" id="donationNormalMilestones"></ul>
     </section>
   </div>
-
-  <div id="stats-view" class="view">
-
-    <div class="stats-jump-row">
-      <label for="bestiaryJumpInput">Ir al enemigo:</label>
-      <input type="text" id="bestiaryJumpInput"
-             list="bestiaryNameOptions"
-             placeholder="empieza a escribir un nombre"
-             autocomplete="off" />
-      <datalist id="bestiaryNameOptions"></datalist>
-      <button type="button" id="bestiaryJumpBtn">Buscar</button>
-      <span class="hint">o pulsa Enter</span>
-    </div>
-
-    <div class="stats-top">
-      <section>
-        <h3 class="stats-block-title">Trayectoria global</h3>
-        <div id="statsCards"></div>
-      </section>
-      <section>
-        <h3 class="stats-block-title">
-          Bosses derrotados <span class="ratio" id="bossesRatio"></span>
-        </h3>
-        <div class="bigboss-grid" id="bigBossesGrid"></div>
-      </section>
-    </div>
-
-    <section>
-      <h3 class="stats-block-title">Bestiario</h3>
-      <div class="bestiary-toolbar">
-        <div id="bestiarySeenFilter" style="display:inline-flex;gap:0.3rem">
-          <button class="chip active" data-filter="seen">Vistos</button>
-          <button class="chip" data-filter="all">Todos</button>
-        </div>
-        <span class="toolbar-sep"></span>
-        <div id="bestiaryCategoryFilter" style="display:inline-flex;gap:0.3rem">
-          <button class="chip active" data-cat="all">Todos</button>
-          <button class="chip" data-cat="enemy">Enemigos</button>
-          <button class="chip" data-cat="miniboss">Mini-bosses</button>
-        </div>
-        <span class="toolbar-sep"></span>
-        <select id="bestiarySort">
-          <option value="chapter">Por capítulo</option>
-          <option value="kills_desc">Por kills</option>
-          <option value="alpha">Alfabético</option>
-        </select>
-      </div>
-      <div id="bestiaryContainer"></div>
-      <p class="bestiary-empty hidden" id="bestiaryEmpty">
-        Empieza a jugar para llenar el bestiario.
-      </p>
-    </section>
-
-  </div>
 </div>
 
 <div class="challenge-tooltip" id="tooltip"></div>
@@ -2349,7 +2163,7 @@
 <script src="items_inline.js"></script>
 <script src="trinkets_inline.js"></script>
 <script src="cards_inline.js"></script>
-<script src="bestiary_inline.js"></script>
+
 <script>
   const CHARACTERS = [
     {
@@ -4641,271 +4455,271 @@
   const CHALLENGE_INFO = {
     1: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Isaac donde vas a por Mom, sin D6, con las maldiciones permanentes de Curse of the Darkness y Curse of the Unknown.",
+      resumen: "Reto a oscuras desde el primer segundo: arrastras dos maldiciones permanentes — Curse of Darkness (todo se ve casi negro) y Curse of the Unknown (no ves cuántos corazones te quedan). Partida con Isaac sin D6 a por Mom, sin ningún ítem extra.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Rune of Hagalaz.",
     },
     2: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Isaac, sin D6 en la que vamos a por Mom, empiezas con los items Number One, E.Coli, Butt Bombs, Flush! (que te darán la transformación de Oh Crap) y el trinket Petrified Poop.",
+      resumen: "Empiezas convertido en Oh Crap (tus lágrimas son cacas explosivas). Llevas Number One, E. Coli, Butt Bombs, Flush! y el trinket Petrified Poop desde la primera sala. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Rune of Jera.",
     },
     3: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac, sin D6 en la que vamos a por Mom, Empiezas con los ítems Tiny Planet, Soy Milk, The Small Rock e Iron Bar.",
+      resumen: "Lágrimas que orbitan y pesan: Tiny Planet hace que tus lágrimas giren a tu alrededor, Soy Milk les da cadencia altísima y The Small Rock + Iron Bar las convierten en piedras pesadas. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Rune of Ehwaz.",
     },
     4: {
       dificultad: "Medio",
-      resumen: "Es una partida con Eve a por Satan, con los ítems integrados con Eve, Dark Matter, Pentagram y Sacrificial Dagger.",
+      resumen: "Build oscura de Eve: Sacrificial Dagger te da una daga orbital que parte enemigos, Dark Matter rotea tus lágrimas y Pentagram suma daño. Partida con Eve a por Satán.",
       desbloqueo: "Este reto se desbloquea teniendo a Eve y matando a Mom’s Heart o It Lives 11 veces con cualquier personaje.",
       recompensa: "La recompensa por completar este reto es Rune of Dagaz.",
     },
     5: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Magdalene a por Mom, con los ítems integrados con Yum Heart, Infamy, Bucket of Lard y Thunder Thighs.",
+      resumen: "Tanque pesado: Bucket of Lard y Thunder Thighs te dan corazones extra y aplastas enemigos al caminar, pero te haces lentísima. Yum Heart e Infamy cierran la build. Partida con Magdalene a por Mom.",
       desbloqueo: "Este reto se desbloquea teniendo a Magdalene.",
       recompensa: "La recompensa por completar este reto es Rune of Ansuz.",
     },
     6: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Isaac sin D6, donde vamos a por Mom’s Heart, tiene los ojos vendados y no podrá disparar lágrimas como Lilith, aparte empieza con los ítems Distant Admiration, Forever Alone, Halo of Flies (que te darán la transformación de Beelzebub) y Transcendence.",
+      resumen: "Ojos vendados: no disparas. Tienes que matar todo con tres moscas orbitales (Distant Admiration, Forever Alone, Halo of Flies — transformación Beelzebub) mientras Transcendence te hace flotar. Partida con Isaac sin D6 a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando 3 veces a Mom’s Heart y recibirás el ítem Transcendence y te darán el desafío.",
       recompensa: "La recompensa por completar este reto es Rune of Perthro.",
     },
     7: {
       dificultad: "Medio",
-      resumen: "Es una partida con Lazarus a por Isaac, empieza con la pastilla de Lazarus y los ítems Ipecac, Mr.Mega y My Reflection.",
+      resumen: "Te haces daño a ti mismo: Ipecac dispara bombas que explotan al chocar, Mr. Mega las hace enormes y My Reflection te las devuelve a la cara. La pastilla de Lazarus revive una vez. Partida con Lazarus a por Isaac.",
       desbloqueo: "Este reto se desbloquea teniendo a Lazarus y matando a Mom’s Heart o It Lives 11 veces.",
       recompensa: "La recompensa por completar este reto es Suicide King.",
     },
     8: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Mom, tiene los ojos vendados y no podrá disparar lágrimas como Lilith, aparte empieza con los ítems Guppy’s Hair Ball, Guppy’s Head y Guppy’s Tail dándote la transformación de Guppy.",
+      resumen: "Ojos vendados con la transformación Guppy puesta de salida (Guppy’s Hair Ball + Guppy’s Head + Guppy’s Tail): matas todo con las moscas que aparecen cada vez que recibes daño. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto se desbloquea consiguiendo por primera vez la transformación de Guppy.",
       recompensa: "La recompensa por completar este reto es Algiz.",
     },
     9: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza con los ítems Dr Fetus, Remote Detonator y el trinket Match Stick.",
+      resumen: "Solo bombas: Dr. Fetus reemplaza tus lágrimas por bombas y con Remote Detonator las haces estallar cuando tú quieras. Partida con Isaac sin D6 a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando 9 veces a Mom’s Heart para conseguir el item Dr Fetus y te darán el desafío.",
       recompensa: "La recompensa por completar este reto es Chaos Card.",
     },
     10: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Magdalene a por Mom, empieza con Yum Heart, Raw Liver, The Compass, Treasure Map, Blue Map y el trinket Child’s Heart. Empiezas con la maldicion Cursed of the Cursed.",
+      resumen: "Mapa completo desde el inicio (Compass + Treasure Map + Blue Map) pero arrastras la maldición Curse of the Cursed: no puedes salir de una sala hasta limpiarla. Yum Heart, Raw Liver y el trinket Child’s Heart te dan algo de aguante. Partida con Magdalene a por Mom.",
       desbloqueo: "Este reto se desbloquea teniendo a Magdalene.",
       recompensa: "La recompensa por completar este reto es Credit Card.",
     },
     11: {
       dificultad: "Medio",
-      resumen: "Es una partida con Judas a por Satán, empieza con los ítems The Book of Belial, Epic Fetus y Loki’s Horns.",
+      resumen: "Build de Judas con cohetes y cuernos: Epic Fetus dispara misiles dirigidos, Book of Belial buffa al activarlo y Loki’s Horns añade disparos en cruz al azar. Partida con Judas a por Satán.",
       desbloqueo: "Este reto se desbloquea completando el desafío 19 (The Family Man) y matando a Lokii por primera vez.",
       recompensa: "La recompensa por completar este reto es Rules Card.",
     },
     12: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con los ítems Habit, 9 Volt , Lemon Mishap y la pastilla Lemon Party.",
+      resumen: "El suelo se llena de meadas que electrocutan: 9 Volt + Habit + Lemon Mishap + la pastilla Lemon Party te dejan charcos amarillos por todas partes que dañan a los enemigos. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Card Againts Humanity.",
     },
     13: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Mom, tiene los ojos vendados y no podrá disparar lágrimas como Lilith, aparte empieza con los ítems Pyro, 9 volt, Butt Beans, The Black Bean y The Bean.",
+      resumen: "Vendado y a base de gas: Pyro te da una bomba infinita y los Beans (The Bean, Butt Beans, Black Bean) son tus únicas armas — gas venenoso al pulsar disparo. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Burnt Penny.",
     },
     14: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Isaac, sin D6 a por Mom, empieza con el ítem 9 volt, The Battery, Starter Deck y Deck of Cards.",
+      resumen: "Solo cartas: The Battery + 9 Volt + Starter Deck + Deck of Cards te llenan la mochila constantemente con cartas que tienes que ir usando para sobrevivir. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es SMB Super Fan.",
     },
     15: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con el ítem Polyfemuns, Cupid’s Arrow y My Reflection.",
+      resumen: "Una sola lágrima enorme y lenta que vuelve: Polyphemus dispara un proyectil gigante, Cupid’s Arrow lo hace atravesar enemigos y My Reflection lo devuelve a la fuente. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Swallowed Penny.",
     },
     16: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con el ítem Technology, Technology 2 y Spoon Bender.",
+      resumen: "Solo láseres: Technology + Technology 2 te dan dos láseres permanentes y Spoon Bender les añade homing — ya no disparas lágrimas. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Robo-Baby 2.0.",
     },
     17: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con el ítem Anti-Gravity y Strange Atractor.",
+      resumen: "Te conviertes en imán de enemigos: Strange Attractor los atrae hacia ti y Anti-Gravity carga tus lágrimas para soltarlas todas juntas al moverte. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Death’s Touch.",
     },
     18: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Mom. Empieza con el The Mulligan y Spiderbaby y el trinket Tick.",
+      resumen: "Build de arañas: The Mulligan convierte las moscas que matas en arañas, Spiderbaby te suma arañas al recibir daño y el trinket Tick (que no puedes quitarte) te chupa vida. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Tech 5.",
     },
     19: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Brother Bobby, Sister Maggy, Rotten Baby (los cuales te dan la transformación de Conjoined) y BFFS! pero tienes los ojos vendados y no podrás disparar lagrimas como Lilith.",
+      resumen: "Ojos vendados con familia numerosa: Brother Bobby, Sister Maggy y Rotten Baby (transformación Conjoined: cabezas extra que disparan contigo) más BFFS! que los hace gigantes. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Dad’s Key (se desbloquea teniendo las dos partes de la llave de ángel) y te darán el desafío.",
       recompensa: "La recompensa por completar este reto es Epic Fetus.",
     },
     20: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Mom, empieza sin ningún ítem.",
+      resumen: "Vainilla puro: Isaac sin D6 y sin ningún ítem extra. Solo tú, las lágrimas base y lo que te dé el camino. Partida a por Mom.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto es Rune of Berkano.",
     },
     21: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza sin ningún ítem.",
+      resumen: "Cada planta es una mega-mansión: todos los pisos son XXL (el doble de salas por nivel). Sin ítems iniciales. Partida con Isaac sin D6 a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto es Corazón Dorado.",
     },
     22: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza sin ningún ítem pero la partida está acelerada.",
+      resumen: "El juego va a cámara rápida: todo (tú, enemigos, proyectiles) se mueve más deprisa. Sin ítems iniciales. Partida con Isaac sin D6 a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto es Get out of Jail Free Card.",
     },
     23: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Blue Baby a por Satan, empieza con el Brother Bobby, Mr Mega, Pyromaniac y Kamikaze pero tienes los ojos vendados y no podrás disparar como el personaje Lilith.",
+      resumen: "Ojos vendados, solo bombas: Pyromaniac te hace inmune al fuego y hasta te cura con explosiones, Mr. Mega las hace enormes y Kamikaze te deja explotarte tú mismo. Brother Bobby dispara por ti. Partida con Blue Baby a por Satán.",
       desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Mr Mega (se desbloquea rompiendo 10 rocas marcadas).",
       recompensa: "La recompensa por completar este reto es Golden Bomb.",
     },
     24: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Money=Power, Sack of Pennies y 50 monedas.",
+      resumen: "Tu daño es dinero: Money=Power suma daño por cada moneda que llevas, Sack of Pennies te las va dando y empiezas con 50. Si te quedas a cero, no haces daño. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Sack of Pennies (se desbloquea matando a Isaac con Cain).",
       recompensa: "La recompensa por completar este reto son dos pastillas (Addicted y Percs).",
     },
     25: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con 12 contenedores de vida roja, (solo uno de ellos relleno) y el ítem Charm of the Vampire.",
+      resumen: "Mucho contenedor y poco corazón: 12 contenedores rojos pero solo uno relleno. Charm of the Vampire te cura cada cierto número de enemigos matados — toca farmear sin morir. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto son dos pastillas (Re-lax y ???).",
     },
     26: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Mega Satan, empieza con el ítem Boomerang, Mom’s Knife, The Ladder, Trinity Shield y las dos partes de la llave de ángel.",
+      resumen: "Build completa para Mega Satan: Mom’s Knife como arma cuerpo a cuerpo, Boomerang para devolver lágrimas, Trinity Shield para bloquear de frente, The Ladder para puentes y ya llevas las dos llaves de ángel. Partida con Isaac sin D6.",
       desbloqueo: "Este reto se desbloquea matando a ??? (Blue Baby) o The Lamb por primera vez y desbloqueando Mom’s Knife (matando a Satan con Isaac).",
       recompensa: "La recompensa por completar este reto es Poker Chip.",
     },
     27: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Blue Baby a por ??? (Blue Baby), empieza con el ítem The Poop, Thunder Thighs y 3 Bob’s Brain que le dan la transformación de Bob.",
+      resumen: "Build Bob (todo veneno): The Poop (caca explosiva), Thunder Thighs (más vida) y 3 Bob’s Brain — bombas tóxicas que persiguen enemigos. Partida con Blue Baby a por ??? (Blue Baby).",
       desbloqueo: "Este reto se desbloquea matando 5 veces a Isaac, consiguiendo la Polaroid y permitiendo ir a The Chest.",
       recompensa: "La recompensa por completar este reto es Stud Finder.",
     },
     28: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza con el ítem 3 Dollar Baby, Rainbow Baby y el trinket Rainbow Worm (que no te puedes quitar a no ser que lo absorbas).",
+      resumen: "Cada planta cambia tus lágrimas: 3 Dollar Bill te asigna un efecto aleatorio nuevo cada piso, Rainbow Baby dispara con esos efectos y el trinket Rainbow Worm no te lo puedes quitar (salvo absorbiéndolo). Partida con Isaac sin D6 a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto es D8.",
     },
     29: {
       dificultad: "Medio",
-      resumen: "Es una partida con Judas a por Isaac, empieza con el ítem The Book of Belial y Chocolate Milk.",
+      resumen: "Lágrima cargada de Judas: Chocolate Milk hace que tu disparo se cargue para soltar un proyectil enorme y Book of Belial te da un boost de daño temporal. Partida con Judas a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto es Kidney Stone.",
     },
     30: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza con el ítem Holy Grail, Spear of Destiny, Punching Bag y Isaac’s Heart pero tienes los ojos vendados y no podrás disparar como Lilith.",
+      resumen: "Ojos vendados con espada y escudo: Spear of Destiny dispara orbitando, Holy Grail añade un corazón extra, Punching Bag distrae a los enemigos y Isaac’s Heart hace que tu corazón flote por la sala (no recibes daño en el cuerpo, pero sí en el corazón). Partida con Isaac sin D6 a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto es Black Rune.",
     },
     31: {
       dificultad: "Muy difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Mega Satan (más o menos), empieza con 10 ítems aleatorios y las dos partes de la llave de ángeles.",
+      resumen: "Empiezas con 10 ítems aleatorios y las dos llaves de ángel — cada partida es completamente distinta, puede tocarte build dios o build basura. Partida con Isaac sin D6 a por Mega Satan.",
       desbloqueo: "Este reto se desbloquea consiguiendo The Negative para poder ir a la Dark Room sin pincharte y ya allí tienes que derrotar a The Lamb y Mega Satan. Si lo haces pinchándote no te contara ya que necesitas desbloquear si o si antes The Negative.",
       recompensa: "La recompensa por completar este reto es Laz Bleeds More! (Lazarus empieza siempre con el ítem Anemic sin importar si revive o no).",
     },
     32: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Mom’s Heart, empieza sin ningún ítem.",
+      resumen: "Es el reto-broma del juego: nombres de ítems y salas tergiversados, HUD y sonidos alterados — el juego te toma el pelo todo el rato. Sin ítems iniciales. Partida con Isaac sin D6 a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto es que Magdalene empieza con la pastilla Full Health en todas las partidas.",
     },
     33: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Mom’s Eyeshadow y Friendly Ball.",
+      resumen: "Captura-criaturas: Friendly Ball convierte enemigos en familiares de un solo uso y Mom’s Eyeshadow tiene chance de petrificarlos al disparar. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart.",
       recompensa: "La recompensa por completar este reto es Charged Key.",
     },
     34: {
       dificultad: "Muy difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Mega Satan (tendrás que ir por ruta de abajo), empieza con las dos partes de la llave de ángeles.",
+      resumen: "Mega Satan a pelo: tienes las dos llaves de ángel pero ningún ítem inicial. Hay que llegar y matarlo solo con lo que aparezca en el camino. Partida con Isaac sin D6.",
       desbloqueo: "Este reto se desbloquea matando 5 veces a Satán para desbloquear la Negative y matando a Mega Satan.",
       recompensa: "La recompensa por completar este reto es Samson Feels Healthy! (Samson empieza siempre con el trinket Child’s Heart).",
     },
     35: {
       dificultad: "Fácil",
-      resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Cupid’s Arrow y Rubber Cement.",
+      resumen: "Lágrimas pegajosas que rebotan: Rubber Cement las hace rebotar por toda la sala y Cupid’s Arrow les añade atravesar enemigos. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando 5 veces a Isaac, para desbloquear el ítem Polaroid.",
       recompensa: "La recompensa por completar este reto es Greed’s Gullet.",
     },
     36: {
       dificultad: "Medio",
-      resumen: "Es una partida con Isaac sin D6 a por Mom, empieza con el ítem The Poop, 9 Volt, Skatole, E.Coli, 3 Butt Bombs, BFFS!, Thunder Thighs y Dirty Mind, gracias a estos ítems tendrás la transformación de Oh Crap, también empieza con el trinket Mysterious Candy, pero tienes los ojos vendados y no podrás disparar como el personaje Lilith.",
+      resumen: "Build caca ultra y vendado: 9 Volt + Skatole + E.Coli + The Poop + 3 Butt Bombs + BFFS! + Thunder Thighs + Dirty Mind te dan la transformación Oh Crap a tope, más el trinket Mysterious Candy. Partida con Isaac sin D6 a por Mom.",
       desbloqueo: "Este reto está desbloqueado desde el principio.",
       recompensa: "La recompensa por completar este reto es Dirty Mind.",
     },
     37: {
       dificultad: "Medio",
-      resumen: "Es una partida con Bethany sin Book of Virtues a por Satan, empieza con el ítem The Book of Belial, Blood Bag, Anemic y Blood Oath y el trinket Child’s Heart.",
+      resumen: "Build de sangre con Bethany: Blood Oath te quita medio corazón al entrar a una sala a cambio de daño, Blood Bag cura al usarlo, Anemic deja rastro de sangre dañino al recibir golpes y Book of Belial buffa. Bethany juega sin Book of Virtues. Partida a por Satán.",
       desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart y matarlo una vez con Lazarus para desbloquear a Bethany.",
       recompensa: "La recompensa por completar este reto es Sigil of Baphomet.",
     },
     38: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Bethany sin Book of Virtues a por Isaac, empieza con el ítem School Bag, Urn of Souls, Guppy’s Paw y el trinket Maggy’s Faith pero tienes los ojos vendados y no podrás disparar como el personaje Lilith.",
+      resumen: "Ojos vendados con Bethany: Urn of Souls dispara fuego usando tus corazones azules como munición, School Bag te da un segundo activo y Guppy’s Paw convierte vida roja en azul. Bethany sin Book of Virtues. Partida a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart, matando a Satán con Bethany para desbloquear Urn of Souls y matando a The Lamb con Magdalene para desbloquear Maggy’s Faith.",
       recompensa: "La recompensa por completar este reto es Purgatory.",
     },
     39: {
       dificultad: "Muy difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Mother, empieza con el ítem Spirit Sword, Trinity Shield y Mom’s Bracelet.",
+      resumen: "Pelea cuerpo a cuerpo con espada: Spirit Sword dispara con un swing en arco, Trinity Shield bloquea por delante y Mom’s Bracelet te deja levantar rocas y enemigos pequeños para tirárselos. Partida con Isaac sin D6 a por Mother.",
       desbloqueo: "Este reto se desbloquea matando a Mother por primera vez.",
       recompensa: "La recompensa por completar este reto es Spirit Sword.",
     },
     40: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Jacob y Esau a por Mom’s Heart, Jacob empieza con el ítem 20/20 y Esau con el ítem 20/20 y X-Ray Vision.",
+      resumen: "Todas las salas visibles desde el inicio: Jacob lleva 20/20 (lágrimas dobles) y Esau lleva 20/20 + X-Ray Vision, que abre todas las paredes secretas. Partida con Jacob y Esau a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando a Mother por primera vez. Se pueden encontrar todas las habitaciones.",
       recompensa: "La recompensa por completar este reto es Broken Glasses.",
     },
     41: {
       dificultad: "Difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Isaac, empieza con el ítem Mom’s Purse, Marbles y Mom’s Box.",
+      resumen: "Te comes los trinkets: Marbles convierte cada trinket que tocas en uno permanente, Mom’s Purse te da un slot extra y Mom’s Box dobla efectos. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando a Mom’s Heart 11 veces y usando la pastilla Gulp! 5 veces en una partida para desbloquear el ítem Marbles. (Si entras en Marbles explico como desbloquearlo fácil)",
       recompensa: "La recompensa por completar este reto es Ice Cube.",
     },
     42: {
       dificultad: "Muy difícil",
-      resumen: "Es una partida con Tainted Forgotten a por Satán, empieza sin ningún ítem.",
+      resumen: "Tainted Forgotten a pelo: el alma maneja al esqueleto y el esqueleto golpea cuerpo a cuerpo, sin ítems extra. Partida a por Satán.",
       desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Forgotten.",
       recompensa: "La recompensa por completar este reto es The Chariot?.",
     },
     43: {
       dificultad: "Muy difícil",
-      resumen: "Es una partida con Tainted Cain a por Mom, empieza con el ítem Bag of Crafting.",
+      resumen: "Crafteo puro: Tainted Cain solo usa la Bag of Crafting — recoges consumibles, metes 8 en la bolsa y te genera un ítem según la receta. Partida a por Mom.",
       desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Cain.",
       recompensa: "La recompensa por completar este reto es Justice?.",
     },
     44: {
       dificultad: "Muy difícil",
-      resumen: "Es una partida con Tainted Jacob a por Mother, empieza con el ítem Dad’s Key y Red Key.",
+      resumen: "Ruta secreta con llaves: Tainted Jacob ya empieza con Dad’s Key (abre cualquier puerta) y Red Key (crea habitaciones extra de la nada). Partida a por Mother.",
       desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Jacob.",
       recompensa: "La recompensa por completar este reto es The Hermit?.",
     },
     45: {
       dificultad: "Muy difícil",
-      resumen: "Es una partida con Isaac sin D6 a por Blue Baby, empieza con el ítem TMTRAINER. En esta partida tienes el ítem TMTRAINER y todo es un caos, intenta buscar algún ítem que te haga inmortal y luego no cojas ningún ítem más para no perder la partida (es la manera mas segura de hacerlo, pero puedes ser valiente y darle con todo).",
+      resumen: "Ítems rotos con efectos aleatorios: TMTRAINER glitchea cada ítem que recoges con una mezcla de efectos imposibles — puede ser dios o suicidio. La estrategia: encuentra uno que te haga invencible y deja de coger más. Partida con Isaac sin D6 a por Blue Baby.",
       desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Eden.",
       recompensa: "La recompensa por completar este reto es Temperance?.",
     },
@@ -6250,342 +6064,7 @@
     return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   }
 
-  /* ====== Pestaña Estadísticas ====== */
-
-  const BESTIARY_FILTER_STATE = {
-    filter: "seen", category: "all", sort: "chapter",
-  };
-
-  const CHAPTER_LABELS = {
-    1: "Basement · Cellar · Burning Basement · Downpour · Dross",
-    2: "Caves · Catacombs · Flooded Caves · Mines · Ashpit",
-    3: "Depths · Necropolis · Dank Depths · Mausoleum · Gehenna",
-    4: "Womb · Utero · Scarred Womb · Corpse",
-    5: "Sheol · Cathedral",
-    6: "Dark Room · Chest",
-    7: "Blue Womb · Void · Home",
-    "extra": "Otros",
-  };
-
-  let _bestiaryTooltipEl = null;
-
-  function _loadStatsStateOrNull() {
-    if (window._statsState) return window._statsState;
-    try {
-      const raw = localStorage.getItem("isaac_tracker_state") || localStorage.getItem("state");
-      if (raw) {
-        const obj = JSON.parse(raw);
-        if (obj && obj.stats_state) return obj.stats_state;
-      }
-    } catch {}
-    if (window.__APP_STATE__ && window.__APP_STATE__.stats_state) {
-      return window.__APP_STATE__.stats_state;
-    }
-    return null;
-  }
-
-  function renderStatsCards(stats) {
-    const el = document.getElementById("statsCards");
-    if (!el) return;
-    el.innerHTML = "";
-    const skipKeys = new Set(["bosses_defeated"]);  // se muestra como ratio del header
-    for (const g of stats.globals) {
-      if (skipKeys.has(g.key)) continue;
-      const card = document.createElement("div");
-      card.className = "stat-card";
-      const valText = g.max != null
-        ? `${g.value.toLocaleString("es-ES")} / ${g.max.toLocaleString("es-ES")}`
-        : g.value.toLocaleString("es-ES");
-      const subText = (g.max != null)
-        ? `<div class="sub">faltan ${Math.max(0, g.max - g.value)}</div>
-           <div class="bar"><div style="width:${g.max ? Math.round(100*g.value/g.max) : 0}%"></div></div>`
-        : "";
-      card.innerHTML = `
-        <div class="lab">${g.label_es}</div>
-        <div class="val">${valText}</div>
-        ${subText}
-      `;
-      el.appendChild(card);
-    }
-  }
-
-  function renderBigBossesPanel(stats) {
-    const grid = document.getElementById("bigBossesGrid");
-    const ratio = document.getElementById("bossesRatio");
-    if (!grid) return;
-    grid.innerHTML = "";
-    let defeated = 0;
-    const sprites = (window.BESTIARY_SPRITES) || {};
-    for (const b of stats.big_bosses) {
-      if (b.seen) defeated++;
-      const cell = document.createElement("div");
-      cell.className = "bigboss" + (b.seen ? "" : " unseen");
-      cell.dataset.bigbossIdx = b.idx;
-      const spriteKey = `bigboss_${String(b.idx).padStart(2, "0")}`;
-      const src = sprites[spriteKey] || b.sprite_url || "";
-      const img = src
-        ? `<img src="${src}" alt="${b.name_en}">`
-        : `<div class="placeholder">?</div>`;
-      const k = b.kills == null ? "—" : `×${b.kills.toLocaleString("es-ES")}`;
-      const d = (b.deaths == null || b.deaths === 0) ? "" : `<span class="d">/${b.deaths}</span>`;
-      const markTag = b.mark_completed ? '<span class="mark-tag">✓</span>' : '';
-      cell.innerHTML = `
-        ${markTag}
-        ${img}
-        <span class="name" title="${b.name_es}">${b.name_es}</span>
-        <span class="k">${k}${d}</span>
-      `;
-      cell.addEventListener("mouseenter", ev => showBigBossTooltip(ev, b));
-      cell.addEventListener("mousemove", ev => positionBestiaryTooltip(ev));
-      cell.addEventListener("mouseleave", hideBestiaryTooltip);
-      grid.appendChild(cell);
-    }
-    if (ratio) ratio.textContent = `${defeated} / ${stats.big_bosses.length}`;
-  }
-
-  function _filterAndSortBestiary(stats) {
-    let items = stats.bestiary.filter(e => {
-      if (BESTIARY_FILTER_STATE.filter === "seen" && !e.seen) return false;
-      if (BESTIARY_FILTER_STATE.category !== "all"
-          && e.category !== BESTIARY_FILTER_STATE.category) return false;
-      return true;
-    });
-    const sorters = {
-      kills_desc: (a, b) => b.kills - a.kills || a.name_es.localeCompare(b.name_es),
-      alpha:      (a, b) => a.name_es.localeCompare(b.name_es),
-      chapter:    (a, b) => {
-        const ord = ch => (ch === "extra" ? 99 : ch);
-        return (ord(a.chapter) - ord(b.chapter)) || (b.kills - a.kills);
-      },
-    };
-    items.sort(sorters[BESTIARY_FILTER_STATE.sort] || sorters.chapter);
-    return items;
-  }
-
-  function _renderEnemyCell(e) {
-    const cell = document.createElement("div");
-    cell.className = "enemy" + (e.seen ? "" : " unseen");
-    cell.dataset.spriteId = e.sprite_id;
-    const sprites = (window.BESTIARY_SPRITES) || {};
-    const src = sprites[e.sprite_id];
-    const img = src
-      ? `<img src="${src}" alt="${e.name_en}">`
-      : `<div class="placeholder">?</div>`;
-    const mb = e.category === "miniboss" ? '<span class="mb-tag">MB</span>' : '';
-    const kills = e.seen ? `<span class="kk">×${e.kills.toLocaleString("es-ES")}</span>` : `<span class="kk">×?</span>`;
-    const deaths = (e.seen && e.deaths > 0) ? `<span class="dd">/${e.deaths}</span>` : '';
-    cell.innerHTML = `
-      ${mb}
-      ${img}
-      <span class="name" title="${e.name_es}">${e.name_es}</span>
-      <span class="stats">${kills}${deaths}</span>
-    `;
-    cell.addEventListener("mouseenter", ev => showBestiaryTooltip(ev, e));
-    cell.addEventListener("mousemove", ev => positionBestiaryTooltip(ev));
-    cell.addEventListener("mouseleave", hideBestiaryTooltip);
-    return cell;
-  }
-
-  function renderBestiaryContainer(stats) {
-    const container = document.getElementById("bestiaryContainer");
-    const empty = document.getElementById("bestiaryEmpty");
-    if (!container) return;
-    container.innerHTML = "";
-
-    const items = _filterAndSortBestiary(stats);
-    if (items.length === 0) {
-      empty && empty.classList.remove("hidden");
-      return;
-    }
-    empty && empty.classList.add("hidden");
-
-    if (BESTIARY_FILTER_STATE.sort !== "chapter") {
-      const grid = document.createElement("div");
-      grid.className = "enemy-grid";
-      for (const e of items) grid.appendChild(_renderEnemyCell(e));
-      container.appendChild(grid);
-      return;
-    }
-
-    // Agrupar por capítulo
-    const groups = {};
-    for (const e of items) {
-      const ch = e.chapter;
-      if (!groups[ch]) groups[ch] = [];
-      groups[ch].push(e);
-    }
-    // Totales por capítulo SOBRE EL CATÁLOGO COMPLETO (para "X/Y" honesto, no filtrado)
-    const totalsByChapter = {};
-    for (const e of stats.bestiary) {
-      const ch = e.chapter;
-      if (!totalsByChapter[ch]) totalsByChapter[ch] = { total: 0, seen: 0 };
-      totalsByChapter[ch].total++;
-      if (e.seen) totalsByChapter[ch].seen++;
-    }
-
-    const order = [1, 2, 3, 4, 5, 6, 7, "extra"];
-    for (const ch of order) {
-      if (!groups[ch]) continue;
-      const block = document.createElement("div");
-      block.className = "chapter-block";
-      const t = totalsByChapter[ch] || { total: 0, seen: 0 };
-      const pct = t.total ? Math.round(100 * t.seen / t.total) : 0;
-      const numLabel = (ch === "extra") ? "EXTRA" : `CAP ${ch}`;
-      block.innerHTML = `
-        <div class="chapter-header">
-          <span class="num">${numLabel}</span>
-          <span class="floors">${CHAPTER_LABELS[ch] || ""}</span>
-          <span class="count">${t.seen} / ${t.total}</span>
-          <span class="line"></span>
-          <div class="prog"><div style="width:${pct}%"></div></div>
-        </div>
-        <div class="enemy-grid"></div>
-      `;
-      const grid = block.querySelector(".enemy-grid");
-      for (const e of groups[ch]) grid.appendChild(_renderEnemyCell(e));
-      container.appendChild(block);
-    }
-  }
-
-  function ensureBestiaryTooltip() {
-    if (_bestiaryTooltipEl) return _bestiaryTooltipEl;
-    _bestiaryTooltipEl = document.createElement("div");
-    _bestiaryTooltipEl.id = "bestiaryTooltip";
-    document.body.appendChild(_bestiaryTooltipEl);
-    return _bestiaryTooltipEl;
-  }
-
-  function showBestiaryTooltip(ev, e) {
-    const el = ensureBestiaryTooltip();
-    const catLabel = {enemy: "", miniboss: "(Mini-boss)", boss: "(Boss)"}[e.category] || "";
-    const rows = [`<strong>${e.name_es}</strong> ${catLabel}`];
-    if (e.kills > 0)      rows.push(`Kills: ${e.kills.toLocaleString("es-ES")}`);
-    if (e.deaths > 0)     rows.push(`Te ha matado: ${e.deaths.toLocaleString("es-ES")}`);
-    if (e.hits > 0)       rows.push(`Hits recibidos: ${e.hits.toLocaleString("es-ES")}`);
-    if (e.encounters > 0) rows.push(`Encuentros: ${e.encounters.toLocaleString("es-ES")}`);
-    if (rows.length === 1) rows.push("<em>Sin datos en el save</em>");
-    el.innerHTML = rows.join("<br>");
-    el.style.display = "block";
-    positionBestiaryTooltip(ev);
-  }
-
-  function showBigBossTooltip(ev, b) {
-    const el = ensureBestiaryTooltip();
-    const rows = [`<strong>${b.name_es}</strong>`];
-    if (b.kind === "event")          rows.push("<em>Evento del juego</em>");
-    else if (b.kind === "transformation") rows.push("<em>Transformación</em>");
-    if (b.kills != null && b.kills > 0)         rows.push(`Kills: ${b.kills.toLocaleString("es-ES")}`);
-    if (b.deaths != null && b.deaths > 0)       rows.push(`Te ha matado: ${b.deaths.toLocaleString("es-ES")}`);
-    if (b.hits != null && b.hits > 0)           rows.push(`Hits recibidos: ${b.hits.toLocaleString("es-ES")}`);
-    if (b.encounters != null && b.encounters > 0) rows.push(`Encuentros: ${b.encounters.toLocaleString("es-ES")}`);
-    if (b.mark_completed) rows.push("✓ Completado por algún personaje");
-    if (!b.seen) rows.push("<em>Aún no derrotado</em>");
-    el.innerHTML = rows.join("<br>");
-    el.style.display = "block";
-    positionBestiaryTooltip(ev);
-  }
-
-  function positionBestiaryTooltip(ev) {
-    if (!_bestiaryTooltipEl) return;
-    _bestiaryTooltipEl.style.left = (ev.clientX + 12) + "px";
-    _bestiaryTooltipEl.style.top  = (ev.clientY + 12) + "px";
-  }
-  function hideBestiaryTooltip() {
-    if (_bestiaryTooltipEl) _bestiaryTooltipEl.style.display = "none";
-  }
-
-  function populateBestiaryDatalist(stats) {
-    const dl = document.getElementById("bestiaryNameOptions");
-    if (!dl) return;
-    dl.innerHTML = "";
-    const all = [...stats.big_bosses, ...stats.bestiary];
-    for (const e of all) {
-      const opt = document.createElement("option");
-      opt.value = e.name_es;
-      dl.appendChild(opt);
-    }
-  }
-
-  function _findAndHighlight(name) {
-    const target = String(name || "").trim().toLowerCase();
-    if (!target) return false;
-    const candidates = document.querySelectorAll("#stats-view .enemy, #stats-view .bigboss");
-    let found = null;
-    candidates.forEach(c => {
-      const lab = (c.querySelector(".name")?.textContent || "").trim().toLowerCase();
-      if (!found && lab === target) found = c;
-      else if (!found && lab.includes(target)) found = c;
-    });
-    if (!found) return false;
-    found.scrollIntoView({behavior: "smooth", block: "center"});
-    found.classList.add("jump-highlight");
-    setTimeout(() => found.classList.remove("jump-highlight"), 1800);
-    return true;
-  }
-
-  function bindBestiaryJumpTo() {
-    const input = document.getElementById("bestiaryJumpInput");
-    const btn = document.getElementById("bestiaryJumpBtn");
-    if (input && !input.dataset.bound) {
-      input.dataset.bound = "1";
-      input.addEventListener("keydown", ev => {
-        if (ev.key === "Enter") {
-          ev.preventDefault();
-          _findAndHighlight(input.value);
-        }
-      });
-    }
-    if (btn && input && !btn.dataset.bound) {
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", () => _findAndHighlight(input.value));
-    }
-  }
-
-  function renderStatsTab() {
-    const stats = _loadStatsStateOrNull();
-    if (!stats) return;
-    renderStatsCards(stats);
-    renderBigBossesPanel(stats);
-    renderBestiaryContainer(stats);
-    populateBestiaryDatalist(stats);
-  }
-
-  function bindBestiaryControls() {
-    const f = document.getElementById("bestiarySeenFilter");
-    if (f && !f.dataset.bound) {
-      f.dataset.bound = "1";
-      f.querySelectorAll(".chip").forEach(b => {
-        b.addEventListener("click", () => {
-          f.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
-          b.classList.add("active");
-          BESTIARY_FILTER_STATE.filter = b.dataset.filter;
-          renderStatsTab();
-        });
-      });
-    }
-    const c = document.getElementById("bestiaryCategoryFilter");
-    if (c && !c.dataset.bound) {
-      c.dataset.bound = "1";
-      c.querySelectorAll(".chip").forEach(b => {
-        b.addEventListener("click", () => {
-          c.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
-          b.classList.add("active");
-          BESTIARY_FILTER_STATE.category = b.dataset.cat;
-          renderStatsTab();
-        });
-      });
-    }
-    const o = document.getElementById("bestiarySort");
-    if (o && !o.dataset.bound) {
-      o.dataset.bound = "1";
-      o.addEventListener("change", ev => {
-        BESTIARY_FILTER_STATE.sort = ev.target.value;
-        renderStatsTab();
-      });
-    }
-    bindBestiaryJumpTo();
-  }
-  bindBestiaryControls();
+  /* (sección Estadísticas eliminada — ver commit/git history para el código previo) */
 
   // Tabs
   function switchTab(view) {
@@ -6597,7 +6076,6 @@
     });
     localStorage.setItem(ACTIVE_TAB_KEY, view);
     hideTooltip();
-    if (view === 'stats') renderStatsTab();
   }
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => switchTab(t.dataset.view));
@@ -7571,7 +7049,11 @@
   setTaintedVisible(localStorage.getItem(TAINTED_VISIBLE_KEY) === '1');
   renderAchievementsView(_lastAchUnlocked);
   const savedTab = localStorage.getItem(ACTIVE_TAB_KEY);
-  if (savedTab) switchTab(savedTab);
+  // Si el tab persistido ya no existe (caso: 'stats' fue eliminado), abrir
+  // el tab por defecto en su lugar para no dejar la UI sin pestaña activa.
+  const tabBtnExists = savedTab && document.querySelector(`.tab[data-view="${savedTab}"]`);
+  if (tabBtnExists) switchTab(savedTab);
+  else switchTab('challenges');
 
   // ===== Items tab — renderer + tooltip =====
   // ITEMS_DATA is loaded from items_inline.js as `window.ITEMS_DATA`:
@@ -7629,6 +7111,9 @@
       cell.dataset.itemId = it.id;
       cell.dataset.itemName = it.name;
       cell.dataset.itemDesc = it.desc || '';
+      cell.dataset.itemUnlock = it.unlock || '';
+      cell.dataset.itemAchId = (it.achId === null || it.achId === undefined) ? '' : it.achId;
+      cell.dataset.itemInitial = (it.achId === null || it.achId === undefined) ? '1' : '0';
       const img = document.createElement('img');
       img.src = 'item_icons/' + it.sprite;
       img.alt = it.name;
@@ -7938,6 +7423,18 @@
           <div class="tt-block-body">${linkifyText(priorityNote)}</div>
         </div>`;
     }
+    // Bloque de desbloqueo: mismo formato que en trinkets para coherencia.
+    // Items iniciales (achId === null) muestran "Inicial - disponible desde el principio".
+    const itemUnlock = cell.dataset.itemUnlock || '';
+    const itemInitial = cell.dataset.itemInitial === '1';
+    if (itemUnlock) {
+      const unlockLabel = itemInitial ? '⭐ Inicial' : '🔑 Cómo conseguirlo';
+      html += `
+        <div class="tt-block unlock">
+          <div class="tt-block-label">${unlockLabel}</div>
+          <div class="tt-block-body">${linkifyText(itemUnlock)}</div>
+        </div>`;
+    }
     html += `</div>`;
     tooltipEl.innerHTML = html;
     if (typeof _hideTooltipsFromLevel === 'function') _hideTooltipsFromLevel(1);
@@ -8208,9 +7705,6 @@
     if (state && state.cards_state && typeof state.cards_state === 'object') {
       window._cardsState = state.cards_state;
     }
-    if (state && state.stats_state && typeof state.stats_state === 'object') {
-      window._statsState = state.stats_state;
-    }
     // render() appends to #list without clearing — clear it ourselves so a
     // second call doesn't produce a duplicate tier list. renderCharacterGrid
     // already clears its own container, so we don't need to touch it.
@@ -8223,7 +7717,6 @@
     renderTrinketsGrid();
     renderCardsGrouped();
     renderDonations(state);
-    renderStatsTab();
     _hideTrackerLoading();
   };
 
@@ -8312,6 +7805,151 @@
       _loadInitialFromPython();
     }
   });
+
+  // --- Auto-update banner (only does anything inside IsaacTracker.exe) ---
+  (function () {
+    let _payload = null;
+    let _downloading = false;
+
+    function _setText(t) {
+      const el = document.getElementById('update-banner-text');
+      if (el) el.textContent = t;
+    }
+    function _setError(isErr) {
+      const banner = document.getElementById('update-banner');
+      if (banner) banner.classList.toggle('is-error', !!isErr);
+    }
+    function _showProgress(show) {
+      const w = document.getElementById('update-banner-progress-wrap');
+      const t = document.getElementById('update-banner-progress-text');
+      const btn = document.getElementById('update-banner-btn');
+      if (w) w.style.display = show ? '' : 'none';
+      if (t) t.style.display = show ? '' : 'none';
+      if (btn) btn.style.display = show ? 'none' : '';
+    }
+    function _showBanner(payload) {
+      _payload = payload;
+      const banner = document.getElementById('update-banner');
+      if (!banner) return;
+      _setError(false);
+      _setText('Nueva versión ' + payload.version + ' disponible');
+      const btn = document.getElementById('update-banner-btn');
+      if (btn) {
+        btn.textContent = payload.mode === 'manual' ? 'Descargar manualmente' : 'Actualizar ahora';
+        btn.disabled = false;
+        btn.style.display = '';
+      }
+      const dismiss = document.getElementById('update-banner-dismiss');
+      if (dismiss) dismiss.style.display = '';
+      _showProgress(false);
+      banner.style.display = '';
+    }
+    function _hideBanner() {
+      const banner = document.getElementById('update-banner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    // Called by Python from updater.apply_update during download.
+    window._updateProgress = function (downloaded, total) {
+      const fill = document.getElementById('update-banner-progress-fill');
+      const text = document.getElementById('update-banner-progress-text');
+      if (total && total > 0) {
+        const pct = Math.min(100, Math.round((downloaded / total) * 100));
+        if (fill) fill.style.width = pct + '%';
+        if (text) text.textContent = pct + '%';
+      } else {
+        const mb = (downloaded / (1024 * 1024)).toFixed(1);
+        if (text) text.textContent = mb + ' MB';
+      }
+    };
+
+    async function _onUpdateClick() {
+      if (!_payload || _downloading) return;
+      const btn = document.getElementById('update-banner-btn');
+
+      if (_payload.mode === 'manual') {
+        if (btn) btn.disabled = true;
+        try {
+          await window.pywebview.api.apply_update(_payload.asset_url, _payload.html_url || '', 'manual');
+          _setText('Descarga abierta en el navegador.');
+          if (btn) btn.style.display = 'none';
+        } catch (e) {
+          if (btn) btn.disabled = false;
+        }
+        return;
+      }
+
+      _downloading = true;
+      if (btn) btn.disabled = true;
+      _showProgress(true);
+      _setText('Descargando versión ' + _payload.version);
+
+      try {
+        const res = await window.pywebview.api.apply_update(_payload.asset_url, _payload.html_url || '', 'auto');
+        if (res && res.ok && res.should_exit) {
+          _setText('Actualización lista. Reiniciando…');
+          _showProgress(false);
+          if (btn) btn.style.display = 'none';
+          const dismiss = document.getElementById('update-banner-dismiss');
+          if (dismiss) dismiss.style.display = 'none';
+          setTimeout(() => {
+            try { window.pywebview.api.shutdown_for_update(); } catch (e) {}
+          }, 900);
+          return;
+        }
+        if (res && res.fallback === 'browser') {
+          _setText('Descarga abierta en el navegador. Cierra el tracker y reemplaza el archivo.');
+          _showProgress(false);
+          if (btn) btn.style.display = 'none';
+          _downloading = false;
+          return;
+        }
+        _setError(true);
+        _setText('No se pudo descargar la actualización.');
+        _showProgress(false);
+        if (btn) {
+          btn.style.display = '';
+          btn.disabled = false;
+          btn.textContent = 'Reintentar';
+        }
+        _downloading = false;
+      } catch (e) {
+        _setError(true);
+        _setText('Error al actualizar.');
+        _showProgress(false);
+        if (btn) {
+          btn.style.display = '';
+          btn.disabled = false;
+          btn.textContent = 'Reintentar';
+        }
+        _downloading = false;
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target) return;
+      if (e.target.id === 'update-banner-btn') _onUpdateClick();
+      else if (e.target.id === 'update-banner-dismiss') _hideBanner();
+    });
+
+    async function _checkForUpdate() {
+      if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.check_update) return;
+      try {
+        const payload = await window.pywebview.api.check_update();
+        if (payload && payload.version && payload.asset_url) {
+          _showBanner(payload);
+        }
+      } catch (e) {
+        // Silent — never bother the user with check failures.
+      }
+    }
+
+    // Run after pywebviewready, slightly delayed so the initial-state loading
+    // overlay gets to render first and the user sees the app before the banner.
+    window.addEventListener('pywebviewready', () => {
+      setTimeout(_checkForUpdate, 1500);
+    });
+  })();
 </script>
 </body>
 </html>

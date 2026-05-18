@@ -45,7 +45,6 @@ a = Analysis(
         ('tracker/assets/items_inline.js', 'assets'),
         ('tracker/assets/trinkets_inline.js', 'assets'),
         ('tracker/assets/cards_inline.js', 'assets'),
-        ('tracker/assets/bestiary_inline.js', 'assets'),
     ],
     hiddenimports=[
         'watchdog.observers.read_directory_changes',

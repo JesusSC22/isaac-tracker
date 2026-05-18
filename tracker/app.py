@@ -19,6 +19,8 @@ from typing import Any
 
 import webview
 
+from tracker import updater
+from tracker._version import __version__
 from tracker.exceptions import SaveNotFoundError, SaveParseError
 from tracker.save_locator import find_steam_userdata_roots, locate_save_file
 from tracker.save_parser import parse_save
@@ -161,6 +163,54 @@ class TrackerApi:
                 "characters_state": {},
                 "meta": {"error": str(e)},
             }
+
+    def get_app_version(self) -> str:
+        return __version__
+
+    def check_update(self) -> dict[str, Any] | None:
+        """Synchronous check (5s network timeout). Returns the update payload
+        or None. Never raises — any failure is swallowed and reported as None.
+        """
+        try:
+            return updater.check_for_update()
+        except Exception:
+            logger.exception("check_update failed unexpectedly")
+            return None
+
+    def apply_update(self, asset_url: str, html_url: str = "", mode: str = "auto") -> dict[str, Any]:
+        """Either download+stage swap (auto mode) or open the release page
+        in the user's browser (manual mode). Pushes progress to JS via
+        window._updateProgress(downloaded, total) during auto download."""
+        if mode == "manual":
+            ok = updater.open_release_page(html_url)
+            return {"ok": ok, "fallback": "browser"}
+
+        def _on_progress(downloaded: int, total: int | None) -> None:
+            if not self._window:
+                return
+            try:
+                t = "null" if total is None else str(int(total))
+                self._window.evaluate_js(
+                    f"window._updateProgress && window._updateProgress({int(downloaded)}, {t})"
+                )
+            except Exception:
+                pass
+
+        try:
+            return updater.apply_update(asset_url, _on_progress)
+        except Exception:
+            logger.exception("apply_update failed unexpectedly")
+            return {"ok": False, "error": "unexpected"}
+
+    def shutdown_for_update(self) -> None:
+        """JS calls this after seeing apply_update return ok+should_exit;
+        we destroy the window so the swap script can take over."""
+        if not self._window:
+            return
+        try:
+            self._window.destroy()
+        except Exception:
+            logger.exception("window.destroy failed during shutdown_for_update")
 
 
 def _push_state(api: TrackerApi, window: webview.Window) -> None:
