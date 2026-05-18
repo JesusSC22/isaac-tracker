@@ -8,6 +8,7 @@ import atexit
 import ctypes
 import json
 import logging
+import os
 import shutil
 import sys
 import tempfile
@@ -204,13 +205,20 @@ class TrackerApi:
 
     def shutdown_for_update(self) -> None:
         """JS calls this after seeing apply_update return ok+should_exit;
-        we destroy the window so the swap script can take over."""
-        if not self._window:
-            return
-        try:
-            self._window.destroy()
-        except Exception:
-            logger.exception("window.destroy failed during shutdown_for_update")
+        we destroy the window AND force-exit so the swap script can proceed.
+
+        window.destroy() alone is not enough: the watchdog SaveWatcher uses a
+        non-daemon Observer thread, and pywebview/WebView2 keeps host objects
+        alive, so Python lingers past the window close — and the swap .bat
+        is polling for our PID to leave the process table. The Timer-driven
+        os._exit gives pywebview ~0.6s to tear down cleanly, then nukes us.
+        """
+        if self._window:
+            try:
+                self._window.destroy()
+            except Exception:
+                logger.exception("window.destroy failed during shutdown_for_update")
+        threading.Timer(0.6, lambda: os._exit(0)).start()
 
 
 def _push_state(api: TrackerApi, window: webview.Window) -> None:

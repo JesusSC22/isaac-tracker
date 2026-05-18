@@ -167,10 +167,19 @@ def _download_to(url: str, dest: Path, on_progress: Callable[[int, int | None], 
 
 
 _SWAP_SCRIPT = """@echo off
+set WAITED=0
 set RETRIES=15
 :wait
 timeout /t 1 /nobreak >nul
-tasklist /FI "IMAGENAME eq {exe_name}" 2>nul | find /I "{exe_name}" >nul && goto wait
+tasklist /FI "IMAGENAME eq {exe_name}" 2>nul | find /I "{exe_name}" >nul
+if %ERRORLEVEL% NEQ 0 goto swap
+set /a WAITED+=1
+if %WAITED% GEQ 12 (
+    taskkill /F /IM "{exe_name}" >nul 2>&1
+    timeout /t 2 /nobreak >nul
+    goto swap
+)
+goto wait
 :swap
 move /Y "%~dp0{new_exe_name}" "%~dp0{exe_name}" >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
@@ -196,12 +205,14 @@ def _write_swap_script(exe_dir: Path) -> Path:
 
 
 def _launch_detached(script_path: Path) -> None:
-    """Launch the swap script detached so it survives our process exit."""
+    """Launch the swap script detached so it survives our process exit.
+    CREATE_NO_WINDOW hides the cmd console; we don't pair it with
+    DETACHED_PROCESS because the two flags are mutually exclusive per MSDN
+    and combining them shows the console window anyway."""
     flags = 0
     if sys.platform == "win32":
-        flags = getattr(subprocess, "DETACHED_PROCESS", 0x00000008) | \
-                getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200) | \
-                getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | \
+                getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
     subprocess.Popen(
         ["cmd", "/c", str(script_path)],
         creationflags=flags,
