@@ -190,6 +190,10 @@ if %ERRORLEVEL% NEQ 0 (
     )
     exit /b 1
 )
+rem Give Windows a moment to fully release the freshly-renamed .exe.
+rem Without this, PyInstaller's bootloader sometimes fails with "Failed to
+rem load Python DLL" because the file isn't yet visible to LoadLibrary.
+timeout /t 2 /nobreak >nul
 start "" "%~dp0{exe_name}"
 (goto) 2>nul & del "%~f0"
 """
