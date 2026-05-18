@@ -1010,8 +1010,43 @@
     .ach-search-empty.visible {
       display: block;
     }
-    /* Items y categorías filtradas por búsqueda */
-    .ach-item.filtered-out {
+    /* Filtro por estado (Todos / Completados / Pendientes) */
+    .ach-status-filter {
+      max-width: 720px;
+      margin: 0 auto 22px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .ach-status-btn {
+      flex: 1 1 0;
+      min-width: 110px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #1f2c4a 0%, #19243f 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: #cfd5e8;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+    }
+    .ach-status-btn:hover {
+      border-color: rgba(212, 166, 74, 0.45);
+      color: #fff;
+    }
+    .ach-status-btn.active {
+      background: linear-gradient(135deg, #d4a64a 0%, #b88a2e 100%);
+      border-color: rgba(212, 166, 74, 0.85);
+      color: #1a1a2e;
+      box-shadow: 0 0 12px rgba(212, 166, 74, 0.35);
+    }
+    /* Items y categorías filtradas por búsqueda o estado */
+    .ach-item.filtered-out,
+    .ach-item.status-filtered-out {
       display: none;
     }
     .ach-category.filtered-empty {
@@ -1067,21 +1102,37 @@
     .ach-category-toggle {
       font-size: 0.85rem;
       color: #aaa;
-      transition: transform 0.2s;
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
       display: inline-block;
+      transform-origin: 50% 50%;
     }
     .ach-category.collapsed .ach-category-toggle {
       transform: rotate(-90deg);
     }
-    .ach-category.collapsed .ach-category-body {
-      display: none;
+    /* Wrapper que anima la altura: grid-template-rows 1fr <-> 0fr respeta
+       la altura real del contenido sin medir nada en JS. El body interno
+       lleva overflow:hidden y min-height:0 para que el clip sea limpio. */
+    .ach-category-body-wrap {
+      display: grid;
+      grid-template-rows: 1fr;
+      transition: grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .ach-category.collapsed .ach-category-body-wrap {
+      grid-template-rows: 0fr;
     }
     .ach-category-body {
+      min-height: 0;
+      overflow: hidden;
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
       gap: 1px;
       background: rgba(255,255,255,0.05);
       padding: 1px;
+      opacity: 1;
+      transition: opacity 0.22s ease-out;
+    }
+    .ach-category.collapsed .ach-category-body {
+      opacity: 0;
     }
     .ach-item {
       display: flex;
@@ -1539,6 +1590,7 @@
     .char-grid-cell.priority {
       box-shadow: inset 0 0 0 3px #f5b73a, 0 0 4px rgba(245,183,58,0.35);
       background: #4a5a7e;
+      z-index: 3;
     }
     /* Strong inverted hierarchy: undone cells go FULL black-and-white and
        lose their bright background; done cells get a subtle green tint
@@ -1601,7 +1653,7 @@
       background: #2a3854;
     }
     .char-grid-cell:hover:not(.empty) {
-      outline: 2px solid #d4a64a;
+      outline: 2px solid #ff5060;
       outline-offset: -2px;
       z-index: 1;
     }
@@ -1620,23 +1672,38 @@
     .char-grid-cell.empty.col-highlight {
       background: #45598a;
     }
-    /* Glow dorado fuerte para celdas resaltadas — se ve encima del fondo
+    /* Glow rojo fuerte para celdas resaltadas — se ve encima del fondo
        verde de las completadas. Clase repetida para ganar en especificidad
        a .done (que también define box-shadow). */
     .char-grid-cell.row-highlight.row-highlight,
     .char-grid-cell.col-highlight.col-highlight {
       box-shadow:
-        inset 0 0 0 2px rgba(255, 220, 130, 0.95),
-        0 0 0 1px rgba(255, 200, 90, 0.85),
-        0 0 14px 3px rgba(255, 200, 90, 0.8),
-        0 0 28px 6px rgba(255, 200, 90, 0.45);
+        inset 0 0 0 2px rgba(255, 120, 120, 0.95),
+        0 0 0 1px rgba(255, 80, 80, 0.85),
+        0 0 14px 3px rgba(255, 80, 80, 0.8),
+        0 0 28px 6px rgba(255, 80, 80, 0.45);
       z-index: 2;
+    }
+    /* Celda con prioridad dentro de una fila/columna en hover: mantenemos
+       el borde amarillo de prioridad SIEMPRE visible por encima del glow
+       rojo del hover, y le añadimos su propio glow amarillo para que se
+       distinga aún más. z-index alto para que la celda priority se vea por
+       encima del glow rojo del resto del row/col. */
+    .char-grid-cell.priority.row-highlight.row-highlight,
+    .char-grid-cell.priority.col-highlight.col-highlight {
+      box-shadow:
+        inset 0 0 0 3px #f5b73a,
+        0 0 0 1px rgba(245, 183, 58, 0.9),
+        0 0 8px 2px rgba(245, 183, 58, 0.75),
+        0 0 18px 5px rgba(255, 80, 80, 0.55),
+        0 0 30px 8px rgba(255, 80, 80, 0.3);
+      z-index: 4;
     }
     /* Celda hovereada (intersección): se resalta en color cálido para distinguirla */
     @keyframes hovered-cell-pulse {
       0%, 100% {
         background-color: #b8385e;
-        outline-color: #d4a64a;
+        outline-color: #d44a4a;
       }
       50% {
         background-color: #d44a78;
@@ -1646,7 +1713,7 @@
     @keyframes hovered-cell-pulse-priority {
       0%, 100% {
         background-color: #c94472;
-        outline-color: #d4a64a;
+        outline-color: #d44a4a;
       }
       50% {
         background-color: #e2588a;
@@ -1678,18 +1745,18 @@
     .char-grid-col-header.col-highlight {
       background: #5a72a8;
       box-shadow:
-        inset 0 -4px 0 #f5b73a,
-        inset 0 0 0 1px rgba(245,183,58,0.7),
-        0 4px 14px rgba(255,200,90,0.6);
+        inset 0 -4px 0 #e94560,
+        inset 0 0 0 1px rgba(233,69,96,0.7),
+        0 4px 14px rgba(255,80,80,0.6);
       z-index: 2;
       position: relative;
     }
     .char-grid-row-header.row-highlight {
       background: #2e4d8a;
       box-shadow:
-        inset -4px 0 0 #f5b73a,
-        inset 0 0 0 1px rgba(245,183,58,0.7),
-        4px 0 14px rgba(255,200,90,0.6);
+        inset -4px 0 0 #e94560,
+        inset 0 0 0 1px rgba(233,69,96,0.7),
+        4px 0 14px rgba(255,80,80,0.6);
       z-index: 2;
       position: relative;
     }
@@ -2117,6 +2184,11 @@
       <input type="text" id="achSearchInput" placeholder="Buscar logros (nombre, descripción o #ID)…" autocomplete="off" spellcheck="false">
       <button type="button" class="ach-search-clear" id="achSearchClear" aria-label="Limpiar búsqueda">✕</button>
     </div>
+    <div class="ach-status-filter" role="group" aria-label="Filtrar por estado">
+      <button type="button" class="ach-status-btn" data-status="all">Todos</button>
+      <button type="button" class="ach-status-btn" data-status="done">Completados</button>
+      <button type="button" class="ach-status-btn" data-status="todo">Pendientes</button>
+    </div>
     <div class="ach-search-empty" id="achSearchEmpty">No hay resultados para tu búsqueda.</div>
 
     <div id="achievements-list"></div>
@@ -2319,7 +2391,7 @@
       tainted: false,
       tier: "B",
       unlock: "Proceso de 3 pasos: 1) Matar al boss del piso 1 en menos de 1 minuto para spawnear la Broken Shovel. 2) Completar Boss Rush con la Broken Shovel para obtener Mom's Shovel. 3) En Dark Room, usar Mom's Shovel sobre una mancha de tierra específica.",
-      priority: "Personaje dual (cuerpo bone con Bone Club melee + alma ranged llamada The Soul que se separa). Sus completions desbloquean Hallowed Ground (Holy Mantle aura cuando estás quieto — top tier defensivo), Book of the Dead (genera huesos/moscas familiares según los enemigos que mates), Spirit Shackles (al morir revives como espíritu y al limpiar la sala vuelves a tu cuerpo, cooldown de un piso), Jaw Bone (??? — boomerang) y Bone Spurs (Mother — los pies dejan estacas de hueso al moverte).",
+      priority: "Personaje dual (cuerpo bone con Bone Club melee + alma ranged llamada The Soul que se separa). Sus completions desbloquean Hallowed Ground (Holy Mantle aura cuando estás quieto — top tier defensivo), Book of the Dead (genera huesos/moscas familiares según los enemigos que mates), Spirit Shackles (Beast — al morir te conviertes en fantasma; tras 10s la forma fantasma vuelve a tu cuerpo si no muere antes. El item se reactiva al recoger ½ Soul/Black Heart), Jaw Bone (??? — familiar boomerang que atraviesa moscas y rebota en otros enemigos) y Bone Spurs (Mother — los enemigos al morir generan 1-2 huesos flotantes que bloquean disparos y dañan a otros enemigos por contacto).",
       sprite: "data:image/png;base64,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",
     },
     {
@@ -2364,7 +2436,7 @@
       tainted: true,
       tier: "S",
       unlock: "Llegar a Home y usar la Red Key (1ª vez) o Cracked Key en el armario de la pared del pasillo, jugando como Cain. Requiere haber derrotado a Mother previamente.",
-      priority: "Su mecánica innata es el Bag of Crafting: no puede coger items de pedestal normalmente; en su lugar mete los pickups (corazones, monedas, llaves, bombas, pills, cartas, trinkets) en la bolsa de 8 huecos y al combinarlos genera un item según la receta — el sistema más roto del juego. Sus completions desbloquean Bag of Crafting como item del pool (Delirium — otros personajes pueden encontrarlo como active), Gilded Key (las 4 marks compartidas — chance de que los cofres normales pasen a Gold Chests), Lucky Sack (Mother — saco familiar con pickups) y Blue Key (Beast — chance de que las puertas spawneen una extra Blue Door con sala de recompensa). Top 1 prioridad de tainted.",
+      priority: "Su mecánica innata es el Bag of Crafting: no puede coger items de pedestal normalmente; en su lugar mete los pickups (corazones, monedas, llaves, bombas, pills, cartas, trinkets) en la bolsa de 8 huecos y al combinarlos genera un item según la receta — el sistema más roto del juego. Sus completions desbloquean Bag of Crafting como item del pool (Delirium — otros personajes pueden encontrarlo como active), Gilded Key (las 4 marks compartidas — trinket: todos los cofres nuevos pasan a ser Golden Chests con drops mejorados), Lucky Sack (Mother — trinket: spawnea un Grab Bag de pickups al pasar a un piso nuevo) y Blue Key (Beast — trinket: las puertas con cerradura no gastan llave, pero te llevan a una sala intermedia con enemigos antes de continuar). Top 1 prioridad de tainted.",
       sprite: "data:image/png;base64,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",
     },
     {
@@ -2409,7 +2481,7 @@
       tainted: true,
       tier: "B",
       unlock: "Llegar a Home y usar la Red Key/Cracked Key en el armario de la pared del pasillo, jugando como Judas. Requiere haber derrotado a Mother previamente.",
-      priority: "No tiene corazones rojos (empieza con 3 black hearts y vuelo innato). Su starting active es Dark Arts: al usarlo aturde a todos los enemigos de la sala y te da multiplicador de damage temporal; cada enemigo que mates durante el efecto suma damage permanente escalable. Curva de aprendizaje pero potente. Sus completions desbloquean Dark Arts como item del pool (Delirium), Sanguine Bond (Beast — cada black heart pickup vale 2 black hearts; tras 13 acumulados, TODOS los hearts del juego pasan a ser black hearts), Number Magnet (Mother — imán para monedas a distancia y más chance de drops de moneda) y Black Sack (Mega Satan).",
+      priority: "No tiene corazones rojos (empieza con 3 black hearts y vuelo innato). Su starting active es Dark Arts: al usarlo aturde a todos los enemigos de la sala y te da multiplicador de damage temporal; cada enemigo que mates durante el efecto suma damage permanente escalable. Curva de aprendizaje pero potente. Sus completions desbloquean Dark Arts como item del pool (Delirium), Sanguine Bond (Beast — pasivo: genera espinas en cada Devil Room; al pisarlas pierdes ½ corazón pero hay tabla de recompensas aleatoria — +daño, monedas, black hearts, item del pool Devil o transformación Leviathan), Number Magnet (Mother — trinket: +10% probabilidad de Devil Room por piso, bloquea a Krampus y reemplaza el layout de la Devil Room con uno especial cargado de items y black hearts) y Black Sack (Mega Satan).",
       sprite: "data:image/png;base64,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",
     },
     {
@@ -2418,7 +2490,7 @@
       tainted: true,
       tier: "B",
       unlock: "Llegar a Home y usar la Red Key/Cracked Key en el armario de la pared del pasillo, jugando como Lazarus. Requiere haber derrotado a Mother previamente.",
-      priority: "Tiene Flip como starting active: alterna entre Tainted Lazarus (vivo) y Dead Tainted Lazarus — los dos disparan lágrimas pero tienen stats e inventario separado, así que efectivamente juegas dos builds en una misma run. Cuando una forma muere, te quedas atrapado en la otra. Sus completions desbloquean Flip como item del pool (Delirium — para otros personajes, revela un segundo item alternativo debajo de cada pedestal y eliges cuál coger), Salvation (Beast — pasivo: al recibir daño dispara un haz de luz que daña a un enemigo) y Torn Card (Mother — carta tipo onda de lágrimas circular). Mecánica creativa.",
+      priority: "Tiene Flip como starting active: alterna entre Tainted Lazarus (vivo) y Dead Tainted Lazarus — los dos disparan lágrimas pero tienen stats e inventario separado, así que efectivamente juegas dos builds en una misma run. Cuando una forma muere, te quedas atrapado en la otra. Sus completions desbloquean Flip como item del pool (Delirium — para otros personajes, revela un segundo item alternativo debajo de cada pedestal y eliges cuál coger), Salvation (Beast — pasivo: aura permanente alrededor de Isaac que dispara rayos de luz a enemigos cercanos; cada vez que recibes daño en el piso el aura crece, hasta 10 veces) y Torn Card (Mother — trinket: cada 15 disparos lanzas una lágrima combinada Ipecac + My Reflection con alcance enorme). Mecánica creativa.",
       sprite: "data:image/png;base64,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",
     },
     {
@@ -2454,7 +2526,7 @@
       tainted: true,
       tier: "B",
       unlock: "Llegar a Home y usar la Red Key/Cracked Key en el armario de la pared del pasillo, jugando como Azazel. Requiere haber derrotado a Mother previamente.",
-      priority: "Brimstone más corto que el de Azazel normal por defecto, pero chargeable: al mantener fire se carga y al soltar dispara un Brimstone gigantesco que cubre media pantalla y atraviesa obstáculos. Vuelo innato. Personaje muy potente para clearing. Sus completions desbloquean Wicked Crown (-1 contenedor rojo permanente a cambio de damage up considerable), Hemoptysis (Delirium — active que escupe una ola de sangre AoE), Azazel's Rage (Beast — pasivo que tras disparar varias lágrimas reemplaza la siguiente por un Brimstone) y Azazel's Stump (Mother).",
+      priority: "Brimstone más corto que el de Azazel normal por defecto, pero chargeable: al mantener fire se carga y al soltar dispara un Brimstone gigantesco que cubre media pantalla y atraviesa obstáculos. Vuelo innato. Personaje muy potente para clearing. Sus completions desbloquean Wicked Crown (las 4 marks compartidas — trinket: genera una Treasure Room y una Shop adicionales en Sheol), Hemoptysis (Delirium — active que escupe una ola de sangre AoE), Azazel's Rage (Beast — pasivo que tras disparar varias lágrimas reemplaza la siguiente por un Brimstone) y Azazel's Stump (Mother).",
       sprite: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAABACAYAAAC6CT8CAAAShUlEQVR42s2baYxlx1XHf1V117f0Nj09Hnvi2JPYzsSJg8meKFESTDAkAYIIKGxCAgmB8gGxI4UPgBAEgvKNgJBAQkIBZJEgBMZJCHGCjE2cWJDNi8bLxOOe6e7pnn7rXWrhw6u6c9+b7smMY5Fc6en1u1vVqXPO//zPOdXw/3so//1awPmPAY778/KFGETynXH8DPBOQHiBfxro+/mJb8eEhB/8oE978YTXlABe57VkAe3//l9/75/738f876gl2GHjiG+nRoL5vQpwcRzbbrdrhRAa2AH+GTgNVMB/AL/3fFf5StfCJILtL153wBJwxK/64vvO+/PXA/vACFj3JvaJPM9dnudiMBhgjME5F54zfuxHgB/xzw697yk/bhhfAhPggh/LfiurHvnvDwCFH3TqPxP/fQOw7K//qr//C0AJmG636zY2NtzKyorrdrvBFK2frG6958f9s6f977H/Hvl3/81B5hBWvq2dlwM/BbwBuB34ih+s7ScOeDPwLi9kvPBde//5Hv/MCvCDXrukaSriOJ6ZgnOiLMvGP7Isk0opZYyJ/TjXA+8BOq33Jy2fS4GB19ihCPhzLdi96F8UFkK2fn/Ar27VUr9trbhb+Lv53ev13MbGRqOt9j1Hjx51a2trc8+KS88eNs5PtH3qLcCfelVGXvXXATf761PgceBvgY/4c0eAe4CbgJv6/b6L41g45zDGYIxhOp0aay2AyrLMdjode/HiRQWIPM9JkoSgKWMMVVVRFAV1XbOysoIxhuFwSGvyweQ51elwY5KwHsecKUv7+cHACjjtYDvypvUW77wIIXDOoZQijmOcczjnulVVvRo4C3zSa+vFwNsCkAghhJQSKSVKqZlgWivtASCOY5kkiRRito5JkqCUwjmHEAIhBFEUEa7XdY1fEARIAbKvFBYYG0MkBKmUXBfHDI0J0H4bcJto+ckcuq2srIgTJ05IgKqqePzxx23L79oo1fiBEIJ+v08URSh1yV3LsiSKIqIoYmdnByEER44cmRPIGIPWmul0SlmWB/rDD6yusqs1D860B8D3r66yW9c8NBohwDpwURs0sixDKcV4PCZMcjKZUJYleacj66pCa91cS5JEBe2Ec1EUIaVsNA405zwAXDbZYK4eMC6LGceThI04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",
     },
     {
@@ -2481,7 +2553,7 @@
       tainted: true,
       tier: "C",
       unlock: "Llegar a Home y usar la Red Key/Cracked Key en el armario de la pared del pasillo, jugando como Lilith. Requiere haber derrotado a Mother previamente.",
-      priority: "Lleva blindfold permanente como Lilith normal (no puede disparar lágrimas). Empieza con Gello, un familiar bebé atado a ella por un cordón umbilical: Gello dispara las lágrimas por ella y el cordón daña enemigos por contacto. Si recibe demasiado daño el cordón se rompe y Gello se separa; tras un tiempo se reconecta. Vuelo innato. Sus completions desbloquean Twisted Pair (Beast — dos familiars tipo cabeza que disparan lágrimas), Adoption Papers (Mother — todos los familiars hacen ×4 daño y disparan x2 más rápido) y Gello como item del pool (Delirium — otros personajes pueden encontrarlo como familiar).",
+      priority: "Lleva blindfold permanente como Lilith normal (no puede disparar lágrimas). Empieza con Gello, un familiar bebé atado a ella por un cordón umbilical: Gello dispara las lágrimas por ella y el cordón daña enemigos por contacto. Si recibe demasiado daño el cordón se rompe y Gello se separa; tras un tiempo se reconecta. Vuelo innato. Sus completions desbloquean Twisted Pair (Beast — dos familiars que disparan lágrimas con tus efectos y stats; cada uno inflige 37.5% de tu daño), Adoption Papers (Mother — trinket: tiendas y Black Markets ahora venden familiars rebajados a 10 monedas, del pool Baby Shop) y Gello como item del pool (Delirium — otros personajes pueden encontrarlo como familiar).",
       sprite: "data:image/png;base64,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",
     },
     {
@@ -2490,7 +2562,7 @@
       tainted: true,
       tier: "C",
       unlock: "Llegar a Home y usar la Red Key/Cracked Key en el armario de la pared del pasillo, jugando como Eden. Requiere haber derrotado a Mother previamente.",
-      priority: "Random extrema: todas las stats e items se rerollean cada vez que recibe daño — un solo golpe puede destruir tu build entera. Caos absoluto y castigo brutal. Sus completions desbloquean TMTRAINER (Beast — todos los items que recojas a partir de cogerlo se vuelven 'glitched' con efectos aleatorios infinitos, top tier de caos), Modeling Clay (Mother — al inicio de cada piso te da una copia temporal de un pasivo random de cualquier pool) y Corrupted Data (Delirium — pasivo glitched con efectos múltiples impredecibles).",
+      priority: "Random extrema: todas las stats e items se rerollean cada vez que recibe daño — un solo golpe puede destruir tu build entera. Caos absoluto y castigo brutal. Sus completions desbloquean TMTRAINER (Beast — todos los items que recojas a partir de cogerlo se vuelven 'glitched' con efectos aleatorios infinitos, top tier de caos), Modeling Clay (Mother — trinket: al entrar a cada sala, 50% de imitar el efecto de un pasivo aleatorio del pool de esa sala durante esa habitación) y Corrupted Data (Delirium — desbloquea el set de items glitched con efectos impredecibles cuando llevas TMTRAINER).",
       sprite: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADcAAABACAYAAAC+/O8/AAAd80lEQVR42r2baZBkV3Xnf3d5L18ute9V3dX73upFajZ1I6HdQgiEwQYZEHjDxnbYMcx4wmPH+IPDMeGYAO8ez9gME8aEwCBbINCGGFkgtSRare5Wr9Vb9VLVtW+ZWZn5tnvvfMisptSWQJIVcyNuZVW99Sz33P/5n5Pw5oYGso3pvdYJuZy30/e9s9kg47LZrMtms7X6ZxBmMr5TSjqgAnzkJzxn+TMEb3HoN3ieaMy0MQHwfX+jlLLHOecJIWqArFbDdwKFZdeqxqdc+oeUQlnr3gVMaq2NUiojhLBKqYVqtXrUOVe75tlL17rGfMMv/UaGasx42f98z1P/HcQdUgoBsgb4cZw2OWf6l1nWNZ6z9InWyhpjJ5xz81LKyFMqQEqAk0KI/xSG4aVrDLAknGnMt8VyS8dTwHiet0MptVUpiKK0I0nSjwM91160c8dqVq1aSzbbAUIKgCQpiamJEV45dpZyOZJAv1aqPzWGyNqlS7cCJ/L5/CljDGmajqdp+sPXULQDLP/OkQH8q3cV4o+0VjOep2eU0hNAssxVHOBWD3a6P//ib7tTJ77npiavuOnpaTc9Pe0uDr/kHvrGn7hbb9l59Vzf89y11wOTnqentVbTSol/BJpeQ+Hy32O5pRtEAIWCvzlJxO1RFH2Q1HQsnbRpYy+7d++IurtWkxglALd2da+85wO36PUb3yWW6YXOzk5aWnKUSgk42P/8sTSKE7N2bZ+46b3vdtlcH2Nj4/53vvNId5JcXda3+n7wm74vFoyxJIk5lKbpgcaxJbdP3qzFvOXRUEr5+1KKmtLKNNzBFvK++73//Avu2JFvucrilKvVao1Zddam7rWHceXiGffQN/7EXbd9tQPcJ+6/3Q2ffcrVajX3owOH3O7r9/zYsn4mUUqVpJQ1KWVNCPGFa9zT/2mBYvmQjZkCtqmpaWOapp+11n7UOVauX9sjPviB94YfuOeD6R133s0999wtd13/HuH5nWitG9NDCIm19fBhLSRxhLWglMLPtNPZ3sTs3AL5nGDvjdu5687b8YM+Bgb6XFt7j9myeU26aWOXMWnZGxubzzjntHNOA+1B4Hf6fqaUJMlYI7hkGu9sf5pwqnGiqxuMT6ep+RMh6Pd9bX7+o7ea3/jcA5mPfexT3ntvukv1D6wX1vq4a4KzEAIhQOCQArTWCBxCSkCQCTpQMqalydDWnsdan2yumSAoiO3btsibb9qjtm8dUElS48SJYRdGcSoE1vN0TxQl70uSZAZ4pvG4hhpfXzjR+F0Antb6HcK5zyH4kFKqf8d1g9z3wZvTj99/v3jnO29RUnddvYFzEmMMJk1J0xghJFJKorDE+JWThOEi+Xxb/S2sQUqFVIpScZqZmQtUalVmF8qMjl1mZnqUXJBSaO6grWM9q1atd5u33GDeu+96s35di5ufn9EzsxWArlwuu7q7u32iXK5MNATLLRP2VQFFLNvHUqXUltTa300So8CYXbu2Jr/6K58Itu+4GSc6scaBMwgpkVIgpQancDiEkBiTMj5+jnOnX6Sja5DOrjUo5QEK5yxhWGV6epxisQoOPJEwXRphdvwiE1eOsXrtNjZs3Mfgqi3iU2u2ayjqM0PPk8/l4/G/e1gslqtbqtXaljRNSsCFBuKpXRtFr7WcAQiCYJMx5uds3d/sbbfdYe7/+Cc97XdijEBpgZQSIQTOgbUpUiqEEFiTMHL5KCdPvMDYlVGyuQ5WDm5CqboeSwtjnDv3EsPnT5AmlpUdg2zs30R/ax9KCKaL01waG2VyeorF0iSBH5Iv9NLRuZl1a1a6XNYwPj6mZmbLGGN7lRAb84XCcBzH043lpJdQjF6GUlwDz7Vaa3sczGcyuimfC/TKlRudl+ltRE5DWK0iBGgvg9Z+wyqQxCGl0jjTU2cZu3Ke+bka/SvcVZdMkpDZmQtMjA+xUJ7EU00MdA5w3ertZLyAi1MXSC4JLk9eYuLiGRbGz3LhfJ4Nm97D2vXvYXD1Wv2Rn72dUnG2NjPzlF6s1LYkcbIljuPLwBxQbBjILg+nFtCZjHq3EPL3jDF3aq36d+4c5GM/f4e65/33iN6+VaIeLCSXLrzMyMgxPC+gUGgDBEkccvHCIaYmz2DSGnNzs8zMzNLXv45167cS1uY5f/YA5YUx0jRhrlQijS19bX30tPbgcMRpTEYH9LX1saJ9ACU1E3OTXBq7zOTkCGFljiAjWLmyTwwMdMtaLZTj4zNYa1dIKbf7vppMUzu+JI9uWC8GQs/z261NPp6mqTLGsHbtxvDTD3yKDZu3ysriLJVqhSSOmZ0dw5oYIep4OgorzM5cYnL8DKXyNL5foKmpi9VrmunuWYHnZSiXKoyPnSZJQjzdTCHThnMOKSTlsAwOrLX0tvZQyBaQUjEyM0I1TZmYvcLMyHlK0yN09nSwe/cW/YG2Zk4NXVx89rnDPrDJ8/R6rb1/gXQJdGeWuyVSeotCpNFS5GltXcOadfsAj9NDj3L82GGUKrBx8w42btpOc0sPaRpz+dIrTE+fJzURtVrC+PgIHR2D7N13J909g3VwmqQIBNOzcwgT0uS10NPVQ0e+A+ssOJCiHg+iJAIEOT/HloHNbO7fiElTzoydZWx8goEVneQyBZI4VUtgw/N0lM16i4uLVxMKoRsmbPE8b00cx7udo9jSUlC9PR2Z3Tu3KqUV8/MXGT53nNnZSXp7W+nqWkNb+wBRVGFm6iLjY2cIo3lamjtQymN+foG+/m2s37CzHkSKU5RLU+TyzcTpZcoLs3T29DDQuYJsJiC2EaKh49QkxGmMw6Glpre9l6ZsM8YajBMkowmXL06Akgys6NTXbd8ghodHo0q1VqxWw92e500VCsmF+XliBehsVm+zlj80xnxIStF9/e4t7hc/fa+++eYdMgpnxJHDLzI5OcvGze/ixr3vp6OzF2tSLl84xOWR49RqJbJBnkwmS7G4wMJCkb6+9axbv40krXDy2DMU50cRQjJfKhGFMf3t/Qx0DaCVIjbxss1fIBBIIa9aMkkT4iSmKdtEe1M707PzTM5PsHX7WnnDru1iZGTSjF6ZzAPbPE9tNkaeTFM7qYFQCJEIwTuNSXuNMfT1dlTvvnsfi4uL4q//6muMjV1m167rWb16E13dAwCEYYVicZpScYJstgmlM8zMzTK/UEQpTRSWGB05jRQhi+VJiuU5rPVQzqevtY+WQgtOWIx77bTSOUdqU2zqsNaAgJZcC92t3fQXF0hMTEu+INpaJLff8Q4jBJnzw6Mr5uaLWimZSClDWdcYRgg3fzULzXiiWqnxvacO8D/+17fZ/8JJPE9Rz1CW1qdC6QyeFyClpLJYYezKJHNzJZyTlEqTnD/3AlMTZ/E8n0otZWx8Ci8NWNe5gc6mTowxpDa9arHlgllraeyzdSsiWawtshhWWNO3ihvWXk9xMuLc+cvcdNNu8Zuf+xibN6/BGDtfrSZGa40OguCBajVaJ6XwN6wfTK6/frMeXNmrv/ZPT/Lscy+Rz3nceONedu7aR3t7HwDFhUnm58dIkypBNo+1KdZATrcQ+5LYVnE2IolKzKUViuUaYcXSrNrob+mnq6WLjJ8htUnDDesuaazF1kEErU1NeLq+8RtrcdaSmgSEwFMB/mKW1slJkiSlpblFV8LICU+kzjkf+EhXIbdLO2f/yjmnjHHBtq1r1a/80n0ceOmk98U/+0eCjOPXP/tRPvyz97Nl2z58P8CYlLGxISbGhpACosRwZXycjM2zqn0tnUHIuanTWAGen6VYKjF2ZZIWr4ON/Rvpau1E+wqLfZW1cK4upHOY1FCt1VB16gFrLc45cA4ElNMKSWLYNLiB1W4F4wuXvePHzjA1NesBq4H/WC4vGm2tbV66/8TkLM+/cJSXXx5ibq7I3r17+OjPfYLtO/YBPqXSLDNT55mbHUFKQy6b5/KZSzzx5H66dQc77l3P6p5eLs6cZmS6HtG08WjzOxhoXUl3WzfZICCxMc79GMQ7IDGG5myWFq05eeY0//L9p7kyNwtAR3Mz+UITRoBwcMOGtezdtZvmtm7mah6VYo6mqkeQiiVgkheAXpb18vKhIQ4fOUOS1KPXnj03snnrTYDGWsPo5WNMjA1hbEIQ5JibW+Tw4ZM8+cQLDGTaed+abezcs5msnyEtO2anFxhoHmBN7zo6WzvQniS1yav4K+fqqZBQCpskzE9Pc/ilg3z929/m9OQkAmjLZEispWIMGvjlu+5kdVMLboMiEoL+QgdbW1fSnVlGugn5apohSZJ/k5BrXcehZ4aeZ3pymCQNKZdLnB4a5uSJi+z/0TGKxZCQcf7hicd53+I0W/fsoL9vNXEtIifztBRaUEqRpGndvZahdQfkczkK+TznTw3x3W9/m6HLl3nPbbdxU3MzAjhz7DjP7H8OGlDqqYMHccAHPnwf79izhxY/g+8k0l11hBRwupEuqDpVp6WUEmsdSmmamppIkhiTTDE6cpQorNHU3A4iw+mhCX74g0OcOHuZjBBEOL5z8ABlZ9h7022867rrmZmbY7GyiO/7jfxK/ZuQH0YRWilaW1q4ND7O3/7zP9PS28vX//RP2b17NwBf++pXOXPqJBMLCwTAuekZLj/+BJ3r1nHjDXvwPE3NJiR1Fk0soRYN/JyUcquU8reA1Vop3nvLrfGHP/wRf+fOjQydfJYkWcCahGq1Qi7Xyq7dN9HUtJEnHz8CXCZZ5maVMEJLDdLDWcgFWTo728E5HKKBJ+sRMrWWsclJojgG50jTlPlKhbxzrFu//uo9Vw4O4nkeQgikqHMXMbAwOUVlaoqmtjasUqDV1SW8ZLnv+75fcc4tRlFEkqSsXbvG/uqvfhohqjz7zNcIwwp+psDY2DAjoyXau3eQCdrp6OhESYl1DukEQgramgpEaYS1EcoTzMwUmZqdwTrq1IOoC+jqVCG+79Pe2gpSkvF9VnR14QnBD3/wA/bs2QPO8fLBg4RhiDWGBJBCUNAa3xiq09M4rck07tewnL9kuT+L47hPa923pKkzp094F84fYO2aDjrbm6lWPSanSxw9co5Dx4Z55rmz5HSGUyeP1zlApYiMQSuFFGBSg2xroz2b5fkDL/HN7z5KOYnJIAiCgGoYkuDoyhf4+H0fYsPOnSAlSina29q4ODXFF7/4Rfq7ujBpyqVLl6hWq2SkBOdQUuJpjVAKZwyysogsFiGKfgwynEMLIX4T6hAnn8/S0dFCf2+gjhz+Vy5eaGV0fI5yeZHzZy9y8OApjg5d5Mgrp6+m8YGUZJSilqZESUIljBBCENZqjJwa4tGnn+YrjzzyuvRbW2srG9eupWtwEM/3sEIws7DAM88882/Y4YzWpNYSGsN8rYbQGqE9zo6MuJdPnRKzCwtOChE752attaH2PE2SJBhj2bZ1HZ/65D3s2rGOmZlZvvHw93n0qQNUq1VELSSuJlcj3JJwnufhex401g1CkM/lOPnKK3zxL/+Kx5999icSpP/w8MMslEv8zq/9Gk2FAmZZNPWWMa7a8/A8D4yFKMQCnpJU0oSnjxxNvrx/vze2UEwDKS8Y5/4GOKWBmnNIcFprJfL5LJVqLA6/MixOHjxDMjpPSy6HIEfRFa8Sm7KRzy9EEaLhDis7O9i7YwddHR08/cNneeixx/EKBe667TaagoA4TUnSFE9rfM9jplxm/wsv8I1HHuHum2/mum3buHH7NmZmZpgoFusciDEIoJokVJMEBzQHAet7e9m9ahUiDDl07pw5NTnlA16r1jJQ6umJOD6p09Qs0WHJ0NAF/uIvH0RIoWZni96GXBOff/9d7LzuOkbLi3z1sUd5ZmjoaplleV2pp1DgF++8k1+870N0t7cz2tiAb9q7l7//0pdoKhRwzrFYWaSQLyCEYGx8nF/+zGc4duhlrkxNc9ftffzWRz9KHvj7Rx+j2FCauqZutXfrVn7p3g/w3nVrOXfuHOXZmavHLOQTa/MA2lqbXTowN19ibr509bzeFVrk8oG4bv0armtpZcwarhQKCARNWiO1ZrFSwa9W2NXbyx03vofVO3eCEERxXLdssci54WHy+TzOOarVKrlcDiEEU1NTFMuLWGOJ4pggn2frDTdwx+goI+PjDM0vkOTy5HM50iRhMU3xgNtuu5V9u3czc/mSffKlg3J8bk4GWoeJMWescwdrUqZA7nVLWBLM8YkJ8WePPqFrQnHvz/wM77rzZ7D7bkYISUZKrOeRKc7TO3qZFUrQMziIE4IkjmltKqCAF158kU/efz+5TIYkSbDWIqXE831K1SoTExO0BQHNhQI2jjFKMbhuHb92331ckZqJlYMkhWZUHFG14GO5IZ9lZmqCf3rmB+nfPfucXwpDqZybFkr9rUnT79aMmVnaCh5akkcpYbT2yHtqi0vM9vkoZnhuzpw5c8bZvXv1yu07Kba0YwFpDIn26KgusmFFP+1RlZKfYbJUwreWzevX87EP3suliUlmJsbxnavvUVphrcNzFj/IsPU972b9ipWsHRykXC5TtZZCWxu7d+9iRTbP2d4BFjJZMmlKrDSBcKyYnaJ8ZojhCxfSqcVFDXhNSnXllBqeTtPRhjx5DXyusXy0MS42JiZw/qfTNPlCw4Iua9K0PDGh0/FxSik4JZFRTCwlPpbQ9zFa4gtJUq1inGPzhg387m/8Bmmakqbpq0qryz+15+FpTT6bpVKpYITADzKkzqemPMrFEiXKZJwj8TNEJmVu7Arx5AR+mi7FC+mcS2Lnmpcn8xqYeY3i3HcT5wZ8pW7zYccr4xPaf/a5uLupVeh3tnhNuSxJrUJkHBUFYcYj9X1IDCaOcVLS1NTEiv7+esLpea9Gysv3kyQhThKKpRLVWq0OrD1N6nmExlFZLBNaUFrjlGa2VOZfjx5Nxvc/z6mZmVxOa1LnfuSs/aGz9nKDWI6BRL9WYX82js8A/6Wg1OfTJNmx/8oYr0xNy11dPfYd/SvIrlqF5/tkpMI3Cdo5ZGoxOKRSSCGIoojpOH7DBUHnHEqpOrXg6m6vnGg8RyOdIwprXL50iZd+dMAee26/V7WWjBCx73n/sBhFXyZNk2V0erLEOKtl7PPS3mnas9m5WpLMJc61R8b0LSxWVFouhUFTE00DK2RLbx9tAjonx/HnZ7F+BpvNIqzFpClJklx1y580TZrWAYCUON+HahU3NUmKJOzpw7Z3Ulpc5Oyhl5MD330kPXrwpUylWBQOfhQI8aV8Pv8vlSiaXeYXlmVs82uWkycWF08Cf1gIApOE4bbixWFxeGLMU1I58k2ssBbKRZpmZ3FJRKG5FU8InJSgFErrN2U5KSVKCNIkprxQYiY0zPtZJrKLjJwe4uXvPcHR73zbr1nrAiESz/MeLMfxXy4WiywrC6RvpJtBLZ3Yls0+VErTapSmn6mE4dazL+ynWCxWC21tfk820Dt37uQdg4NcJyRNUUQ1k6GqNCJNEA1I9toS1X84KXFakweyYY155THc3s3BCxc49tRTzCRJUp6eTsePH8uG9ZztQOB5D3a1tn63PDW1vCps30jBf6mZJgPYkfn5E8CJvBBtVojBhZFLubGLFwIH5Fvb3FSQE1GuQDp6mTWepnntWjKNLNo2SJ/X64JxrlHKtZZoYYHJ4fOcd5LndcCzJ05y5GsPEkahkuAFUppAyqqAhxbi+C8W6oL5DTWFP61s/HqdQxag4HkTVohzsTFbDbQDIgnDNK1VxZULF8TQ0aPMX7nCimxAfy5bx4apwU9TdJLgGYOXpnjL/pZpSjZJ8ObnOXf8GN986vs8dugwh0+eYOzEcbswOZ4C2tWVdFxp/Ud5rR+vGjN/jcXcm22yWfLfADDzSXICOJEVYkVGqfuFEF3WWjVz7Ki6cuyoOwJiqFCg2RnKM9OY5hZiIVGuTs1dS7wKKesVe2thYZ79R4/yle8/zUQ9yroAXF4pJ6VctM5NO2sfrCbJ/67+OAtiqZ3k39sexbLWpL7ufH67SdP/Gqfp3rIxSz0rPiCu7+6mr7MD6/kYGkvOXfM0Vz9gnasTHnHEyNQUx2bnWBYYvGat0Uo/rgT/bToMzwDTr/NOb7mxbcnsCjA39PUVXx4fHwdqHoiVra30dnUglcf43ByHpqbgxwv9TY21fb10tbSSxjETMzNiolRyJk2rwNjNq1aVf3DpEstL3G+mD+UnNd1c9evUmM9W0/TzwI6cEP4nbr9d/IcHPqXuvusuSSbDi4cOvSXB8tmAX3/gAX7rU5/klq3bZFituCPDF4yDDgHvCpPELCbJK8v8QP+kHjD9BgLK0kIVLZnMqjCKNteS5FeyWu/q7exkz/r18fvfdzP77rhDMriKoLmZkXPnOTcyghaCvO8T/wSkkvF9io0sfsfmTXzyvvvYsG+f4PSQKC+WzXixxLFLl/qnZmb6y0niB3ApGwTD82E4uizg8VYCypL5U0AL5z5h4IHEmNU9hQK/8L5buOeWm/WK1atlNU7Izc8z2NXFZ+/7EHPT0yil0EphjX21mpapTSpJkqZY6+ju76OntRXm5ihbx+49e+TvtrTKbz39NF954gkWougdHvxPUacR/rrxXvL11t5PE26JTXCAFLAJ2GidI9C6tGnFQLBn61Y/am7m5XPnOP/Ek2SjiF0rBtizZg02k8FKiXAO6+yrOo2WOEgnBMoYRBQxOjfHdx57HFvIs3HDBnasXCm6fJ8Tp05FnpSJda4gYLOD9ddYS7wVt3TX/F6+ukdYm5ktFVU1DMn19TI6Msqff+lL5KKIP/jMpxm86SYqmQxxg2YzxlzlK5dKVkprTAPG+9UqJ158kS/841cJurr4g9/5bbxNG5mrVpkrl5VxTi57ofLb2Qa8nGFb0rzxlFItzc0wMICvFUOnT+NbS0UIREsLcRxTSVMynkeQz5MPgjoicI5KWCOME6I4Rvk+QWsLxTTl6OgorcUi+UyAHhigZWQUT2srhLBLNLlY9h5vm3Du1X4trHMkcYxXqZKmKW3NzTTnsnSuWkXQ0YGenESlaT0XS5KrHbEOcGmKtpbUGDytyXV20LV6NX2trfjZoF6UqVSJ69SEWF5AsW+wS1a/gf3tamCR8IQAq+DD1TDseebwERKlw6C7y3/hyBGZWktnZxdeEJA4h3UOlSTUFhY4MTzMK8MX6ohEKa7fsIHN69bi+T7GWhLr8HM5Ojs7mZqf55uPPca5CxdMeexKsv/48SBJU0/BReARUe/YE8s6DN1bEc4sEy6ei+NvNcEPY2iphOH9Txw4wJMHD+J7HsUowjrHriBAS4mwBgcESlEtFtn/3HP8zcPfImzU237nIx9hQ0c7QU8PTgiEtfhKEfg+47OzfPkb36DF94niWNBQlAePhfB7URSFywJe8nYgFABXhtk8fDmG8cS5z2BMe8UYgCoQ5IJA9nZ2ogsF0vEJPClRhQI166g23HK2VqNUKhGFIapWI2hqQre20tPRTjaTaZTBbTQfhrmGYkc9+EoAj4b17jxer8fyrQi3HEDHFfh+AV7xhFglpbzX8zy/GEXaOScWq1VGJibo7u5GSUlzTw9+Sws9q1aRk/Kq5VpaW8nmcuQLBZyU1KanGZ2YpBKGCJBCCK8lkyGO48g692SHc388+uO2Q6+BZc3bAb+W73sOcDFUmzOZKSnlpIXdCrJaKSpRVL08MaGjWk3s2LqV5m3byWrF4cOHzb/u35+kQpi855lbr79e3Pbud8vmrVuplEo8+PDDPPjId+yJc+eqzhhfC6GUEJOelF/wfP+hyTS9uOydxRvBlm92K1jCUXkgnI2iZ4DTGdimpbzV07rpyvR0cOV735PzM9Nu7apVYmdrK3PDw4yMXFZpmioLJFIyOjXJ0MWLrGhu5sCRI/yfr3/dHTx5SgJBi++TpGmxlqZPRvAXjX1NNbai6tv9jZBrh7/U5N3Q0L6MEHcLKX+/YuqBpDUI4htvuMHv6O8jKpY4c/4cp88PYwBfStYNDLB+1SCF9g7GpqbcCwcPJotp6ksgq1TVGfPHMfzfFA4s8xr1Vlrt38qQje/syMZiHMzAN/NCXGrSOs7U0/7lX4aYCeB4AMczcBKYX3bMBhA2aR3mhRj24ctA2zI3zPP/eYhr3dqDHXn4fF7Kcf/HmHRpfj2AfQHsU3AH8Ojy4xkwOSHOF+Czfv1rL6/7nLf7W1ivhzvThmabgGICRwGhrP2cL2Vv1vOu1sydc0PFKHpu6eIWz7tXCIGQEmstaZpKY+28hSdiuLzsvqXldN2bGf8Pqlvp+ZH83TsAAAAASUVORK5CYII=",
     },
     {
@@ -2499,7 +2571,7 @@
       tainted: true,
       tier: "D",
       unlock: "Llegar a Home y usar la Red Key/Cracked Key en el armario de la pared del pasillo, jugando como The Lost (extremadamente difícil). Requiere haber derrotado a Mother previamente.",
-      priority: "Como The Lost pero sin Holy Mantle de inicio y sin acceso a Devil Deals — solo Angel Deals. Cada item de Angel Room te da un Holy Mantle de un solo golpe (se gasta al recibir daño y para refrescarlo necesitas otro item de Angel Room). Solo para masocistas o por completismo absoluto. Sus completions desbloquean Sacred Orb (Beast — los items de baja calidad que iban a spawnear se rerollean a quality 2+, mejor pool), Ghost Bombs (Delirium — bombas que atraviesan paredes) y Crystal Key (Mother — llave que abre tipo Tinted/Golden chests con efectos especiales).",
+      priority: "Como The Lost pero sin Holy Mantle de inicio y sin acceso a Devil Deals — solo Angel Deals. Cada item de Angel Room te da un Holy Mantle de un solo golpe (se gasta al recibir daño y para refrescarlo necesitas otro item de Angel Room). Solo para masocistas o por completismo absoluto. Sus completions desbloquean Sacred Orb (Beast — pasivo: los items de calidad 0 y 1 se rerollean automáticamente, y los de calidad 2 tienen 33% de rerollearse — empuja el pool hacia items mejores), Ghost Bombs (Delirium — pasivo: +5 bombas; al explotar, tus bombas generan fantasmas que persiguen a los enemigos y explotan tras 10s) y Crystal Key (Mother — trinket: al limpiar una sala, probabilidad de abrir una Red Room adyacente; la probabilidad sube si tienes varios).",
       sprite: "data:image/png;base64,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",
     },
     {
@@ -4554,7 +4626,7 @@
     },
     11: {
       dificultad: "Medio",
-      resumen: "Build de Judas con cohetes y cuernos: Epic Fetus dispara misiles dirigidos, Book of Belial buffa al activarlo y Loki’s Horns añade disparos en cruz al azar. Partida con Judas a por Satán.",
+      resumen: "Build de Judas con cohetes y cuernos: Epic Fetus dispara misiles dirigidos, Book of Belial buffa al activarlo y Loki’s Horns añade disparos en cruz al azar. La trampa: empiezas con UN solo contenedor de corazón rojo y cualquier daño autoinfligido (los misiles de Epic Fetus en tu propia cara, p. ej.) te mata al instante. Hay que conseguir soul/black hearts cuanto antes. Partida con Judas a por Satán.",
       desbloqueo: "Este reto se desbloquea completando el desafío 19 (The Family Man) y matando a Lokii por primera vez.",
       recompensa: "La recompensa por completar este reto es Rules Card.",
     },
@@ -4620,7 +4692,7 @@
     },
     22: {
       dificultad: "Difícil",
-      resumen: "El juego va a cámara rápida: todo (tú, enemigos, proyectiles) se mueve más deprisa. Sin ítems iniciales. Partida con Isaac sin D6 a por Mom’s Heart.",
+      resumen: "El juego va a cámara rápida: todo (tú, enemigos, proyectiles) se mueve más deprisa. Hay un tope blando de 16 minutos: a partir de ahí recibes medio corazón de daño cada 10 segundos (1 corazón entero a partir del capítulo 4), así que no se puede ir despacio. Sin ítems iniciales. Partida con Isaac sin D6 a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto es Get out of Jail Free Card.",
     },
@@ -4632,13 +4704,13 @@
     },
     24: {
       dificultad: "Medio",
-      resumen: "Tu daño es dinero: Money=Power suma daño por cada moneda que llevas, Sack of Pennies te las va dando y empiezas con 50. Si te quedas a cero, no haces daño. Partida con Isaac sin D6 a por Isaac.",
+      resumen: "Tu daño es dinero: Money=Power suma daño por cada moneda que llevas, Sack of Pennies te las va dando y empiezas con 50. Las trampas: cada puerta se abre como una máquina arcade — gastas 1 moneda para pasar; recibir daño tira MÁS monedas al suelo de las que puedes recuperar; y si te quedas a 0 monedas, MUERES (no es solo perder daño). Hay que administrar cada penny. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart o It Lives y consiguiendo el ítem Sack of Pennies (se desbloquea matando a Isaac con Cain).",
       recompensa: "La recompensa por completar este reto son dos pastillas (Addicted y Percs).",
     },
     25: {
       dificultad: "Fácil",
-      resumen: "Mucho contenedor y poco corazón: 12 contenedores rojos pero solo uno relleno. Charm of the Vampire te cura cada cierto número de enemigos matados — toca farmear sin morir. Partida con Isaac sin D6 a por Isaac.",
+      resumen: "Mucho contenedor y poco corazón: 12 contenedores rojos pero solo uno relleno. Trampa importante: los corazones rojos del suelo aparecen como MONEDAS (no puedes recoger corazones para curarte) y los items de curación clásicos (Yum Heart, Placenta, Pyromaniac, leech) están desactivados. La única forma fiable de curar es Charm of the Vampire (cura cada X enemigos matados), las camas, la card XIX-The Sun, las pastillas Full Health/Bad Trip y la Slot/Blood Donation Machine. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto son dos pastillas (Re-lax y ???).",
     },
@@ -4662,7 +4734,7 @@
     },
     29: {
       dificultad: "Medio",
-      resumen: "Lágrima cargada de Judas: Chocolate Milk hace que tu disparo se cargue para soltar un proyectil enorme y Book of Belial te da un boost de daño temporal. Partida con Judas a por Isaac.",
+      resumen: "Judas con Chocolate Milk (disparo cargable) y Book of Belial (boost de daño al activarlo), +2 daño base. La trampa del reto: cada lágrima que no impacte a un enemigo te hace daño a ti — fallar es perder vida. Cuentan como impacto válido pisos como bombas, fuego, cacas, enemigos congelados o stone grimaces; si sales de la sala antes de que la lágrima toque pared, no recibes daño. Partida a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando a Mom por primera vez.",
       recompensa: "La recompensa por completar este reto es Kidney Stone.",
     },
@@ -4674,7 +4746,7 @@
     },
     31: {
       dificultad: "Muy difícil",
-      resumen: "Empiezas con 10 ítems aleatorios y las dos llaves de ángel — cada partida es completamente distinta, puede tocarte build dios o build basura. Partida con Isaac sin D6 a por Mega Satan.",
+      resumen: "Juegas los pisos al revés (empiezas en Dark Room con 8-10 items aleatorios y 10 contenedores; vas subiendo hasta Basement). Trampas: cada sala de inicio es un pelea de jefe directa; al subir de piso pierdes UN contenedor de corazón y el ítem MÁS ANTIGUO de tu inventario; no hay treasure rooms (las shops sí funcionan a partir del Womb). Para subir al piso anterior buscas la sala de inicio (haz de luz). Partida con Isaac sin D6.",
       desbloqueo: "Este reto se desbloquea consiguiendo The Negative para poder ir a la Dark Room sin pincharte y ya allí tienes que derrotar a The Lamb y Mega Satan. Si lo haces pinchándote no te contara ya que necesitas desbloquear si o si antes The Negative.",
       recompensa: "La recompensa por completar este reto es Laz Bleeds More! (Lazarus empieza siempre con el ítem Anemic sin importar si revive o no).",
     },
@@ -4686,13 +4758,13 @@
     },
     33: {
       dificultad: "Medio",
-      resumen: "Captura-criaturas: Friendly Ball convierte enemigos en familiares de un solo uso y Mom’s Eyeshadow tiene chance de petrificarlos al disparar. Partida con Isaac sin D6 a por Isaac.",
+      resumen: "En este reto Friendly Ball NO captura enemigos: invoca uno amigo aleatorio cada uso, y se recarga al instante en cuanto ese aliado muere — puedes encadenar usos toda la sala. Mom's Eyeshadow tiene chance de petrificar al disparar. Aviso: si sales de la sala antes de que el aliado aparezca pierdes la carga, y los minions que invoque tu aliado no recargan la bola. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando 11 veces a Mom’s Heart.",
       recompensa: "La recompensa por completar este reto es Charged Key.",
     },
     34: {
       dificultad: "Muy difícil",
-      resumen: "Mega Satan a pelo: tienes las dos llaves de ángel pero ningún ítem inicial. Hay que llegar y matarlo solo con lo que aparezca en el camino. Partida con Isaac sin D6.",
+      resumen: "Mega Satan a pelo: tienes las dos llaves de ángel pero ningún ítem inicial. Trampas pesadas: arrastras 4 maldiciones permanentes que NO se pueden quitar (Curse of the Labyrinth, of the Blind, of the Lost y of the Maze), todos los enemigos con forma campeón aparecen como campeón (y los campeones no sueltan items), las salas de jefe son combate doble desde Caves en adelante, y NO aparecen pickups de corazones (red/soul/black/eternal/bone/golden/blended/rotten) en todo el reto. Solo curan items o efectos al matar enemigos. Partida con Isaac sin D6.",
       desbloqueo: "Este reto se desbloquea matando 5 veces a Satán para desbloquear la Negative y matando a Mega Satan.",
       recompensa: "La recompensa por completar este reto es Samson Feels Healthy! (Samson empieza siempre con el trinket Child’s Heart).",
     },
@@ -4728,31 +4800,31 @@
     },
     40: {
       dificultad: "Difícil",
-      resumen: "Todas las salas visibles desde el inicio: Jacob lleva 20/20 (lágrimas dobles) y Esau lleva 20/20 + X-Ray Vision, que abre todas las paredes secretas. Partida con Jacob y Esau a por Mom’s Heart.",
+      resumen: "Todas las salas visibles desde el inicio: Jacob lleva 20/20 (lágrimas dobles) y Esau lleva 20/20 + X-Ray Vision, que abre todas las paredes secretas. Trampa importante: cada enemigo y CADA JEFE de la sala aparece duplicado (excepto Stonies, Death's Heads y Mom; pero Mom's Heart/It Lives! sí se duplican). Las salas se llenan de mobs — gestionar es la mitad del reto. Partida con Jacob y Esau a por Mom’s Heart.",
       desbloqueo: "Este reto se desbloquea matando a Mother por primera vez. Se pueden encontrar todas las habitaciones.",
       recompensa: "La recompensa por completar este reto es Broken Glasses.",
     },
     41: {
       dificultad: "Difícil",
-      resumen: "Te comes los trinkets: Marbles convierte cada trinket que tocas en uno permanente, Mom’s Purse te da un slot extra y Mom’s Box dobla efectos. Partida con Isaac sin D6 a por Isaac.",
+      resumen: "Empiezas con Mom's Box, Marbles y Mom's Purse, y te dan 4 trinkets aleatorios. Trampas: TODOS los pedestales de items (incluidos treasure rooms, shop, library, devil) se reemplazan por TRINKETS — no vas a coger items en toda la run. Y Marbles aquí no es chance baja como siempre: cada vez que recibes daño te tragas el trinket que llevas equipado (queda absorbido permanentemente). Las salas de Devil tienen pinchos alrededor del trinket: cuesta 1 corazón rojo cogerlo. Partida con Isaac sin D6 a por Isaac.",
       desbloqueo: "Este reto se desbloquea matando a Mom’s Heart 11 veces y usando la pastilla Gulp! 5 veces en una partida para desbloquear el ítem Marbles. (Si entras en Marbles explico como desbloquearlo fácil)",
       recompensa: "La recompensa por completar este reto es Ice Cube.",
     },
     42: {
       dificultad: "Muy difícil",
-      resumen: "Tainted Forgotten a pelo: el alma maneja al esqueleto y el esqueleto golpea cuerpo a cuerpo, sin ítems extra. Partida a por Satán.",
+      resumen: "Tainted Forgotten a pelo: el alma maneja al esqueleto y el esqueleto golpea cuerpo a cuerpo, sin ítems extra. Trampa central: Tainted Forgotten EXPLOTA cada 2.5 segundos (60 de daño por explosión, daño melee fijo en 5). El timer se resetea cada vez que recoges/usas un pickup (corazones, monedas, bombas, llaves), usas un activo o usas items específicos (Mom's Bracelet, Sharp Key, Converter, Friendly Ball, etc.). Hay que aprender el ritmo entre explosiones. Partida a por Satán.",
       desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Forgotten.",
       recompensa: "La recompensa por completar este reto es The Chariot?.",
     },
     43: {
       dificultad: "Muy difícil",
-      resumen: "Crafteo puro: Tainted Cain solo usa la Bag of Crafting — recoges consumibles, metes 8 en la bolsa y te genera un ítem según la receta. Partida a por Mom.",
+      resumen: "Tainted Cain con la Bag of Crafting recortada: solo 3 huecos en vez de 8. En este reto NO hay pedestales de items — los items aparecen como cartas (que se usan como activos de un solo uso, hasta 3 a la vez, intercambiables con el botón de soltar). Casi todas las salas, jefes y pickups sueltan estas cartas. Los Starter Decks (drop de jefes) suman +1 slot y dan 3 cartas extra. Tiendas venden cartas por 5 monedas; devil deals cuestan 1 corazón rojo. Partida a por Mom.",
       desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Cain.",
       recompensa: "La recompensa por completar este reto es Justice?.",
     },
     44: {
       dificultad: "Muy difícil",
-      resumen: "Ruta secreta con llaves: Tainted Jacob ya empieza con Dad’s Key (abre cualquier puerta) y Red Key (crea habitaciones extra de la nada). Partida a por Mother.",
+      resumen: "Tainted Jacob empieza con Dad's Key y Red Key. Trampa muy seria: cada piso genera como un Curse of the Labyrinth en clusters desconectados (una shop, dos boss rooms, dos treasure rooms) y empiezas en una sala SIN puertas — la Red Key es obligatoria para conectar habitaciones. Pero ojo: tras 20 usos de Red Key en un mismo piso aparece DARK ESAU; cada 5 usos extra spawnea otro. Las salas secretas no se generan en este reto. Partida a por Mother.",
       desbloqueo: "Este reto se desbloquea consiguiendo a Tainted Jacob.",
       recompensa: "La recompensa por completar este reto es The Hermit?.",
     },
@@ -5969,82 +6041,182 @@
     });
     table.appendChild(tbody);
 
+    // Antes de tirar el DOM viejo, limpia el estado de hover (referencias
+    // a nodos que vamos a descartar).
+    _resetGridHoverState();
+
     container.innerHTML = '';
     container.appendChild(table);
+
+    // Precalcula las celdas por columna. _onGridMouseOver y el click en
+    // cabeceras lo consultan en O(1) en vez de hacer querySelectorAll por
+    // cada movimiento del ratón.
+    _columnsByIndex = [];
+    const numCols = headRow.children.length;
+    for (let i = 0; i < numCols; i++) {
+      _columnsByIndex.push([headRow.children[i]]);
+    }
+    for (const tr of tbody.children) {
+      const cells = tr.children;
+      for (let i = 0; i < cells.length; i++) {
+        if (_columnsByIndex[i]) _columnsByIndex[i].push(cells[i]);
+      }
+    }
 
     attachGridListeners();
     updateCharProgress();
   }
 
-  function attachGridListeners() {
-    const grid = document.getElementById('character-grid');
+  // Estado de hover de la rejilla de personajes. La rejilla puede tener
+  // ~260 celdas, así que sustituimos los listeners por-celda por delegación
+  // y precalculamos las columnas en cada render para evitar querySelectorAll
+  // en cada movimiento del ratón.
+  let _columnsByIndex = [];
+  let _lastHoverCell = null;
+  let _highlightedRow = null;
+  let _highlightedCol = null;
+  let _tooltipRAF = 0;
+  let _tooltipPendingCell = null;
+  let _gridDelegated = false;
 
-    grid.querySelectorAll('.char-grid-col-header').forEach(th => {
-      th.addEventListener('click', () => {
-        const slug = th.dataset.slug;
-        const s = loadState(CHAR_STORAGE_KEY);
-        const key = `${slug}_unlocked`;
-        s[key] = !s[key];
-        saveState(s, CHAR_STORAGE_KEY);
-        th.classList.toggle('locked', !s[key]);
-        const colIdx = Array.from(th.parentNode.children).indexOf(th);
+  function _resetGridHoverState() {
+    if (_highlightedRow) {
+      for (const c of _highlightedRow) c.classList.remove('row-highlight');
+      _highlightedRow = null;
+    }
+    if (_highlightedCol) {
+      for (const c of _highlightedCol) c.classList.remove('col-highlight');
+      _highlightedCol = null;
+    }
+    _lastHoverCell = null;
+    _cancelTooltipDeferred();
+  }
+
+  function _setHoverHighlight(cell) {
+    const tr = cell.parentNode;
+    _highlightedRow = Array.from(tr.cells);
+    for (const c of _highlightedRow) c.classList.add('row-highlight');
+    const colIdx = cell.cellIndex;
+    const colCells = _columnsByIndex[colIdx];
+    if (colCells) {
+      _highlightedCol = colCells;
+      for (const c of colCells) c.classList.add('col-highlight');
+    }
+  }
+
+  function _clearHoverHighlight() {
+    if (_highlightedRow) {
+      for (const c of _highlightedRow) c.classList.remove('row-highlight');
+      _highlightedRow = null;
+    }
+    if (_highlightedCol) {
+      for (const c of _highlightedCol) c.classList.remove('col-highlight');
+      _highlightedCol = null;
+    }
+  }
+
+  function _cancelTooltipDeferred() {
+    if (_tooltipRAF) {
+      cancelAnimationFrame(_tooltipRAF);
+      _tooltipRAF = 0;
+    }
+    _tooltipPendingCell = null;
+  }
+
+  function _showCellTooltipDeferred(cell) {
+    if (_tooltipPendingCell === cell) return;
+    _cancelTooltipDeferred();
+    _tooltipPendingCell = cell;
+    _tooltipRAF = requestAnimationFrame(() => {
+      _tooltipRAF = 0;
+      if (_tooltipPendingCell !== cell || !cell.isConnected) {
+        _tooltipPendingCell = null;
+        return;
+      }
+      _tooltipPendingCell = null;
+      showCellTooltip(cell);
+    });
+  }
+
+  function _onGridCellEnter(cell) {
+    if (cell.classList.contains('char-grid-cell')) {
+      _setHoverHighlight(cell);
+      if (cell.dataset.itemName) _showCellTooltipDeferred(cell);
+    } else if (cell.classList.contains('char-grid-col-header')) {
+      const c = CHARACTERS.find(x => x.slug === cell.dataset.slug);
+      if (c) showCharTooltip(c, cell);
+    }
+  }
+
+  function _onGridCellLeave(cell) {
+    _cancelTooltipDeferred();
+    hideTooltip();
+    if (cell && cell.classList.contains('char-grid-cell')) {
+      _clearHoverHighlight();
+    }
+  }
+
+  function _onGridMouseOver(e) {
+    const target = e.target.closest('.char-grid-cell, .char-grid-col-header');
+    if (target === _lastHoverCell) return;
+    if (_lastHoverCell) _onGridCellLeave(_lastHoverCell);
+    _lastHoverCell = target;
+    if (target) _onGridCellEnter(target);
+  }
+
+  function _onGridMouseLeave() {
+    if (_lastHoverCell) _onGridCellLeave(_lastHoverCell);
+    _lastHoverCell = null;
+  }
+
+  function _onGridClick(e) {
+    const cellTd = e.target.closest('.char-grid-cell');
+    if (cellTd) {
+      const slug = cellTd.dataset.slug;
+      const mark = parseInt(cellTd.dataset.mark, 10);
+      const s = loadState(CHAR_STORAGE_KEY);
+      const key = `${slug}_mark_${mark}`;
+      s[key] = !s[key];
+      saveState(s, CHAR_STORAGE_KEY);
+      cellTd.classList.toggle('done', s[key]);
+      updateCharProgress();
+      return;
+    }
+    const headerTh = e.target.closest('.char-grid-col-header');
+    if (headerTh) {
+      const grid = document.getElementById('character-grid');
+      const slug = headerTh.dataset.slug;
+      const s = loadState(CHAR_STORAGE_KEY);
+      const key = `${slug}_unlocked`;
+      s[key] = !s[key];
+      saveState(s, CHAR_STORAGE_KEY);
+      headerTh.classList.toggle('locked', !s[key]);
+      const colIdx = headerTh.cellIndex;
+      const colCells = _columnsByIndex[colIdx];
+      if (colCells) {
+        for (const c of colCells) {
+          if (c.classList.contains('char-grid-cell')) {
+            c.classList.toggle('col-locked', !s[key]);
+          }
+        }
+      } else {
         grid.querySelectorAll('tbody tr').forEach(tr => {
           const cell = tr.children[colIdx];
           if (cell) cell.classList.toggle('col-locked', !s[key]);
         });
-        updateCharProgress();
-      });
-
-      th.addEventListener('mouseenter', () => {
-        const c = CHARACTERS.find(x => x.slug === th.dataset.slug);
-        if (c) showCharTooltip(c, th);
-      });
-      th.addEventListener('mouseleave', hideTooltip);
-    });
-
-    grid.querySelectorAll('.char-grid-cell').forEach(td => {
-      td.addEventListener('click', () => {
-        const slug = td.dataset.slug;
-        const mark = parseInt(td.dataset.mark, 10);
-        const s = loadState(CHAR_STORAGE_KEY);
-        const key = `${slug}_mark_${mark}`;
-        s[key] = !s[key];
-        saveState(s, CHAR_STORAGE_KEY);
-        td.classList.toggle('done', s[key]);
-        updateCharProgress();
-      });
-
-      td.addEventListener('mouseenter', () => {
-        highlightRowAndCol(td);
-        const itemName = td.dataset.itemName;
-        if (!itemName) return;
-        showCellTooltip(td);
-      });
-      td.addEventListener('mouseleave', () => {
-        clearRowColHighlight();
-        hideTooltip();
-      });
-    });
-  }
-
-  function highlightRowAndCol(td) {
-    const tr = td.parentNode;
-    const colIdx = Array.from(tr.children).indexOf(td);
-    Array.from(tr.children).forEach(cell => cell.classList.add('row-highlight'));
-    const grid = document.getElementById('character-grid');
-    const headRow = grid.querySelector('thead tr');
-    if (headRow && headRow.children[colIdx]) {
-      headRow.children[colIdx].classList.add('col-highlight');
+      }
+      updateCharProgress();
     }
-    grid.querySelectorAll('tbody tr').forEach(row => {
-      if (row.children[colIdx]) row.children[colIdx].classList.add('col-highlight');
-    });
   }
 
-  function clearRowColHighlight() {
+  function attachGridListeners() {
+    if (_gridDelegated) return;
     const grid = document.getElementById('character-grid');
-    grid.querySelectorAll('.row-highlight').forEach(el => el.classList.remove('row-highlight'));
-    grid.querySelectorAll('.col-highlight').forEach(el => el.classList.remove('col-highlight'));
+    if (!grid) return;
+    grid.addEventListener('mouseover', _onGridMouseOver);
+    grid.addEventListener('mouseleave', _onGridMouseLeave);
+    grid.addEventListener('click', _onGridClick);
+    _gridDelegated = true;
   }
 
   // ===== Donaciones =====
@@ -6802,12 +6974,12 @@
     unlock: e.u,
   }));
   // Repentance+ exclusives (4) — IDs 638-641, identificados desde la wiki oficial.
-  // 3 relacionados con online co-op + 1 placeholder "Read Up!" (item descriptions).
+  // 3 relacionados con online co-op + 1 "Item Descriptions" (catchphrase: "Read Up!").
   ACHIEVEMENTS_DATA.push(
-    { id: 638, category: "hitos", name: "Play Online",          unlock: "Juega una partida online." },
-    { id: 639, category: "hitos", name: "Win Online",           unlock: "Gana una partida online." },
-    { id: 640, category: "hitos", name: "Win Online Daily",     unlock: "Gana una daily run online." },
-    { id: 641, category: "hitos", name: "Read Up! (Item Descriptions)", unlock: "Derrota a Mom." },
+    { id: 638, category: "hitos", name: "Play Online",        unlock: "Juega una partida online." },
+    { id: 639, category: "hitos", name: "Win Online",         unlock: "Gana una partida online." },
+    { id: 640, category: "hitos", name: "Win Online Daily",   unlock: "Gana una daily run online." },
+    { id: 641, category: "hitos", name: "Item Descriptions",  unlock: "Derrota a Mom." },
   );
 
   // Overrides para que las categorías cuadren con la intuición del jugador:
@@ -7009,7 +7181,10 @@
           body.appendChild(item);
         }
       }
-      section.appendChild(body);
+      const bodyWrap = document.createElement('div');
+      bodyWrap.className = 'ach-category-body-wrap';
+      bodyWrap.appendChild(body);
+      section.appendChild(bodyWrap);
       container.appendChild(section);
     }
     // Re-aplicar el filtro de búsqueda si hay algo escrito (sobrevive a re-renders).
@@ -7023,11 +7198,30 @@
     const input = document.getElementById('achSearchInput');
     const clearBtn = document.getElementById('achSearchClear');
     const emptyMsg = document.getElementById('achSearchEmpty');
+    const statusBtns = document.querySelectorAll('.ach-status-btn');
     const wrap = input ? input.parentElement : null;
     if (!input || !wrap) return;
 
+    // Estado actual del filtro: 'all' | 'done' | 'todo'. Persistido en localStorage.
+    const ACH_STATUS_KEY = 'ach_status_filter';
+    const VALID_STATUSES = ['all', 'done', 'todo'];
+    function getStatus() {
+      const v = localStorage.getItem(ACH_STATUS_KEY);
+      return VALID_STATUSES.includes(v) ? v : 'all';
+    }
+    function setStatus(v) {
+      localStorage.setItem(ACH_STATUS_KEY, v);
+    }
+    function refreshStatusButtons() {
+      const cur = getStatus();
+      statusBtns.forEach(b => {
+        b.classList.toggle('active', b.dataset.status === cur);
+      });
+    }
+
     function applyFilter() {
       const q = input.value.trim().toLowerCase();
+      const status = getStatus();
       wrap.classList.toggle('has-value', q.length > 0);
 
       const categories = document.querySelectorAll('.ach-category');
@@ -7036,32 +7230,56 @@
         let visibleCount = 0;
         const items = cat.querySelectorAll('.ach-item');
         items.forEach(item => {
-          if (!q) {
-            item.classList.remove('filtered-out');
-            visibleCount++;
-            return;
+          // Filtro por estado (done/todo): independiente de la búsqueda.
+          const isDone = item.classList.contains('done');
+          const statusMatch =
+            status === 'all' ||
+            (status === 'done' && isDone) ||
+            (status === 'todo' && !isDone);
+          item.classList.toggle('status-filtered-out', !statusMatch);
+
+          // Filtro por texto.
+          let textMatch = true;
+          if (q) {
+            const name = (item.querySelector('.ach-item-name')?.textContent || '').toLowerCase();
+            const unlock = (item.querySelector('.ach-item-unlock')?.textContent || '').toLowerCase();
+            const id = (item.querySelector('.ach-item-id')?.textContent || '').toLowerCase();
+            textMatch = name.includes(q) || unlock.includes(q) || id.includes(q);
           }
-          const name = (item.querySelector('.ach-item-name')?.textContent || '').toLowerCase();
-          const unlock = (item.querySelector('.ach-item-unlock')?.textContent || '').toLowerCase();
-          const id = (item.querySelector('.ach-item-id')?.textContent || '').toLowerCase();
-          const match = name.includes(q) || unlock.includes(q) || id.includes(q);
-          item.classList.toggle('filtered-out', !match);
-          if (match) visibleCount++;
+          item.classList.toggle('filtered-out', !textMatch);
+
+          if (statusMatch && textMatch) visibleCount++;
         });
-        cat.classList.toggle('filtered-empty', q.length > 0 && visibleCount === 0);
-        // Si hay búsqueda activa, expande la categoría para mostrar los resultados.
-        if (q.length > 0 && visibleCount > 0) {
+        // Una categoría se oculta si no le quedan items visibles tras aplicar
+        // cualquiera de los dos filtros (búsqueda o estado).
+        const filterActive = q.length > 0 || status !== 'all';
+        cat.classList.toggle('filtered-empty', filterActive && visibleCount === 0);
+        // Si algún filtro está activo y la categoría tiene resultados, expandirla.
+        if (filterActive && visibleCount > 0) {
           cat.classList.remove('collapsed');
         }
         totalVisible += visibleCount;
       });
-      // Mensaje "sin resultados" si hay búsqueda y no encontró nada.
+      // Mensaje "sin resultados" cuando algún filtro está activo y nada coincide.
       if (emptyMsg) {
-        emptyMsg.classList.toggle('visible', q.length > 0 && totalVisible === 0);
+        const filterActive = q.length > 0 || status !== 'all';
+        emptyMsg.classList.toggle('visible', filterActive && totalVisible === 0);
       }
     }
     // Exponer global para que el render la pueda re-llamar tras cada re-render.
     window.applyAchSearchFilter = applyFilter;
+
+    refreshStatusButtons();
+
+    statusBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const next = btn.dataset.status;
+        if (!VALID_STATUSES.includes(next)) return;
+        setStatus(next);
+        refreshStatusButtons();
+        applyFilter();
+      });
+    });
 
     input.addEventListener('input', applyFilter);
     if (clearBtn) {

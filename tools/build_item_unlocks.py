@@ -36,8 +36,9 @@ POST_FIXES: list[tuple[str, str]] = [
     (" times", " veces"),
     # Casos específicos (antes que los conectores genéricos)
     ("Jacob and Esau", "Jacob & Esau"),  # Nombre canónico del personaje
-    ("Use the Blood Donation Machine", "Usa la Blood Donation Machine"),
-    ("Use XIII - Death", "Usa XIII - Death"),
+    # Nota: estos patches actúan SOBRE el texto YA traducido por translate(),
+    # por eso buscan "Usa" (no "Use"); el genérico `^Use (.+)$ → Usa \1` corre antes.
+    ("Usa the Blood Donation Machine", "Usa la Blood Donation Machine"),
     ("Defeat ", "Derrota a "),
     ("Derrota a a ", "Derrota a "),
     # Conectores genéricos (al final, no estropean nombres canónicos como "Jacob & Esau")

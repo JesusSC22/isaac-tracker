@@ -29,7 +29,7 @@ Walking the file with the Kaitai grammar produces the following 11 chunks, all p
 | 10| SPECIAL_SEED_COUNTERS  | 0x0F5C      | 80      | 1 byte     | 80         |
 | 11| BESTIARY_COUNTERS      | 0x0FB8      | 4       | variable   | rest of file |
 
-After chunk 10 we are at offset 0x0FB8; the bestiary occupies the remaining ~7,968 bytes including the trailing AfterbirthChecksum. **The achievements count of 642 is the strong signal that this is a Repentance+ file** (Afterbirth+ writes 404; vanilla Repentance writes ~637; Repentance+ adds ~5 new achievements).
+After chunk 10 we are at offset 0x0FB8; the bestiary occupies the remaining ~7,968 bytes including the trailing AfterbirthChecksum. **The achievements count of 642 is the strong signal that this is a Repentance+ file** (Afterbirth+ writes 404; vanilla Repentance writes 637; Repentance+ writes 642 — the chunk reserves one extra slot beyond the 4 new achievements IDs 638-641 added by the November 2024 update).
 
 ### Challenges chunk content (from this fixture)
 

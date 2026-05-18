@@ -29,7 +29,7 @@ ITEM_UNLOCKS: dict[int, dict] = {
     112: {'ach_id': 45, 'unlock_es': 'Derrota a Satan con Magdalene'},
     113: {'ach_id': 47, 'unlock_es': 'Derrota a The Lamb con Azazel'},
     114: {'ach_id': 43, 'unlock_es': 'Derrota a Satan con Isaac'},
-    119: {'ach_id': 147, 'unlock_es': 'Usa the Blood Donation Machine 30 veces'},
+    119: {'ach_id': 147, 'unlock_es': 'Usa la Blood Donation Machine 30 veces'},
     127: {'ach_id': 48, 'unlock_es': 'Derrota a Satan con ???'},
     131: {'ach_id': 46, 'unlock_es': 'Derrota a Satan con Cain'},
     149: {'ach_id': 140, 'unlock_es': "Derrota a Mom's Heart 6 veces"},
