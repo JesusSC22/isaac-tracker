@@ -7,13 +7,27 @@ real short-lived subprocess so the WinAPI path actually gets exercised.
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import pytest
 
 from tracker import updater
+
+
+@pytest.fixture(autouse=True)
+def _silence_update_log(monkeypatch):
+    """Evita que los tests escriban en %LOCALAPPDATA%\\IsaacTracker\\update.log."""
+    monkeypatch.setattr(updater, "_update_log_path", lambda: None)
+
+
+@pytest.fixture
+def _fast_retries(monkeypatch):
+    """Acorta los delays del retry de finalize_swap para que los tests no esperen segundos."""
+    monkeypatch.setattr(updater, "_FINALIZE_RETRY_DELAYS", (0.0,) * 6)
 
 
 def test_parse_finalize_pid_returns_pid_when_flag_present():
@@ -147,3 +161,122 @@ def test_finalize_pending_update_bails_when_exe_dir_unknown(monkeypatch):
 )
 def test_is_newer(candidate, current, expected):
     assert updater._is_newer(candidate, current) is expected
+
+
+# ===== Retry de _finalize_swap (cubre el bug del bloqueo transitorio de Defender) =====
+
+def test_finalize_swap_retries_when_replace_fails_then_succeeds(tmp_path, monkeypatch, _fast_retries):
+    """Defender bloquea el primer intento; el segundo funciona. Antes del fix esto
+    devolvía False y dejaba ambos archivos en disco."""
+    (tmp_path / updater.EXE_NAME).write_bytes(b"old")
+    (tmp_path / updater.NEW_EXE_NAME).write_bytes(b"new")
+
+    real_replace = os.replace
+    calls = {"n": 0}
+
+    def flaky_replace(src, dst):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise PermissionError("simulated Defender lock on IsaacTracker.exe")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(updater.os, "replace", flaky_replace)
+
+    assert updater._finalize_swap(tmp_path) is True
+    assert calls["n"] == 3
+    assert (tmp_path / updater.EXE_NAME).read_bytes() == b"new"
+    assert not (tmp_path / updater.NEW_EXE_NAME).exists()
+
+
+def test_finalize_swap_returns_false_when_all_retries_exhausted(tmp_path, monkeypatch, _fast_retries):
+    """Si ningún intento consigue el rename, devolvemos False y dejamos los
+    archivos como están — la auto-recuperación del próximo arranque debería
+    reintentarlo."""
+    (tmp_path / updater.EXE_NAME).write_bytes(b"old")
+    (tmp_path / updater.NEW_EXE_NAME).write_bytes(b"new")
+
+    def always_fail(src, dst):
+        raise PermissionError("locked forever")
+
+    monkeypatch.setattr(updater.os, "replace", always_fail)
+
+    assert updater._finalize_swap(tmp_path) is False
+    # Ambos archivos siguen en disco para que la próxima ejecución los rescate.
+    assert (tmp_path / updater.EXE_NAME).read_bytes() == b"old"
+    assert (tmp_path / updater.NEW_EXE_NAME).read_bytes() == b"new"
+
+
+# ===== Auto-recuperación al arrancar =====
+
+def test_maybe_recover_relaunches_when_pending_new_exe_exists(tmp_path, monkeypatch):
+    """Existe un IsaacTracker.new.exe huérfano y estamos corriendo como el
+    IsaacTracker.exe estable → debemos llamar al finalizer y pedir salida."""
+    new_exe = tmp_path / updater.NEW_EXE_NAME
+    new_exe.write_bytes(b"\0" * (updater._MIN_PLAUSIBLE_EXE_BYTES + 1))
+
+    monkeypatch.setattr(updater, "_exe_path", lambda: tmp_path / updater.EXE_NAME)
+
+    launched = {}
+
+    def fake_launch(path, pid):
+        launched["path"] = path
+        launched["pid"] = pid
+
+    monkeypatch.setattr(updater, "_launch_finalizer", fake_launch)
+
+    assert updater.maybe_recover_pending_swap(exe_dir=tmp_path) is True
+    assert launched["path"] == new_exe
+    assert launched["pid"] == os.getpid()
+
+
+def test_maybe_recover_ignores_tiny_partial_download(tmp_path, monkeypatch):
+    """Una descarga parcial NO debe relanzarse: el binario incompleto
+    crashearía al arrancar y dejaría al usuario sin app."""
+    new_exe = tmp_path / updater.NEW_EXE_NAME
+    new_exe.write_bytes(b"\0" * 1024)  # 1 KB, claramente parcial
+
+    monkeypatch.setattr(updater, "_exe_path", lambda: tmp_path / updater.EXE_NAME)
+
+    called = []
+    monkeypatch.setattr(updater, "_launch_finalizer", lambda *a, **kw: called.append(a))
+
+    assert updater.maybe_recover_pending_swap(exe_dir=tmp_path) is False
+    assert called == []
+
+
+def test_maybe_recover_is_noop_when_no_pending_new_exe(tmp_path, monkeypatch):
+    monkeypatch.setattr(updater, "_exe_path", lambda: tmp_path / updater.EXE_NAME)
+    called = []
+    monkeypatch.setattr(updater, "_launch_finalizer", lambda *a, **kw: called.append(a))
+
+    assert updater.maybe_recover_pending_swap(exe_dir=tmp_path) is False
+    assert called == []
+
+
+def test_maybe_recover_is_noop_when_running_from_new_exe(tmp_path, monkeypatch):
+    """Si por alguna razón ya estamos corriendo desde el .new.exe (usuario lo
+    abrió a mano), NO relanzamos otro .new.exe — sería un bucle infinito."""
+    new_exe = tmp_path / updater.NEW_EXE_NAME
+    new_exe.write_bytes(b"\0" * (updater._MIN_PLAUSIBLE_EXE_BYTES + 1))
+
+    monkeypatch.setattr(updater, "_exe_path", lambda: new_exe)
+
+    called = []
+    monkeypatch.setattr(updater, "_launch_finalizer", lambda *a, **kw: called.append(a))
+
+    assert updater.maybe_recover_pending_swap(exe_dir=tmp_path) is False
+    assert called == []
+
+
+def test_maybe_recover_is_noop_when_not_frozen(tmp_path, monkeypatch):
+    """Cuando corremos desde fuente (no .exe), _exe_path devuelve None
+    y no hacemos nada."""
+    monkeypatch.setattr(updater, "_exe_path", lambda: None)
+    called = []
+    monkeypatch.setattr(updater, "_launch_finalizer", lambda *a, **kw: called.append(a))
+
+    new_exe = tmp_path / updater.NEW_EXE_NAME
+    new_exe.write_bytes(b"\0" * (updater._MIN_PLAUSIBLE_EXE_BYTES + 1))
+
+    assert updater.maybe_recover_pending_swap(exe_dir=tmp_path) is False
+    assert called == []

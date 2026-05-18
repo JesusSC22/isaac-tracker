@@ -365,6 +365,12 @@ def main() -> None:
     old_pid = updater.parse_finalize_pid(sys.argv)
     if old_pid is not None:
         updater.finalize_pending_update_async(old_pid)
+    elif updater.maybe_recover_pending_swap():
+        # Auto-recovery: hemos detectado un IsaacTracker.new.exe adyacente
+        # huérfano de un update previo que falló el rename. Acabamos de
+        # lanzarlo con --finalize-update apuntando a nosotros; debemos
+        # salir para que el nuevo proceso pueda completar el swap.
+        sys.exit(0)
 
     api = TrackerApi()
     main_url, splash_url = _prepare_asset_urls()

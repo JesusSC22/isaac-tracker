@@ -47,6 +47,15 @@ NETWORK_TIMEOUT = 5.0
 DOWNLOAD_TIMEOUT = 60.0
 FINALIZE_WAIT_TIMEOUT = 30.0
 FINALIZE_POST_DOWNLOAD_GRACE = 1.0
+# Reintentos del rename final. Defender (u otros AV) a veces escanea el
+# IsaacTracker.exe viejo justo en el momento que el viejo proceso muere,
+# lo que hace que el primer os.replace falle con "acceso denegado". Estos
+# delays cubren ~10 s, suficiente para casi todos los bloqueos transitorios.
+_FINALIZE_RETRY_DELAYS: tuple[float, ...] = (0.0, 0.5, 1.0, 1.5, 2.5, 4.0)
+# Tamaño mínimo creíble para un IsaacTracker.exe completo. Por debajo de
+# esto asumimos que el .new.exe es una descarga parcial y NO la usamos
+# para auto-recuperación (lanzarla solo dejaría al usuario sin app).
+_MIN_PLAUSIBLE_EXE_BYTES = 5 * 1024 * 1024
 
 _SEMVER_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
 
@@ -296,25 +305,85 @@ def _wait_for_pid_to_die(pid: int, timeout_seconds: float) -> bool:
         kernel32.CloseHandle(h)
 
 
+def _update_log_path() -> Path | None:
+    """Return the path to the persistent updater log, or None if unavailable.
+
+    On Windows we use ``%LOCALAPPDATA%\\IsaacTracker\\update.log``. Tests can
+    redirect by overriding the ``LOCALAPPDATA`` environment variable.
+    """
+    try:
+        if sys.platform == "win32":
+            base = os.environ.get("LOCALAPPDATA")
+            if not base:
+                return None
+            d = Path(base) / "IsaacTracker"
+        else:
+            d = Path.home() / ".isaac-tracker"
+        d.mkdir(parents=True, exist_ok=True)
+        return d / "update.log"
+    except OSError:
+        return None
+
+
+def _ulog(msg: str) -> None:
+    """Append a timestamped line to the persistent updater log. Best-effort.
+
+    Keeps the file under ~256KB by truncating to the last 64KB when it grows.
+    Independent of the stdlib logging config (which the app disables by
+    default) so we always get a record of what the auto-update path did.
+    """
+    p = _update_log_path()
+    if p is None:
+        return
+    try:
+        if p.exists() and p.stat().st_size > 256 * 1024:
+            with p.open("rb") as f:
+                f.seek(-64 * 1024, os.SEEK_END)
+                tail = f.read()
+            p.write_bytes(tail)
+        line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} v{__version__} pid={os.getpid()} {msg}\n"
+        with p.open("a", encoding="utf-8") as f:
+            f.write(line)
+    except OSError:
+        pass
+
+
 def _finalize_swap(exe_dir: Path) -> bool:
     """Rename ``IsaacTracker.new.exe`` to ``IsaacTracker.exe`` in ``exe_dir``.
 
-    Removes any stale legacy ``_update.bat`` left over from pre-1.0.7 upgrades
-    while we're at it. Returns True on success; False if the rename failed
-    (in which case the user can keep using ``IsaacTracker.new.exe`` directly).
+    Reintenta el rename varias veces para tolerar bloqueos transitorios de
+    Windows Defender (u otros AV) que escanean el .exe viejo justo cuando el
+    viejo proceso acaba de morir, lo que hace fallar el primer intento con
+    "acceso denegado". También limpia el legado ``_update.bat`` heredado de
+    versiones anteriores a 1.0.7.
+
+    Returns True on success; False if every retry failed (en cuyo caso ambos
+    archivos quedan en disco y el siguiente arranque debería reintentarlo
+    vía :func:`maybe_recover_pending_swap`).
     """
     target = exe_dir / EXE_NAME
     source = exe_dir / NEW_EXE_NAME
     if not source.exists():
         # Nothing to swap (e.g. invoked manually with the flag). Treat as ok.
         return True
-    try:
-        # os.replace atomically overwrites the old .exe if it still exists;
-        # Windows allows renaming over a non-running .exe file just fine.
-        os.replace(source, target)
-    except OSError as e:
-        logger.warning("Finalize rename failed: %s", e)
+    last_err: OSError | None = None
+    for delay in _FINALIZE_RETRY_DELAYS:
+        if delay:
+            time.sleep(delay)
+        try:
+            # os.replace atomically overwrites the old .exe if it still exists;
+            # Windows allows renaming over a non-running .exe file just fine.
+            os.replace(source, target)
+            last_err = None
+            break
+        except OSError as e:
+            last_err = e
+            _ulog(f"finalize_swap retry: {e}")
+    if last_err is not None:
+        logger.warning("Finalize rename failed after retries: %s", last_err)
+        _ulog(f"finalize_swap FAILED after {len(_FINALIZE_RETRY_DELAYS)} attempts: {last_err}")
         return False
+    _ulog("finalize_swap ok")
     legacy_bat = exe_dir / LEGACY_SWAP_SCRIPT_NAME
     if legacy_bat.exists():
         try:
@@ -335,9 +404,11 @@ def finalize_pending_update(old_pid: int, exe_dir: Path | None = None) -> bool:
         exe_dir = _exe_dir()
     if exe_dir is None:
         return False
+    _ulog(f"finalize: waiting for old pid={old_pid}")
     died = _wait_for_pid_to_die(old_pid, FINALIZE_WAIT_TIMEOUT)
     if not died:
         logger.warning("Old PID %s did not exit within %ss", old_pid, FINALIZE_WAIT_TIMEOUT)
+        _ulog(f"finalize: old pid={old_pid} did not die within {FINALIZE_WAIT_TIMEOUT}s")
         return False
     return _finalize_swap(exe_dir)
 
@@ -349,9 +420,58 @@ def finalize_pending_update_async(old_pid: int) -> threading.Thread:
             finalize_pending_update(old_pid)
         except Exception:
             logger.exception("Finalize thread crashed")
+            _ulog("finalize thread crashed (see app logger for traceback)")
     t = threading.Thread(target=_run, daemon=True, name="updater-finalize")
     t.start()
     return t
+
+
+def maybe_recover_pending_swap(exe_dir: Path | None = None) -> bool:
+    """Detect a pending .new.exe left over by a previous failed swap and
+    relaunch it in finalize mode.
+
+    Llamada al arrancar (cuando ``--finalize-update`` NO está en argv). Si
+    encontramos un ``IsaacTracker.new.exe`` adyacente a nuestro propio .exe
+    estable, asumimos que un update anterior se quedó a medias y lanzamos
+    ese binario con el flag de finalize pasándole nuestro PID. El caller
+    debe salir si esta función retorna True.
+
+    Requiere que el archivo ``.new.exe`` tenga un tamaño plausible — así
+    evitamos relanzar una descarga parcial dejada por un cierre brusco a
+    mitad de descarga, que dejaría al usuario sin app.
+
+    Returns True iff hemos lanzado el finalizer (= el caller debe terminar).
+    """
+    if exe_dir is None:
+        exe_dir = _exe_dir()
+    if exe_dir is None:
+        return False
+    current = _exe_path()
+    if current is None:
+        return False
+    # Solo recuperamos cuando estamos corriendo desde el .exe estable. Si
+    # ya estamos corriendo desde .new.exe (caso raro: el usuario lo abrió
+    # directamente), no relanzamos otro .new.exe — sería un bucle.
+    if current.name.lower() != EXE_NAME.lower():
+        return False
+    new_exe = exe_dir / NEW_EXE_NAME
+    if not new_exe.exists():
+        return False
+    try:
+        size = new_exe.stat().st_size
+    except OSError:
+        return False
+    if size < _MIN_PLAUSIBLE_EXE_BYTES:
+        _ulog(f"recover: ignoring tiny .new.exe ({size} bytes), likely a partial download")
+        return False
+    _ulog(f"recover: found pending .new.exe ({size} bytes), relaunching for finalize")
+    try:
+        _launch_finalizer(new_exe, os.getpid())
+    except OSError as e:
+        logger.warning("Auto-recovery launch failed: %s", e)
+        _ulog(f"recover: launch failed: {e}")
+        return False
+    return True
 
 
 def open_release_page(html_url: str) -> bool:
