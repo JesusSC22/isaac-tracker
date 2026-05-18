@@ -2002,9 +2002,48 @@
       background: #fff; color: #c0392b; border-color: #fff;
     }
     .update-banner.is-error .update-banner-dismiss { color: #fff; }
+
+    /* Manual "check for updates" button in the top-right corner. */
+    .update-check-btn {
+      position: fixed;
+      top: 8px;
+      right: 12px;
+      z-index: 1000;
+      background: rgba(22, 33, 62, 0.85);
+      color: #aaa;
+      border: 1px solid #2a3552;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: inherit;
+      letter-spacing: 0.3px;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      backdrop-filter: blur(2px);
+    }
+    .update-check-btn:hover:not(:disabled) {
+      color: #d4a64a;
+      border-color: #d4a64a;
+    }
+    .update-check-btn:disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+    .update-check-btn.is-uptodate {
+      color: #6cd66c;
+      border-color: #3d7d3d;
+    }
+    .update-check-btn.is-error {
+      color: #e57373;
+      border-color: #7a3838;
+    }
   </style>
 </head>
 <body>
+
+<!-- Manual update check button (always visible inside IsaacTracker.exe). -->
+<button type="button" id="update-check-btn" class="update-check-btn" title="Comprobar si hay una versión nueva en GitHub" style="display:none">Comprobar actualización</button>
 
 <!-- Update banner (auto-update from GitHub releases). Hidden until check_update finds a newer version. -->
 <div id="update-banner" class="update-banner" style="display:none" role="status">
@@ -7843,10 +7882,50 @@
       if (dismiss) dismiss.style.display = '';
       _showProgress(false);
       banner.style.display = '';
+      // The banner already exposes the action; tuck the manual check button
+      // out of the way to avoid two competing call-to-actions on the same row.
+      const checkBtn = document.getElementById('update-check-btn');
+      if (checkBtn) checkBtn.style.display = 'none';
     }
     function _hideBanner() {
       const banner = document.getElementById('update-banner');
       if (banner) banner.style.display = 'none';
+      const checkBtn = document.getElementById('update-check-btn');
+      if (checkBtn && _currentVersion) checkBtn.style.display = '';
+    }
+
+    let _currentVersion = null;
+
+    function _resetCheckBtn() {
+      const btn = document.getElementById('update-check-btn');
+      if (!btn) return;
+      btn.classList.remove('is-uptodate', 'is-error');
+      btn.disabled = false;
+      btn.textContent = 'v' + (_currentVersion || '?') + ' · Comprobar actualización';
+    }
+
+    async function _onManualCheck() {
+      const btn = document.getElementById('update-check-btn');
+      if (!btn || btn.disabled) return;
+      if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.check_update) return;
+      btn.disabled = true;
+      btn.classList.remove('is-uptodate', 'is-error');
+      btn.textContent = 'Comprobando…';
+      try {
+        const payload = await window.pywebview.api.check_update();
+        if (payload && payload.version && payload.asset_url) {
+          _showBanner(payload);
+          // _showBanner hid the button; nothing else to do.
+          return;
+        }
+        btn.classList.add('is-uptodate');
+        btn.textContent = 'v' + (_currentVersion || '?') + ' · Estás al día';
+        setTimeout(_resetCheckBtn, 2500);
+      } catch (e) {
+        btn.classList.add('is-error');
+        btn.textContent = 'Sin conexión';
+        setTimeout(_resetCheckBtn, 2500);
+      }
     }
 
     // Called by Python from updater.apply_update during download.
@@ -7930,7 +8009,23 @@
       if (!e.target) return;
       if (e.target.id === 'update-banner-btn') _onUpdateClick();
       else if (e.target.id === 'update-banner-dismiss') _hideBanner();
+      else if (e.target.id === 'update-check-btn') _onManualCheck();
     });
+
+    async function _initVersionLabel() {
+      if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.get_app_version) return;
+      try {
+        _currentVersion = await window.pywebview.api.get_app_version();
+      } catch (e) {
+        _currentVersion = null;
+      }
+      if (!_currentVersion) return;
+      const btn = document.getElementById('update-check-btn');
+      if (btn) {
+        btn.textContent = 'v' + _currentVersion + ' · Comprobar actualización';
+        btn.style.display = '';
+      }
+    }
 
     async function _checkForUpdate() {
       if (!window.pywebview || !window.pywebview.api || !window.pywebview.api.check_update) return;
@@ -7947,6 +8042,7 @@
     // Run after pywebviewready, slightly delayed so the initial-state loading
     // overlay gets to render first and the user sees the app before the banner.
     window.addEventListener('pywebviewready', () => {
+      _initVersionLabel();
       setTimeout(_checkForUpdate, 1500);
     });
   })();
